@@ -42,7 +42,7 @@ func newTestAgentLoop(
 		Agents: config.AgentsConfig{
 			Defaults: config.AgentDefaults{
 				Workspace:         tmpDir,
-				Model:             "test-model",
+				ModelName:         "test-model",
 				MaxTokens:         4096,
 				MaxToolIterations: 10,
 			},
@@ -101,7 +101,7 @@ func TestNewAgentLoop_StateInitialized(t *testing.T) {
 		Agents: config.AgentsConfig{
 			Defaults: config.AgentDefaults{
 				Workspace:         tmpDir,
-				Model:             "test-model",
+				ModelName:         "test-model",
 				MaxTokens:         4096,
 				MaxToolIterations: 10,
 			},
@@ -137,7 +137,7 @@ func TestToolRegistry_ToolRegistration(t *testing.T) {
 		Agents: config.AgentsConfig{
 			Defaults: config.AgentDefaults{
 				Workspace:         tmpDir,
-				Model:             "test-model",
+				ModelName:         "test-model",
 				MaxTokens:         4096,
 				MaxToolIterations: 10,
 			},
@@ -194,7 +194,7 @@ func TestToolRegistry_GetDefinitions(t *testing.T) {
 		Agents: config.AgentsConfig{
 			Defaults: config.AgentDefaults{
 				Workspace:         tmpDir,
-				Model:             "test-model",
+				ModelName:         "test-model",
 				MaxTokens:         4096,
 				MaxToolIterations: 10,
 			},
@@ -230,7 +230,7 @@ func TestAgentLoop_GetStartupInfo(t *testing.T) {
 
 	cfg := config.DefaultConfig()
 	cfg.Agents.Defaults.Workspace = tmpDir
-	cfg.Agents.Defaults.Model = "test-model"
+	cfg.Agents.Defaults.ModelName = "test-model"
 	cfg.Agents.Defaults.MaxTokens = 4096
 	cfg.Agents.Defaults.MaxToolIterations = 10
 
@@ -274,7 +274,7 @@ func TestAgentLoop_Stop(t *testing.T) {
 		Agents: config.AgentsConfig{
 			Defaults: config.AgentDefaults{
 				Workspace:         tmpDir,
-				Model:             "test-model",
+				ModelName:         "test-model",
 				MaxTokens:         4096,
 				MaxToolIterations: 10,
 			},
@@ -394,7 +394,7 @@ func TestProcessMessage_UsesRouteSessionKey(t *testing.T) {
 		Agents: config.AgentsConfig{
 			Defaults: config.AgentDefaults{
 				Workspace:         tmpDir,
-				Model:             "test-model",
+				ModelName:         "test-model",
 				MaxTokens:         4096,
 				MaxToolIterations: 10,
 			},
@@ -450,7 +450,7 @@ func TestProcessMessage_CommandOutcomes(t *testing.T) {
 		Agents: config.AgentsConfig{
 			Defaults: config.AgentDefaults{
 				Workspace:         tmpDir,
-				Model:             "test-model",
+				ModelName:         "test-model",
 				MaxTokens:         4096,
 				MaxToolIterations: 10,
 			},
@@ -530,7 +530,7 @@ func TestProcessMessage_SwitchModelShowModelConsistency(t *testing.T) {
 			Defaults: config.AgentDefaults{
 				Workspace:         tmpDir,
 				Provider:          "openai",
-				Model:             "before-switch",
+				ModelName:         "before-switch",
 				MaxTokens:         4096,
 				MaxToolIterations: 10,
 			},
@@ -587,7 +587,7 @@ func TestToolResult_SilentToolDoesNotSendUserMessage(t *testing.T) {
 		Agents: config.AgentsConfig{
 			Defaults: config.AgentDefaults{
 				Workspace:         tmpDir,
-				Model:             "test-model",
+				ModelName:         "test-model",
 				MaxTokens:         4096,
 				MaxToolIterations: 10,
 			},
@@ -629,7 +629,7 @@ func TestToolResult_UserFacingToolDoesSendMessage(t *testing.T) {
 		Agents: config.AgentsConfig{
 			Defaults: config.AgentDefaults{
 				Workspace:         tmpDir,
-				Model:             "test-model",
+				ModelName:         "test-model",
 				MaxTokens:         4096,
 				MaxToolIterations: 10,
 			},
@@ -700,7 +700,7 @@ func TestAgentLoop_ContextExhaustionRetry(t *testing.T) {
 		Agents: config.AgentsConfig{
 			Defaults: config.AgentDefaults{
 				Workspace:         tmpDir,
-				Model:             "test-model",
+				ModelName:         "test-model",
 				MaxTokens:         4096,
 				MaxToolIterations: 10,
 			},
@@ -770,6 +770,56 @@ func TestAgentLoop_ContextExhaustionRetry(t *testing.T) {
 	}
 }
 
+func TestProcessDirectWithChannel_InitializesMCPInAgentMode(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "agent-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	cfg := &config.Config{
+		Agents: config.AgentsConfig{
+			Defaults: config.AgentDefaults{
+				Workspace:         tmpDir,
+				ModelName:         "test-model",
+				MaxTokens:         4096,
+				MaxToolIterations: 10,
+			},
+		},
+		Tools: config.ToolsConfig{
+			MCP: config.MCPConfig{
+				ToolConfig: config.ToolConfig{
+					Enabled: true,
+				},
+			},
+		},
+	}
+
+	msgBus := bus.NewMessageBus()
+	provider := &mockProvider{}
+	al := NewAgentLoop(cfg, msgBus, provider)
+	defer al.Close()
+
+	if al.mcp.hasManager() {
+		t.Fatal("expected MCP manager to be nil before first direct processing")
+	}
+
+	_, err = al.ProcessDirectWithChannel(
+		context.Background(),
+		"hello",
+		"session-1",
+		"cli",
+		"direct",
+	)
+	if err != nil {
+		t.Fatalf("ProcessDirectWithChannel failed: %v", err)
+	}
+
+	if !al.mcp.hasManager() {
+		t.Fatal("expected MCP manager to be initialized in direct agent mode")
+	}
+}
+
 func TestTargetReasoningChannelID_AllChannels(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "agent-test-*")
 	if err != nil {
@@ -781,7 +831,7 @@ func TestTargetReasoningChannelID_AllChannels(t *testing.T) {
 		Agents: config.AgentsConfig{
 			Defaults: config.AgentDefaults{
 				Workspace:         tmpDir,
-				Model:             "test-model",
+				ModelName:         "test-model",
 				MaxTokens:         4096,
 				MaxToolIterations: 10,
 			},
@@ -851,7 +901,7 @@ func TestHandleReasoning(t *testing.T) {
 			Agents: config.AgentsConfig{
 				Defaults: config.AgentDefaults{
 					Workspace:         tmpDir,
-					Model:             "test-model",
+					ModelName:         "test-model",
 					MaxTokens:         4096,
 					MaxToolIterations: 10,
 				},

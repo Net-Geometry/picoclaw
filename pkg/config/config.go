@@ -4,12 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 
 	"github.com/caarlos0/env/v11"
 
+	"github.com/sipeed/picoclaw/pkg"
 	"github.com/sipeed/picoclaw/pkg/fileutil"
+	"github.com/sipeed/picoclaw/pkg/logger"
 )
 
 // rrCounter is a global counter for round-robin load balancing across models.
@@ -17,6 +20,8 @@ var rrCounter atomic.Uint64
 
 // FlexibleStringSlice is a []string that also accepts JSON numbers,
 // so allow_from can contain both "123" and 123.
+// It also supports parsing comma-separated strings from environment variables,
+// including both English (,) and Chinese (，) commas.
 type FlexibleStringSlice []string
 
 func (f *FlexibleStringSlice) UnmarshalJSON(data []byte) error {
@@ -48,17 +53,46 @@ func (f *FlexibleStringSlice) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalText implements encoding.TextUnmarshaler to support env variable parsing.
+// It handles comma-separated values with both English (,) and Chinese (，) commas.
+func (f *FlexibleStringSlice) UnmarshalText(text []byte) error {
+	if len(text) == 0 {
+		*f = nil
+		return nil
+	}
+
+	s := string(text)
+	// Replace Chinese comma with English comma, then split
+	s = strings.ReplaceAll(s, "，", ",")
+	parts := strings.Split(s, ",")
+
+	result := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			result = append(result, part)
+		}
+	}
+	*f = result
+	return nil
+}
+
+// CurrentVersion is the latest config schema version
+const CurrentVersion = 1
+
+// Config is the current config structure with version support
 type Config struct {
+	Version   int             `json:"version"` // Config schema version for migration
 	Agents    AgentsConfig    `json:"agents"`
 	Bindings  []AgentBinding  `json:"bindings,omitempty"`
 	Session   SessionConfig   `json:"session,omitempty"`
 	Channels  ChannelsConfig  `json:"channels"`
-	Providers ProvidersConfig `json:"providers,omitempty"`
 	ModelList []ModelConfig   `json:"model_list"` // New model-centric provider configuration
 	Gateway   GatewayConfig   `json:"gateway"`
 	Tools     ToolsConfig     `json:"tools"`
 	Heartbeat HeartbeatConfig `json:"heartbeat"`
 	Devices   DevicesConfig   `json:"devices"`
+	Voice     VoiceConfig     `json:"voice"`
 	// BuildInfo contains build-time version information
 	BuildInfo BuildInfo `json:"build_info,omitempty"`
 }
@@ -73,19 +107,14 @@ type BuildInfo struct {
 
 // MarshalJSON implements custom JSON marshaling for Config
 // to omit providers section when empty and session when empty
-func (c Config) MarshalJSON() ([]byte, error) {
+func (c *Config) MarshalJSON() ([]byte, error) {
 	type Alias Config
 	aux := &struct {
 		Providers *ProvidersConfig `json:"providers,omitempty"`
 		Session   *SessionConfig   `json:"session,omitempty"`
 		*Alias
 	}{
-		Alias: (*Alias)(&c),
-	}
-
-	// Only include providers if not empty
-	if !c.Providers.IsEmpty() {
-		aux.Providers = &c.Providers
+		Alias: (*Alias)(c),
 	}
 
 	// Only include session if not empty
@@ -196,7 +225,6 @@ type AgentDefaults struct {
 	AllowReadOutsideWorkspace bool           `json:"allow_read_outside_workspace"    env:"PICOCLAW_AGENTS_DEFAULTS_ALLOW_READ_OUTSIDE_WORKSPACE"`
 	Provider                  string         `json:"provider"                        env:"PICOCLAW_AGENTS_DEFAULTS_PROVIDER"`
 	ModelName                 string         `json:"model_name,omitempty"            env:"PICOCLAW_AGENTS_DEFAULTS_MODEL_NAME"`
-	Model                     string         `json:"model"                           env:"PICOCLAW_AGENTS_DEFAULTS_MODEL"` // Deprecated: use model_name instead
 	ModelFallbacks            []string       `json:"model_fallbacks,omitempty"`
 	ImageModel                string         `json:"image_model,omitempty"           env:"PICOCLAW_AGENTS_DEFAULTS_IMAGE_MODEL"`
 	ImageModelFallbacks       []string       `json:"image_model_fallbacks,omitempty"`
@@ -221,10 +249,7 @@ func (d *AgentDefaults) GetMaxMediaSize() int {
 // GetModelName returns the effective model name for the agent defaults.
 // It prefers the new "model_name" field but falls back to "model" for backward compatibility.
 func (d *AgentDefaults) GetModelName() string {
-	if d.ModelName != "" {
-		return d.ModelName
-	}
-	return d.Model
+	return d.ModelName
 }
 
 type ChannelsConfig struct {
@@ -349,16 +374,17 @@ type SlackConfig struct {
 }
 
 type MatrixConfig struct {
-	Enabled            bool                `json:"enabled"                 env:"PICOCLAW_CHANNELS_MATRIX_ENABLED"`
-	Homeserver         string              `json:"homeserver"              env:"PICOCLAW_CHANNELS_MATRIX_HOMESERVER"`
-	UserID             string              `json:"user_id"                 env:"PICOCLAW_CHANNELS_MATRIX_USER_ID"`
-	AccessToken        string              `json:"access_token"            env:"PICOCLAW_CHANNELS_MATRIX_ACCESS_TOKEN"`
-	DeviceID           string              `json:"device_id,omitempty"     env:"PICOCLAW_CHANNELS_MATRIX_DEVICE_ID"`
-	JoinOnInvite       bool                `json:"join_on_invite"          env:"PICOCLAW_CHANNELS_MATRIX_JOIN_ON_INVITE"`
-	AllowFrom          FlexibleStringSlice `json:"allow_from"              env:"PICOCLAW_CHANNELS_MATRIX_ALLOW_FROM"`
+	Enabled            bool                `json:"enabled"                  env:"PICOCLAW_CHANNELS_MATRIX_ENABLED"`
+	Homeserver         string              `json:"homeserver"               env:"PICOCLAW_CHANNELS_MATRIX_HOMESERVER"`
+	UserID             string              `json:"user_id"                  env:"PICOCLAW_CHANNELS_MATRIX_USER_ID"`
+	AccessToken        string              `json:"access_token"             env:"PICOCLAW_CHANNELS_MATRIX_ACCESS_TOKEN"`
+	DeviceID           string              `json:"device_id,omitempty"      env:"PICOCLAW_CHANNELS_MATRIX_DEVICE_ID"`
+	JoinOnInvite       bool                `json:"join_on_invite"           env:"PICOCLAW_CHANNELS_MATRIX_JOIN_ON_INVITE"`
+	MessageFormat      string              `json:"message_format,omitempty" env:"PICOCLAW_CHANNELS_MATRIX_MESSAGE_FORMAT"`
+	AllowFrom          FlexibleStringSlice `json:"allow_from"               env:"PICOCLAW_CHANNELS_MATRIX_ALLOW_FROM"`
 	GroupTrigger       GroupTriggerConfig  `json:"group_trigger,omitempty"`
 	Placeholder        PlaceholderConfig   `json:"placeholder,omitempty"`
-	ReasoningChannelID string              `json:"reasoning_channel_id"    env:"PICOCLAW_CHANNELS_MATRIX_REASONING_CHANNEL_ID"`
+	ReasoningChannelID string              `json:"reasoning_channel_id"     env:"PICOCLAW_CHANNELS_MATRIX_REASONING_CHANNEL_ID"`
 }
 
 type LINEConfig struct {
@@ -472,6 +498,10 @@ type DevicesConfig struct {
 	MonitorUSB bool `json:"monitor_usb" env:"PICOCLAW_DEVICES_MONITOR_USB"`
 }
 
+type VoiceConfig struct {
+	EchoTranscription bool `json:"echo_transcription" env:"PICOCLAW_VOICE_ECHO_TRANSCRIPTION"`
+}
+
 type ProvidersConfig struct {
 	Anthropic     ProviderConfig       `json:"anthropic"`
 	OpenAI        OpenAIProviderConfig `json:"openai"`
@@ -495,6 +525,7 @@ type ProvidersConfig struct {
 	Mistral       ProviderConfig       `json:"mistral"`
 	Avian         ProviderConfig       `json:"avian"`
 	Minimax       ProviderConfig       `json:"minimax"`
+	LongCat       ProviderConfig       `json:"longcat"`
 }
 
 // IsEmpty checks if all provider configs are empty (no API keys or API bases set)
@@ -521,7 +552,8 @@ func (p ProvidersConfig) IsEmpty() bool {
 		p.Qwen.APIKey == "" && p.Qwen.APIBase == "" &&
 		p.Mistral.APIKey == "" && p.Mistral.APIBase == "" &&
 		p.Avian.APIKey == "" && p.Avian.APIBase == "" &&
-		p.Minimax.APIKey == "" && p.Minimax.APIBase == ""
+		p.Minimax.APIKey == "" && p.Minimax.APIBase == "" &&
+		p.LongCat.APIKey == "" && p.LongCat.APIBase == ""
 }
 
 // MarshalJSON implements custom JSON marshaling for ProvidersConfig
@@ -668,6 +700,7 @@ type CronToolsConfig struct {
 type ExecConfig struct {
 	ToolConfig          `         envPrefix:"PICOCLAW_TOOLS_EXEC_"`
 	EnableDenyPatterns  bool     `                                 env:"PICOCLAW_TOOLS_EXEC_ENABLE_DENY_PATTERNS"  json:"enable_deny_patterns"`
+	AllowRemote         bool     `                                 env:"PICOCLAW_TOOLS_EXEC_ALLOW_REMOTE"          json:"allow_remote"`
 	CustomDenyPatterns  []string `                                 env:"PICOCLAW_TOOLS_EXEC_CUSTOM_DENY_PATTERNS"  json:"custom_deny_patterns"`
 	CustomAllowPatterns []string `                                 env:"PICOCLAW_TOOLS_EXEC_CUSTOM_ALLOW_PATTERNS" json:"custom_allow_patterns"`
 	TimeoutSeconds      int      `                                 env:"PICOCLAW_TOOLS_EXEC_TIMEOUT_SECONDS"       json:"timeout_seconds"` // 0 means use default (60s)
@@ -766,44 +799,53 @@ type MCPConfig struct {
 }
 
 func LoadConfig(path string) (*Config, error) {
-	cfg := DefaultConfig()
-
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return cfg, nil
+			return DefaultConfig(), nil
 		}
 		return nil, err
 	}
 
-	// Pre-scan the JSON to check how many model_list entries the user provided.
-	// Go's JSON decoder reuses existing slice backing-array elements rather than
-	// zero-initializing them, so fields absent from the user's JSON (e.g. api_base)
-	// would silently inherit values from the DefaultConfig template at the same
-	// index position. We only reset cfg.ModelList when the user actually provides
-	// entries; when count is 0 we keep DefaultConfig's built-in list as fallback.
-	var tmp Config
-	if err := json.Unmarshal(data, &tmp); err != nil {
-		return nil, err
+	// First, try to detect config version by reading the version field
+	var versionInfo struct {
+		Version int `json:"version"`
 	}
-	if len(tmp.ModelList) > 0 {
-		cfg.ModelList = nil
+	if e := json.Unmarshal(data, &versionInfo); e != nil {
+		return nil, fmt.Errorf("failed to detect config version: %w", e)
 	}
 
-	if err := json.Unmarshal(data, cfg); err != nil {
-		return nil, err
+	// Load config based on detected version
+	var cfg *Config
+	switch versionInfo.Version {
+	case 0:
+		// Legacy config (no version field)
+		v, e := loadConfigV0(data)
+		if e != nil {
+			return nil, e
+		}
+		cfg, e = v.Migrate()
+		if e != nil {
+			logger.DebugF("config migrate fail", map[string]any{"from": versionInfo.Version, "to": CurrentVersion})
+			return nil, e
+		}
+		logger.DebugF("config migrate success", map[string]any{"from": versionInfo.Version, "to": CurrentVersion})
+		defer func() {
+			_ = SaveConfig(path, cfg)
+		}()
+	case CurrentVersion:
+		// Current version
+		cfg, err = loadConfig(data)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("unsupported config version: %d", versionInfo.Version)
 	}
 
-	if err := env.Parse(cfg); err != nil {
-		return nil, err
-	}
-
-	// Migrate legacy channel config fields to new unified structures
-	cfg.migrateChannelConfigs()
-
-	// Auto-migrate: if only legacy providers config exists, convert to model_list
-	if len(cfg.ModelList) == 0 && cfg.HasProvidersConfig() {
-		cfg.ModelList = ConvertProvidersToModelList(cfg)
+	// Apply environment variables
+	if e := env.Parse(cfg); e != nil {
+		return nil, e
 	}
 
 	// Validate model_list for uniqueness and required fields
@@ -811,23 +853,26 @@ func LoadConfig(path string) (*Config, error) {
 		return nil, err
 	}
 
+	// Ensure Workspace has a default if not set
+	if cfg.Agents.Defaults.Workspace == "" {
+		homePath, _ := os.UserHomeDir()
+		if picoclawHome := os.Getenv(pkg.PicoClawHome); picoclawHome != "" {
+			homePath = picoclawHome
+		} else if homePath != "" {
+			homePath = filepath.Join(homePath, pkg.DefaultPicoClawHome)
+		}
+		cfg.Agents.Defaults.Workspace = filepath.Join(homePath, pkg.WorkspaceName)
+	}
+
 	return cfg, nil
 }
 
-func (c *Config) migrateChannelConfigs() {
-	// Discord: mention_only -> group_trigger.mention_only
-	if c.Channels.Discord.MentionOnly && !c.Channels.Discord.GroupTrigger.MentionOnly {
-		c.Channels.Discord.GroupTrigger.MentionOnly = true
-	}
-
-	// OneBot: group_trigger_prefix -> group_trigger.prefixes
-	if len(c.Channels.OneBot.GroupTriggerPrefix) > 0 &&
-		len(c.Channels.OneBot.GroupTrigger.Prefixes) == 0 {
-		c.Channels.OneBot.GroupTrigger.Prefixes = c.Channels.OneBot.GroupTriggerPrefix
-	}
-}
-
 func SaveConfig(path string, cfg *Config) error {
+	// Ensure version is always set when saving
+	if cfg.Version == 0 {
+		cfg.Version = CurrentVersion
+	}
+
 	data, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return err
@@ -839,53 +884,6 @@ func SaveConfig(path string, cfg *Config) error {
 
 func (c *Config) WorkspacePath() string {
 	return expandHome(c.Agents.Defaults.Workspace)
-}
-
-func (c *Config) GetAPIKey() string {
-	if c.Providers.OpenRouter.APIKey != "" {
-		return c.Providers.OpenRouter.APIKey
-	}
-	if c.Providers.Anthropic.APIKey != "" {
-		return c.Providers.Anthropic.APIKey
-	}
-	if c.Providers.OpenAI.APIKey != "" {
-		return c.Providers.OpenAI.APIKey
-	}
-	if c.Providers.Gemini.APIKey != "" {
-		return c.Providers.Gemini.APIKey
-	}
-	if c.Providers.Zhipu.APIKey != "" {
-		return c.Providers.Zhipu.APIKey
-	}
-	if c.Providers.Groq.APIKey != "" {
-		return c.Providers.Groq.APIKey
-	}
-	if c.Providers.VLLM.APIKey != "" {
-		return c.Providers.VLLM.APIKey
-	}
-	if c.Providers.ShengSuanYun.APIKey != "" {
-		return c.Providers.ShengSuanYun.APIKey
-	}
-	if c.Providers.Cerebras.APIKey != "" {
-		return c.Providers.Cerebras.APIKey
-	}
-	return ""
-}
-
-func (c *Config) GetAPIBase() string {
-	if c.Providers.OpenRouter.APIKey != "" {
-		if c.Providers.OpenRouter.APIBase != "" {
-			return c.Providers.OpenRouter.APIBase
-		}
-		return "https://openrouter.ai/api/v1"
-	}
-	if c.Providers.Zhipu.APIKey != "" {
-		return c.Providers.Zhipu.APIBase
-	}
-	if c.Providers.VLLM.APIKey != "" && c.Providers.VLLM.APIBase != "" {
-		return c.Providers.VLLM.APIBase
-	}
-	return ""
 }
 
 func expandHome(path string) string {
@@ -928,11 +926,6 @@ func (c *Config) findMatches(modelName string) []ModelConfig {
 		}
 	}
 	return matches
-}
-
-// HasProvidersConfig checks if any provider in the old providers config has configuration.
-func (c *Config) HasProvidersConfig() bool {
-	return !c.Providers.IsEmpty()
 }
 
 // ValidateModelList validates all ModelConfig entries in the model_list.

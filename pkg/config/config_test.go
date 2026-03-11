@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"testing"
 )
 
@@ -207,15 +206,6 @@ func TestDefaultConfig_WorkspacePath(t *testing.T) {
 	}
 }
 
-// TestDefaultConfig_Model verifies model is set
-func TestDefaultConfig_Model(t *testing.T) {
-	cfg := DefaultConfig()
-
-	if cfg.Agents.Defaults.Model != "" {
-		t.Error("Model should be empty")
-	}
-}
-
 // TestDefaultConfig_MaxTokens verifies max tokens has default value
 func TestDefaultConfig_MaxTokens(t *testing.T) {
 	cfg := DefaultConfig()
@@ -252,21 +242,6 @@ func TestDefaultConfig_Gateway(t *testing.T) {
 	}
 	if cfg.Gateway.Port == 0 {
 		t.Error("Gateway port should have default value")
-	}
-}
-
-// TestDefaultConfig_Providers verifies provider structure
-func TestDefaultConfig_Providers(t *testing.T) {
-	cfg := DefaultConfig()
-
-	if cfg.Providers.Anthropic.APIKey != "" {
-		t.Error("Anthropic API key should be empty by default")
-	}
-	if cfg.Providers.OpenAI.APIKey != "" {
-		t.Error("OpenAI API key should be empty by default")
-	}
-	if cfg.Providers.OpenRouter.APIKey != "" {
-		t.Error("OpenRouter API key should be empty by default")
 	}
 }
 
@@ -328,34 +303,12 @@ func TestSaveConfig_FilePermissions(t *testing.T) {
 	}
 }
 
-func TestSaveConfig_IncludesEmptyLegacyModelField(t *testing.T) {
-	tmpDir := t.TempDir()
-	path := filepath.Join(tmpDir, "config.json")
-
-	cfg := DefaultConfig()
-	if err := SaveConfig(path, cfg); err != nil {
-		t.Fatalf("SaveConfig failed: %v", err)
-	}
-
-	data, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatalf("ReadFile failed: %v", err)
-	}
-
-	if !strings.Contains(string(data), `"model": ""`) {
-		t.Fatalf("saved config should include empty legacy model field, got: %s", string(data))
-	}
-}
-
 // TestConfig_Complete verifies all config fields are set
 func TestConfig_Complete(t *testing.T) {
 	cfg := DefaultConfig()
 
 	if cfg.Agents.Defaults.Workspace == "" {
 		t.Error("Workspace should not be empty")
-	}
-	if cfg.Agents.Defaults.Model != "" {
-		t.Error("Model should be empty")
 	}
 	if cfg.Agents.Defaults.Temperature != nil {
 		t.Error("Temperature should be nil when not provided")
@@ -375,19 +328,23 @@ func TestConfig_Complete(t *testing.T) {
 	if !cfg.Heartbeat.Enabled {
 		t.Error("Heartbeat should be enabled by default")
 	}
+	if !cfg.Tools.Exec.AllowRemote {
+		t.Error("Exec.AllowRemote should be true by default")
+	}
 }
 
-func TestDefaultConfig_OpenAIWebSearchEnabled(t *testing.T) {
+func TestDefaultConfig_ExecAllowRemoteEnabled(t *testing.T) {
 	cfg := DefaultConfig()
-	if !cfg.Providers.OpenAI.WebSearch {
-		t.Fatal("DefaultConfig().Providers.OpenAI.WebSearch should be true")
+	if !cfg.Tools.Exec.AllowRemote {
+		t.Fatal("DefaultConfig().Tools.Exec.AllowRemote should be true")
 	}
 }
 
-func TestLoadConfig_OpenAIWebSearchDefaultsTrueWhenUnset(t *testing.T) {
+func TestLoadConfig_ExecAllowRemoteDefaultsTrueWhenUnset(t *testing.T) {
 	dir := t.TempDir()
 	configPath := filepath.Join(dir, "config.json")
-	if err := os.WriteFile(configPath, []byte(`{"providers":{"openai":{"api_base":""}}}`), 0o600); err != nil {
+	if err := os.WriteFile(configPath, []byte(`{"version":1,"tools":{"exec":{"enable_deny_patterns":true}}}`),
+		0o600); err != nil {
 		t.Fatalf("WriteFile() error: %v", err)
 	}
 
@@ -395,24 +352,8 @@ func TestLoadConfig_OpenAIWebSearchDefaultsTrueWhenUnset(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}
-	if !cfg.Providers.OpenAI.WebSearch {
-		t.Fatal("OpenAI codex web search should remain true when unset in config file")
-	}
-}
-
-func TestLoadConfig_OpenAIWebSearchCanBeDisabled(t *testing.T) {
-	dir := t.TempDir()
-	configPath := filepath.Join(dir, "config.json")
-	if err := os.WriteFile(configPath, []byte(`{"providers":{"openai":{"web_search":false}}}`), 0o600); err != nil {
-		t.Fatalf("WriteFile() error: %v", err)
-	}
-
-	cfg, err := LoadConfig(configPath)
-	if err != nil {
-		t.Fatalf("LoadConfig() error: %v", err)
-	}
-	if cfg.Providers.OpenAI.WebSearch {
-		t.Fatal("OpenAI codex web search should be false when disabled in config file")
+	if !cfg.Tools.Exec.AllowRemote {
+		t.Fatal("tools.exec.allow_remote should remain true when unset in config file")
 	}
 }
 
@@ -481,4 +422,120 @@ func TestDefaultConfig_WorkspacePath_WithPicoclawHome(t *testing.T) {
 	if cfg.Agents.Defaults.Workspace != want {
 		t.Errorf("Workspace path with PICOCLAW_HOME = %q, want %q", cfg.Agents.Defaults.Workspace, want)
 	}
+}
+
+// TestFlexibleStringSlice_UnmarshalText tests UnmarshalText with various comma separators
+func TestFlexibleStringSlice_UnmarshalText(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected []string
+	}{
+		{
+			name:     "English commas only",
+			input:    "123,456,789",
+			expected: []string{"123", "456", "789"},
+		},
+		{
+			name:     "Chinese commas only",
+			input:    "123，456，789",
+			expected: []string{"123", "456", "789"},
+		},
+		{
+			name:     "Mixed English and Chinese commas",
+			input:    "123,456，789",
+			expected: []string{"123", "456", "789"},
+		},
+		{
+			name:     "Single value",
+			input:    "123",
+			expected: []string{"123"},
+		},
+		{
+			name:     "Values with whitespace",
+			input:    " 123 , 456 , 789 ",
+			expected: []string{"123", "456", "789"},
+		},
+		{
+			name:     "Empty string",
+			input:    "",
+			expected: nil,
+		},
+		{
+			name:     "Only commas - English",
+			input:    ",,",
+			expected: []string{},
+		},
+		{
+			name:     "Only commas - Chinese",
+			input:    "，，",
+			expected: []string{},
+		},
+		{
+			name:     "Mixed commas with empty parts",
+			input:    "123,,456，，789",
+			expected: []string{"123", "456", "789"},
+		},
+		{
+			name:     "Complex mixed values",
+			input:    "user1@example.com，user2@test.com, admin@domain.org",
+			expected: []string{"user1@example.com", "user2@test.com", "admin@domain.org"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var f FlexibleStringSlice
+			err := f.UnmarshalText([]byte(tt.input))
+			if err != nil {
+				t.Fatalf("UnmarshalText(%q) error = %v", tt.input, err)
+			}
+
+			if tt.expected == nil {
+				if f != nil {
+					t.Errorf("UnmarshalText(%q) = %v, want nil", tt.input, f)
+				}
+				return
+			}
+
+			if len(f) != len(tt.expected) {
+				t.Errorf("UnmarshalText(%q) length = %d, want %d", tt.input, len(f), len(tt.expected))
+				return
+			}
+
+			for i, v := range tt.expected {
+				if f[i] != v {
+					t.Errorf("UnmarshalText(%q)[%d] = %q, want %q", tt.input, i, f[i], v)
+				}
+			}
+		})
+	}
+}
+
+// TestFlexibleStringSlice_UnmarshalText_EmptySliceConsistency tests nil vs empty slice behavior
+func TestFlexibleStringSlice_UnmarshalText_EmptySliceConsistency(t *testing.T) {
+	t.Run("Empty string returns nil", func(t *testing.T) {
+		var f FlexibleStringSlice
+		err := f.UnmarshalText([]byte(""))
+		if err != nil {
+			t.Fatalf("UnmarshalText error = %v", err)
+		}
+		if f != nil {
+			t.Errorf("Empty string should return nil, got %v", f)
+		}
+	})
+
+	t.Run("Commas only returns empty slice", func(t *testing.T) {
+		var f FlexibleStringSlice
+		err := f.UnmarshalText([]byte(",,,"))
+		if err != nil {
+			t.Fatalf("UnmarshalText error = %v", err)
+		}
+		if f == nil {
+			t.Error("Commas only should return empty slice, not nil")
+		}
+		if len(f) != 0 {
+			t.Errorf("Expected empty slice, got %v", f)
+		}
+	})
 }
