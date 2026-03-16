@@ -48,9 +48,10 @@ type AgentLoop struct {
 	transcriber    voice.Transcriber
 	cmdRegistry    *commands.Registry
 	mcp            mcpRuntime
-	steering       *steeringQueue
-	subTurnResults sync.Map
-	mu             sync.RWMutex
+	steering         *steeringQueue
+	subTurnResults   sync.Map // key: sessionKey (string), value: chan *tools.ToolResult
+	activeTurnStates sync.Map // key: sessionKey (string), value: *turnState
+	mu               sync.RWMutex
 	// Track active requests for safe provider cleanup
 	activeRequests sync.WaitGroup
 }
@@ -253,6 +254,7 @@ func registerSharedTools(
 							depth:          0,
 							session:        newEphemeralSession(nil),
 							pendingResults: make(chan *tools.ToolResult, 16),
+							concurrencySem: make(chan struct{}, 5),
 						}
 					}
 					
@@ -969,8 +971,13 @@ func (al *AgentLoop) runAgentLoop(
 		depth:          0,
 		session:        agent.Sessions,
 		pendingResults: make(chan *tools.ToolResult, 16),
+		concurrencySem: make(chan struct{}, 5), // maxConcurrentSubTurns
 	}
 	ctx = withTurnState(ctx, rootTS)
+
+	// Register this root turn state so HardAbort can find it
+	al.activeTurnStates.Store(opts.SessionKey, rootTS)
+	defer al.activeTurnStates.Delete(opts.SessionKey)
 
 	// Ensure the parent's pending results channel is cleaned up when this root turn finishes
 	defer al.unregisterSubTurnResultChannel(rootTS.turnID)

@@ -227,3 +227,35 @@ func (al *AgentLoop) registerSubTurnResultChannel(sessionKey string, ch chan *to
 func (al *AgentLoop) unregisterSubTurnResultChannel(sessionKey string) {
 	al.subTurnResults.Delete(sessionKey)
 }
+
+// ====================== Hard Abort ======================
+
+// HardAbort immediately cancels the running agent loop for the given session,
+// cascading the cancellation to all child SubTurns. This is a destructive operation
+// that terminates execution without waiting for graceful cleanup.
+//
+// Use this when the user explicitly requests immediate termination (e.g., "stop now", "abort").
+// For graceful interruption that allows the agent to finish the current tool and summarize,
+// use Steer() instead.
+func (al *AgentLoop) HardAbort(sessionKey string) error {
+	tsInterface, ok := al.activeTurnStates.Load(sessionKey)
+	if !ok {
+		return fmt.Errorf("no active turn state found for session %s", sessionKey)
+	}
+
+	ts, ok := tsInterface.(*turnState)
+	if !ok {
+		return fmt.Errorf("invalid turn state type for session %s", sessionKey)
+	}
+
+	logger.InfoCF("agent", "Hard abort triggered", map[string]any{
+		"session_key": sessionKey,
+		"turn_id":     ts.turnID,
+		"depth":       ts.depth,
+	})
+
+	// Trigger cascading cancellation to all child SubTurns
+	ts.Finish()
+
+	return nil
+}

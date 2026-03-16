@@ -13,11 +13,15 @@ import (
 )
 
 // ====================== Config & Constants ======================
-const maxSubTurnDepth = 3
+const (
+	maxSubTurnDepth        = 3
+	maxConcurrentSubTurns  = 5
+)
 
 var (
-	ErrDepthLimitExceeded   = errors.New("sub-turn depth limit exceeded")
-	ErrInvalidSubTurnConfig = errors.New("invalid sub-turn config")
+	ErrDepthLimitExceeded       = errors.New("sub-turn depth limit exceeded")
+	ErrInvalidSubTurnConfig     = errors.New("invalid sub-turn config")
+	ErrConcurrencyLimitExceeded = errors.New("sub-turn concurrency limit exceeded")
 )
 
 // ====================== SubTurn Config ======================
@@ -79,6 +83,7 @@ type turnState struct {
 	session        session.SessionStore
 	mu             sync.Mutex
 	isFinished     bool // Marks if the parent Turn has ended
+	concurrencySem chan struct{} // Limits concurrent child sub-turns
 }
 
 // ====================== Helper Functions ======================
@@ -102,6 +107,7 @@ func newTurnState(ctx context.Context, id string, parent *turnState) *turnState 
 		// intermediate results to be discarded in deliverSubTurnResult.
 		// For production, consider an unbounded queue or a blocking strategy with backpressure.
 		pendingResults: make(chan *tools.ToolResult, 16),
+		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
 	}
 }
 
@@ -189,31 +195,42 @@ func spawnSubTurn(ctx context.Context, al *AgentLoop, parentTS *turnState, cfg S
 		return nil, ErrInvalidSubTurnConfig
 	}
 
+	// 3. Acquire concurrency semaphore — blocks if parent already has maxConcurrentSubTurns running.
+	// Also respects context cancellation so we don't block forever if parent is aborted.
+	if parentTS.concurrencySem != nil {
+		select {
+		case parentTS.concurrencySem <- struct{}{}:
+			defer func() { <-parentTS.concurrencySem }()
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+
 	// Create a sub-context for the child turn to support cancellation
 	childCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	// 3. Create child Turn state
+	// 4. Create child Turn state
 	childID := generateTurnID()
 	childTS := newTurnState(childCtx, childID, parentTS)
 
-	// 4. Establish parent-child relationship (thread-safe)
+	// 5. Establish parent-child relationship (thread-safe)
 	parentTS.mu.Lock()
 	parentTS.childTurnIDs = append(parentTS.childTurnIDs, childID)
 	parentTS.mu.Unlock()
 
-	// 5. Register the parent's pendingResults channel so the parent loop can poll it
+	// 6. Register the parent's pendingResults channel so the parent loop can poll it
 	al.registerSubTurnResultChannel(parentTS.turnID, parentTS.pendingResults)
 	defer al.unregisterSubTurnResultChannel(parentTS.turnID)
 
-	// 6. Emit Spawn event (currently using Mock, will be replaced by real EventBus)
+	// 7. Emit Spawn event (currently using Mock, will be replaced by real EventBus)
 	MockEventBus.Emit(SubTurnSpawnEvent{
 		ParentID: parentTS.turnID,
 		ChildID:  childID,
 		Config:   cfg,
 	})
 
-	// 7. Defer emitting End event, and recover from panics to ensure it's always fired
+	// 8. Defer emitting End event, and recover from panics to ensure it's always fired
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("subturn panicked: %v", r)
@@ -226,11 +243,11 @@ func spawnSubTurn(ctx context.Context, al *AgentLoop, parentTS *turnState, cfg S
 		})
 	}()
 
-	// 8. Execute sub-turn via the real agent loop.
+	// 9. Execute sub-turn via the real agent loop.
 	// Build a child AgentInstance from SubTurnConfig, inheriting defaults from the parent agent.
 	result, err = runTurn(childCtx, al, childTS, cfg)
 
-	// 9. Deliver result back to parent Turn
+	// 10. Deliver result back to parent Turn
 	deliverSubTurnResult(parentTS, childID, result)
 
 	return result, err
