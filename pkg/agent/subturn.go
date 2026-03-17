@@ -24,10 +24,9 @@ const (
 )
 
 var (
-	ErrDepthLimitExceeded       = errors.New("sub-turn depth limit exceeded")
-	ErrInvalidSubTurnConfig     = errors.New("invalid sub-turn config")
-	ErrConcurrencyLimitExceeded = errors.New("sub-turn concurrency limit exceeded")
-	ErrConcurrencyTimeout       = errors.New("timeout waiting for concurrency slot")
+	ErrDepthLimitExceeded   = errors.New("sub-turn depth limit exceeded")
+	ErrInvalidSubTurnConfig = errors.New("invalid sub-turn config")
+	ErrConcurrencyTimeout   = errors.New("timeout waiting for concurrency slot")
 )
 
 // ====================== SubTurn Config ======================
@@ -57,7 +56,6 @@ var (
 //	result, err := SpawnSubTurn(ctx, cfg)
 //	// Result also available in parent's pendingResults channel
 //	// Parent turn will poll and process it in a later iteration
-//
 type SubTurnConfig struct {
 	Model        string
 	Tools        []tools.Tool
@@ -204,12 +202,13 @@ func spawnSubTurn(ctx context.Context, al *AgentLoop, parentTS *turnState, cfg S
 				}
 			}()
 		case <-timeoutCtx.Done():
-			// Check if it was a timeout or parent context cancellation
-			if timeoutCtx.Err() == context.DeadlineExceeded {
-				return nil, fmt.Errorf("%w: all %d slots occupied for %v",
-					ErrConcurrencyTimeout, maxConcurrentSubTurns, concurrencyTimeout)
+			// Check parent context first - if it was cancelled, propagate that error
+			if ctx.Err() != nil {
+				return nil, ctx.Err()
 			}
-			return nil, ctx.Err()
+			// Otherwise it's our timeout
+			return nil, fmt.Errorf("%w: all %d slots occupied for %v",
+				ErrConcurrencyTimeout, maxConcurrentSubTurns, concurrencyTimeout)
 		}
 	}
 
@@ -259,6 +258,11 @@ func spawnSubTurn(ctx context.Context, al *AgentLoop, parentTS *turnState, cfg S
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("subturn panicked: %v", r)
+			logger.ErrorCF("subturn", "SubTurn panicked", map[string]any{
+				"child_id":  childID,
+				"parent_id": parentTS.turnID,
+				"panic":     r,
+			})
 		}
 
 		// 7. Result Delivery Strategy (Async vs Sync)
@@ -351,7 +355,10 @@ func deliverSubTurnResult(parentTS *turnState, childID string, result *tools.Too
 		})
 	default:
 		// Channel is full - treat as orphan result
-		fmt.Println("[SubTurn] warning: pendingResults channel full")
+		logger.WarnCF("subturn", "pendingResults channel full", map[string]any{
+			"parent_id": parentTS.turnID,
+			"child_id":  childID,
+		})
 		if result != nil {
 			MockEventBus.Emit(SubTurnOrphanResultEvent{
 				ParentID: parentTS.turnID,
@@ -378,20 +385,16 @@ func runTurn(ctx context.Context, al *AgentLoop, ts *turnState, cfg SubTurnConfi
 	// ephemeral session store and tool registry.
 	parentAgent := al.GetRegistry().GetDefaultAgent()
 
-	var toolRegistry *tools.ToolRegistry
-	if len(cfg.Tools) > 0 {
-		// Use explicitly provided tools
-		toolRegistry = tools.NewToolRegistry()
-		for _, t := range cfg.Tools {
-			toolRegistry.Register(t)
-		}
-	} else {
-		// Inherit tools from parent agent when cfg.Tools is nil or empty
-		toolRegistry = tools.NewToolRegistry()
-		for _, t := range parentAgent.Tools.GetAll() {
-			toolRegistry.Register(t)
-		}
+	// Determine which tools to use: explicit config or inherit from parent
+	toolRegistry := tools.NewToolRegistry()
+	toolsToRegister := cfg.Tools
+	if len(toolsToRegister) == 0 {
+		toolsToRegister = parentAgent.Tools.GetAll()
 	}
+	for _, t := range toolsToRegister {
+		toolRegistry.Register(t)
+	}
+
 	childAgent := &AgentInstance{
 		ID:                        ts.turnID,
 		Model:                     cfg.Model,
