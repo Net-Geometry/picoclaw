@@ -1073,10 +1073,12 @@ func (al *AgentLoop) runAgentLoop(
 		}
 	}
 
-	// Signal completion to rootTS so it knows it is finished, terminating any active sub-turns.
+	// Signal completion to rootTS so it knows it is finished.
 	// Only call Finish() if this is a root turn (not a SubTurn recursively calling runAgentLoop).
+	// Use isHardAbort=false for normal completion (graceful finish).
+	// This allows Critical SubTurns to continue running and deliver orphan results.
 	if isRootTurn {
-		rootTS.Finish()
+		rootTS.Finish(false)
 	}
 
 	// If last tool had ForUser content and we already sent it, we might not need to send final response
@@ -1210,6 +1212,21 @@ func (al *AgentLoop) runLLMIteration(
 
 	for iteration < agent.MaxIterations || len(pendingMessages) > 0 {
 		iteration++
+
+		// Check if parent turn has ended (graceful finish).
+		// This is only relevant for SubTurns (turnState with parentTurnState != nil).
+		// If parent ended and this SubTurn is not Critical, exit gracefully.
+		if ts := turnStateFromContext(ctx); ts != nil && ts.IsParentEnded() {
+			logger.InfoCF("agent", "Parent turn ended, SubTurn continues or exits", map[string]any{
+				"agent_id":  agent.ID,
+				"iteration": iteration,
+				"turn_id":   ts.turnID,
+			})
+			// For now, we continue running. The Critical flag check is handled
+			// at SubTurnConfig level in spawnSubTurn. Here we just log and continue.
+			// If this SubTurn should exit gracefully, it would have been cancelled
+			// by its own timeout or the caller would have handled it.
+		}
 
 		// Inject pending steering messages into the conversation context
 		// before the next LLM call.

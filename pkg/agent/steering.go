@@ -258,7 +258,8 @@ func (al *AgentLoop) HardAbort(sessionKey string) error {
 	// IMPORTANT: Trigger cascading cancellation FIRST to stop all child SubTurns
 	// from adding more messages to the session. This prevents race conditions
 	// where rollback happens while children are still writing.
-	ts.Finish()
+	// Use isHardAbort=true for hard abort to immediately cancel all children.
+	ts.Finish(true)
 
 	// Rollback session history to the state before this turn started.
 	// This must happen AFTER Finish() to ensure no child turns are still writing.

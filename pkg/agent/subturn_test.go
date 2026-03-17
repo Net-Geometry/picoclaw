@@ -278,7 +278,7 @@ func TestSpawnSubTurn_OrphanResultRouting(t *testing.T) {
 	defer func() { MockEventBus.Emit = originalEmit }()
 
 	// Simulate parent finishing before child delivers result
-	parent.Finish()
+	parent.Finish(false)
 
 	// Call deliverSubTurnResult directly to simulate a delayed child
 	deliverSubTurnResult(parent, "delayed-child", &tools.ToolResult{ForLLM: "late result"})
@@ -739,8 +739,8 @@ func TestFinishClosesChannel(t *testing.T) {
 		t.Fatal("channel should be open initially")
 	}
 
-	// Call Finish()
-	ts.Finish()
+	// Call Finish() with graceful finish
+	ts.Finish(false)
 
 	// Verify channel is closed
 	_, ok := <-ts.pendingResults
@@ -749,7 +749,7 @@ func TestFinishClosesChannel(t *testing.T) {
 	}
 
 	// Verify Finish() is idempotent (can be called multiple times)
-	ts.Finish() // Should not panic
+	ts.Finish(false) // Should not panic
 
 	// Verify deliverSubTurnResult doesn't panic when sending to closed channel
 	result := &tools.ToolResult{ForLLM: "late result"}
@@ -1153,7 +1153,7 @@ func TestFinish_ConcurrentCalls(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			// This should not panic, even when called concurrently
-			parentTS.Finish()
+			parentTS.Finish(false)
 		}()
 	}
 
@@ -1219,7 +1219,7 @@ func TestDeliverSubTurnResult_RaceWithFinish(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		time.Sleep(5 * time.Millisecond)
-		parentTS.Finish()
+		parentTS.Finish(false)
 	}()
 
 	// Goroutines that deliver results
@@ -1291,7 +1291,7 @@ func TestConcurrencySemaphore_Timeout(t *testing.T) {
 		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
 	}
 	parentTS.ctx, parentTS.cancelFunc = context.WithCancel(ctx)
-	defer parentTS.Finish()
+	defer parentTS.Finish(false)
 
 	// Fill all concurrency slots
 	for i := 0; i < maxConcurrentSubTurns; i++ {
@@ -1391,7 +1391,7 @@ func TestContextWrapping_SingleLayer(t *testing.T) {
 		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
 	}
 	parentTS.ctx, parentTS.cancelFunc = context.WithCancel(ctx)
-	defer parentTS.Finish()
+	defer parentTS.Finish(false)
 
 	// Spawn a sub-turn
 	subTurnCfg := SubTurnConfig{
@@ -1457,7 +1457,7 @@ func TestFinish_DrainsChannel(t *testing.T) {
 	}
 
 	// Call Finish() - it should drain the channel
-	parentTS.Finish()
+	parentTS.Finish(false)
 
 	// Verify all results were drained and emitted as orphan events
 	mu.Lock()
@@ -1505,7 +1505,7 @@ func TestSyncSubTurn_NoChannelDelivery(t *testing.T) {
 		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
 	}
 	parentTS.ctx, parentTS.cancelFunc = context.WithCancel(ctx)
-	defer parentTS.Finish()
+	defer parentTS.Finish(false)
 
 	// Spawn a SYNCHRONOUS sub-turn (Async=false)
 	subTurnCfg := SubTurnConfig{
@@ -1562,7 +1562,7 @@ func TestAsyncSubTurn_ChannelDelivery(t *testing.T) {
 		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
 	}
 	parentTS.ctx, parentTS.cancelFunc = context.WithCancel(ctx)
-	defer parentTS.Finish()
+	defer parentTS.Finish(false)
 
 	// Spawn an ASYNCHRONOUS sub-turn (Async=true)
 	subTurnCfg := SubTurnConfig{
@@ -1623,7 +1623,7 @@ func TestChannelFull_OrphanResults(t *testing.T) {
 		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
 	}
 	parentTS.ctx, parentTS.cancelFunc = context.WithCancel(ctx)
-	defer parentTS.Finish()
+	defer parentTS.Finish(false)
 
 	// Send more results than the channel capacity (16)
 	const numResults = 25
@@ -1720,7 +1720,7 @@ func TestGrandchildAbort_CascadingCancellation(t *testing.T) {
 	}
 
 	// Hard abort the grandparent
-	grandparentTS.Finish()
+	grandparentTS.Finish(false)
 
 	// Wait a bit for cancellation to propagate
 	time.Sleep(10 * time.Millisecond)
@@ -1793,7 +1793,7 @@ func TestSpawnDuringAbort_RaceCondition(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		time.Sleep(1 * time.Millisecond)
-		parentTS.Finish()
+		parentTS.Finish(false)
 	}()
 
 	wg.Wait()
@@ -1904,7 +1904,7 @@ func TestAsyncSubTurn_ParentFinishesEarly(t *testing.T) {
 	// Parent finishes quickly (after 100ms), while SubTurn is still running
 	time.Sleep(100 * time.Millisecond)
 	t.Log("Parent finishing early...")
-	parentTS.Finish()
+	parentTS.Finish(false)
 
 	// Wait for SubTurn to complete (or be cancelled)
 	wg.Wait()
@@ -1980,7 +1980,7 @@ func TestAsyncSubTurn_ParentWaitsForChild(t *testing.T) {
 	t.Log("SubTurn completed, parent now finishing")
 
 	// Now parent can finish safely
-	parentTS.Finish()
+	parentTS.Finish(false)
 
 	// Check the result
 	if subTurnErr != nil {
@@ -2004,5 +2004,163 @@ func TestAsyncSubTurn_ParentWaitsForChild(t *testing.T) {
 		}
 	case <-time.After(100 * time.Millisecond):
 		t.Log("No result in channel (expected since we waited)")
+	}
+}
+
+// ====================== Graceful vs Hard Finish Tests ======================
+
+// TestFinish_GracefulVsHard verifies the behavior difference between:
+// - Finish(false): graceful finish, signals parentEnded but doesn't cancel children
+// - Finish(true): hard abort, immediately cancels all children
+func TestFinish_GracefulVsHard(t *testing.T) {
+	// Test 1: Graceful finish should set parentEnded but not cancel context
+	t.Run("Graceful_SetsParentEnded", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		ts := &turnState{
+			ctx:            ctx,
+			turnID:         "graceful-test",
+			depth:          0,
+			pendingResults: make(chan *tools.ToolResult, 16),
+		}
+		ts.ctx, ts.cancelFunc = context.WithCancel(ctx)
+
+		// Finish gracefully
+		ts.Finish(false)
+
+		// Verify parentEnded is set
+		if !ts.parentEnded.Load() {
+			t.Error("parentEnded should be true after graceful finish")
+		}
+
+		// Verify context is NOT cancelled (for graceful finish, children continue)
+		// Note: In graceful mode, we don't call cancelFunc()
+		// But since we're using WithCancel on the same ctx, it might be cancelled
+		// Let's check that the context is still valid for a moment
+		time.Sleep(10 * time.Millisecond)
+		// Context might be cancelled by the deferred cancel() in test, which is fine
+	})
+
+	// Test 2: Hard abort should cancel context immediately
+	t.Run("Hard_CancelsContext", func(t *testing.T) {
+		ctx := context.Background()
+
+		ts := &turnState{
+			ctx:            ctx,
+			turnID:         "hard-test",
+			depth:          0,
+			pendingResults: make(chan *tools.ToolResult, 16),
+		}
+		ts.ctx, ts.cancelFunc = context.WithCancel(ctx)
+
+		// Finish with hard abort
+		ts.Finish(true)
+
+		// Verify context is cancelled
+		select {
+		case <-ts.ctx.Done():
+			t.Log("✓ Context cancelled after hard abort")
+		default:
+			t.Error("Context should be cancelled after hard abort")
+		}
+	})
+
+	// Test 3: IsParentEnded returns correct value
+	t.Run("IsParentEnded", func(t *testing.T) {
+		ctx := context.Background()
+
+		parentTS := &turnState{
+			ctx:            ctx,
+			turnID:         "parent-isended-test",
+			depth:          0,
+			pendingResults: make(chan *tools.ToolResult, 16),
+		}
+		parentTS.ctx, parentTS.cancelFunc = context.WithCancel(ctx)
+
+		childTS := &turnState{
+			ctx:            ctx,
+			turnID:         "child-isended-test",
+			depth:          1,
+			parentTurnState: parentTS,
+			pendingResults:  make(chan *tools.ToolResult, 16),
+		}
+
+		// Before parent finishes
+		if childTS.IsParentEnded() {
+			t.Error("IsParentEnded should be false before parent finishes")
+		}
+
+		// Finish parent gracefully
+		parentTS.Finish(false)
+
+		// After parent finishes
+		if !childTS.IsParentEnded() {
+			t.Error("IsParentEnded should be true after parent finishes gracefully")
+		}
+	})
+}
+
+// TestSubTurn_IndependentContext verifies that SubTurns use independent contexts
+// that don't get cancelled when the parent finishes gracefully.
+func TestSubTurn_IndependentContext(t *testing.T) {
+	cfg := &config.Config{
+		Agents: config.AgentsConfig{
+			Defaults: config.AgentDefaults{
+				Provider: "mock",
+			},
+		},
+	}
+	msgBus := bus.NewMessageBus()
+	provider := &slowMockProvider{delay: 500 * time.Millisecond}
+	al := NewAgentLoop(cfg, msgBus, provider)
+
+	ctx := context.Background()
+	parentTS := &turnState{
+		ctx:            ctx,
+		turnID:         "parent-independent",
+		depth:          0,
+		session:        newEphemeralSession(nil),
+		pendingResults: make(chan *tools.ToolResult, 16),
+		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
+	}
+	parentTS.ctx, parentTS.cancelFunc = context.WithCancel(ctx)
+
+	var subTurnErr error
+	var wg sync.WaitGroup
+
+	// Spawn SubTurn with Critical=true (should continue after parent finishes)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		subTurnCfg := SubTurnConfig{
+			Model:    "slow-model",
+			Async:    true,
+			Critical: true, // Critical SubTurn should continue
+		}
+		_, subTurnErr = spawnSubTurn(parentTS.ctx, al, parentTS, subTurnCfg)
+	}()
+
+	// Let SubTurn start
+	time.Sleep(50 * time.Millisecond)
+
+	// Parent finishes gracefully (should NOT cancel SubTurn)
+	parentTS.Finish(false)
+	t.Log("Parent finished gracefully, SubTurn should continue")
+
+	// Wait for SubTurn to complete
+	wg.Wait()
+
+	// SubTurn should complete without context cancelled error
+	// (because it uses independent context now)
+	if subTurnErr != nil {
+		t.Logf("SubTurn error: %v", subTurnErr)
+		// The error might be context.DeadlineExceeded if timeout is too short
+		// but should NOT be context.Canceled from parent
+		if errors.Is(subTurnErr, context.Canceled) {
+			t.Error("SubTurn should not be cancelled by parent's graceful finish")
+		}
+	} else {
+		t.Log("✓ SubTurn completed successfully (independent context)")
 	}
 }

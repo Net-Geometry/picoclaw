@@ -21,6 +21,9 @@ const (
 	// maxEphemeralHistorySize limits the number of messages stored in ephemeral sessions.
 	// This prevents memory accumulation in long-running sub-turns.
 	maxEphemeralHistorySize = 50
+	// defaultSubTurnTimeout is the default maximum duration for a SubTurn.
+	// SubTurns that run longer than this will be cancelled.
+	defaultSubTurnTimeout = 5 * time.Minute
 )
 
 var (
@@ -84,6 +87,22 @@ type SubTurnConfig struct {
 	// whether the result is delivered via the channel. For true non-blocking execution,
 	// the caller must spawn the sub-turn in a separate goroutine.
 	Async bool
+
+	// Critical indicates this SubTurn's result is important and should continue
+	// running even after the parent turn finishes gracefully.
+	//
+	// When parent finishes gracefully (Finish(false)):
+	//   - Critical=true: SubTurn continues running, delivers result as orphan
+	//   - Critical=false: SubTurn exits gracefully without error
+	//
+	// When parent finishes with hard abort (Finish(true)):
+	//   - All SubTurns are cancelled regardless of Critical flag
+	Critical bool
+
+	// Timeout is the maximum duration for this SubTurn.
+	// If the SubTurn runs longer than this, it will be cancelled.
+	// Default is 5 minutes (defaultSubTurnTimeout) if not specified.
+	Timeout time.Duration
 
 	// Can be extended with temperature, topP, etc.
 }
@@ -227,34 +246,40 @@ func spawnSubTurn(ctx context.Context, al *AgentLoop, parentTS *turnState, cfg S
 		return nil, ErrInvalidSubTurnConfig
 	}
 
-	// 3. Create child Turn state with a cancellable context
-	// This single context wrapping is sufficient - no need for additional layers.
-	childCtx, cancel := context.WithCancel(ctx)
+	// 3. Determine timeout for child SubTurn
+	timeout := cfg.Timeout
+	if timeout <= 0 {
+		timeout = defaultSubTurnTimeout
+	}
+
+	// 4. Create INDEPENDENT child context (not derived from parent ctx).
+	// This allows the child to continue running after parent finishes gracefully.
+	// The child has its own timeout for self-protection.
+	childCtx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	childID := al.generateSubTurnID()
 	childTS := newTurnState(childCtx, childID, parentTS)
-	// Set the cancel function so Finish() can trigger cascading cancellation
+	// Set the cancel function so Finish(true) can trigger hard cancellation
 	childTS.cancelFunc = cancel
 
 	// IMPORTANT: Put childTS into childCtx so that code inside runTurn can retrieve it
 	childCtx = withTurnState(childCtx, childTS)
 	childCtx = WithAgentLoop(childCtx, al) // Propagate AgentLoop to child turn
 
-	// 4. Establish parent-child relationship (thread-safe)
+	// 5. Establish parent-child relationship (thread-safe)
 	parentTS.mu.Lock()
 	parentTS.childTurnIDs = append(parentTS.childTurnIDs, childID)
 	parentTS.mu.Unlock()
 
-	// 5. Emit Spawn event (currently using Mock, will be replaced by real EventBus)
+	// 6. Emit Spawn event
 	MockEventBus.Emit(SubTurnSpawnEvent{
 		ParentID: parentTS.turnID,
 		ChildID:  childID,
 		Config:   cfg,
 	})
 
-	// 6. Defer cleanup: deliver result (for async), emit End event, and recover from panics
-	// IMPORTANT: deliverSubTurnResult must be in defer to ensure it runs even if runTurn panics.
+	// 7. Defer cleanup: deliver result (for async), emit End event, and recover from panics
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("subturn panicked: %v", r)
@@ -265,26 +290,7 @@ func spawnSubTurn(ctx context.Context, al *AgentLoop, parentTS *turnState, cfg S
 			})
 		}
 
-		// 7. Result Delivery Strategy (Async vs Sync)
-		//
-		// WHY we have different delivery mechanisms:
-		// ==========================================
-		//
-		// Synchronous sub-turns (Async=false):
-		//   - Caller expects immediate result via return value
-		//   - Delivering to channel would cause DOUBLE DELIVERY:
-		//     1. Caller gets result from return value
-		//     2. Parent turn would poll channel and get the same result again
-		//   - This would confuse the parent turn's result processing logic
-		//   - Solution: Skip channel delivery, only return via function return
-		//
-		// Asynchronous sub-turns (Async=true):
-		//   - Caller may not immediately process the return value
-		//   - Result needs to be available for later polling via pendingResults
-		//   - Parent turn can collect multiple async results in batches
-		//   - Solution: Deliver to channel AND return via function return
-		//
-		// This must be in defer to ensure delivery even if runTurn panics.
+		// Result Delivery Strategy (Async vs Sync)
 		if cfg.Async {
 			deliverSubTurnResult(parentTS, childID, result)
 		}
@@ -296,8 +302,7 @@ func spawnSubTurn(ctx context.Context, al *AgentLoop, parentTS *turnState, cfg S
 		})
 	}()
 
-	// 7. Execute sub-turn via the real agent loop.
-	// Build a child AgentInstance from SubTurnConfig, inheriting defaults from the parent agent.
+	// 8. Execute sub-turn via the real agent loop.
 	result, err = runTurn(childCtx, al, childTS, cfg)
 
 	return result, err

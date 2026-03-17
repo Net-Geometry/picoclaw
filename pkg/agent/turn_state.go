@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 
 	"github.com/sipeed/picoclaw/pkg/providers"
 	"github.com/sipeed/picoclaw/pkg/session"
@@ -44,6 +45,16 @@ type turnState struct {
 	isFinished           bool          // MUST be accessed under mu lock
 	closeOnce            sync.Once     // Ensures pendingResults channel is closed exactly once
 	concurrencySem       chan struct{} // Limits concurrent child sub-turns
+
+	// parentEnded signals that the parent turn has finished gracefully.
+	// Child SubTurns should check this via IsParentEnded() to decide whether
+	// to continue running (Critical=true) or exit gracefully (Critical=false).
+	parentEnded atomic.Bool
+
+	// parentTurnState holds a reference to the parent turnState.
+	// This allows child SubTurns to check if the parent has ended.
+	// Nil for root turns.
+	parentTurnState *turnState
 }
 
 // ====================== Public API ======================
@@ -99,12 +110,13 @@ func newTurnState(ctx context.Context, id string, parent *turnState) *turnState 
 	// (spawnSubTurn) already creates one. The turnState stores the context and
 	// cancelFunc provided by the caller to avoid redundant context wrapping.
 	return &turnState{
-		ctx:          ctx,
-		cancelFunc:   nil, // Will be set by the caller
-		turnID:       id,
-		parentTurnID: parent.turnID,
-		depth:        parent.depth + 1,
-		session:      newEphemeralSession(parent.session),
+		ctx:            ctx,
+		cancelFunc:     nil, // Will be set by the caller
+		turnID:         id,
+		parentTurnID:   parent.turnID,
+		depth:          parent.depth + 1,
+		session:        newEphemeralSession(parent.session),
+		parentTurnState: parent, // Store reference to parent for IsParentEnded() checks
 		// NOTE: In this PoC, I use a fixed-size channel (16).
 		// Under high concurrency or long-running sub-turns, this might fill up and cause
 		// intermediate results to be discarded in deliverSubTurnResult.
@@ -114,18 +126,47 @@ func newTurnState(ctx context.Context, id string, parent *turnState) *turnState 
 	}
 }
 
-// Finish marks the turn as finished and cancels its context, aborting any running sub-turns.
-// It also closes the pendingResults channel to signal that no more results will be delivered.
-// This method is safe to call multiple times - the channel will only be closed once.
-// Any results remaining in the channel after close will be drained and emitted as orphan events.
-func (ts *turnState) Finish() {
+// IsParentEnded returns true if the parent turn has finished gracefully.
+// This is safe to call from child SubTurn goroutines.
+// Returns false if this is a root turn (no parent).
+func (ts *turnState) IsParentEnded() bool {
+	if ts.parentTurnState == nil {
+		return false
+	}
+	return ts.parentTurnState.parentEnded.Load()
+}
+
+// IsParentEnded is a convenience method to check if parent ended.
+// It returns the value of the parent's parentEnded atomic flag.
+
+// Finish marks the turn as finished.
+//
+// If isHardAbort is true (Hard Abort):
+//   - Cancels all child contexts immediately via cancelFunc
+//   - Used for user-initiated termination (e.g., "stop now")
+//
+// If isHardAbort is false (Graceful Finish):
+//   - Only signals parentEnded for graceful child exit
+//   - Children check IsParentEnded() and decide whether to continue or exit
+//   - Critical SubTurns continue running and deliver orphan results
+//   - Non-Critical SubTurns exit gracefully without error
+//
+// In both cases, the pendingResults channel is closed to signal
+// that no more results will be delivered.
+func (ts *turnState) Finish(isHardAbort bool) {
 	ts.mu.Lock()
 	ts.isFinished = true
 	resultChan := ts.pendingResults
 	ts.mu.Unlock()
 
-	if ts.cancelFunc != nil {
-		ts.cancelFunc()
+	if isHardAbort {
+		// Hard abort: immediately cancel all children
+		if ts.cancelFunc != nil {
+			ts.cancelFunc()
+		}
+	} else {
+		// Graceful finish: signal parent ended, let children decide
+		ts.parentEnded.Store(true)
 	}
 
 	// Use sync.Once to ensure the channel is closed exactly once, even if Finish() is called concurrently.
