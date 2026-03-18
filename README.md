@@ -784,15 +784,15 @@ PicoClaw stores data in your configured workspace (default: `~/.picoclaw/workspa
 ```
 ~/.picoclaw/workspace/
 ├── sessions/          # Conversation sessions and history
-├── memory/           # Long-term memory (MEMORY.md)
-├── state/            # Persistent state (last channel, etc.)
-├── cron/             # Scheduled jobs database
-├── skills/           # Custom skills
-├── AGENTS.md         # Agent behavior guide
-├── HEARTBEAT.md      # Periodic task prompts (checked every 30 min)
-├── IDENTITY.md       # Agent identity
-├── SOUL.md           # Agent soul
-└── USER.md           # User preferences
+├── memory/            # Long-term memory (MEMORY.md)
+├── state/             # Persistent state (last channel, etc.)
+├── cron/              # Scheduled jobs database
+├── skills/            # Workspace-specific skills
+├── AGENT.md           # Structured agent definition and system prompt
+├── SOUL.md            # Agent soul
+├── USER.md            # User profile and preferences for this workspace
+├── HEARTBEAT.md       # Periodic task prompts (checked every 30 min)
+└── ...
 ```
 
 ### Skill Sources
