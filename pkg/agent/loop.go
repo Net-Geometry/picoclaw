@@ -61,6 +61,8 @@ type processOptions struct {
 	SessionKey              string   // Session identifier for history/context
 	Channel                 string   // Target channel for tool execution
 	ChatID                  string   // Target chat ID for tool execution
+	SenderID                string   // Current sender ID for dynamic context
+	SenderDisplayName       string   // Current sender display name for dynamic context
 	UserMessage             string   // User message content (may include prefix)
 	Media                   []string // media:// refs from inbound message
 	DefaultResponse         string   // Response when LLM returns empty
@@ -166,7 +168,12 @@ func registerSharedTools(
 			}
 		}
 		if cfg.Tools.IsToolEnabled("web_fetch") {
-			fetchTool, err := tools.NewWebFetchToolWithProxy(50000, cfg.Tools.Web.Proxy, cfg.Tools.Web.FetchLimitBytes)
+			fetchTool, err := tools.NewWebFetchToolWithProxy(
+				50000,
+				cfg.Tools.Web.Proxy,
+				cfg.Tools.Web.Format,
+				cfg.Tools.Web.FetchLimitBytes,
+				cfg.Tools.Web.PrivateHostWhitelist)
 			if err != nil {
 				logger.ErrorCF("agent", "Failed to create web fetch tool", map[string]any{"error": err.Error()})
 			} else {
@@ -338,10 +345,9 @@ func (al *AgentLoop) Run(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			return nil
-		default:
-			msg, ok := al.bus.ConsumeInbound(ctx)
+		case msg, ok := <-al.bus.InboundChan():
 			if !ok {
-				continue
+				return nil
 			}
 
 			// Start a goroutine that drains the bus while processMessage is
@@ -408,6 +414,8 @@ func (al *AgentLoop) Run(ctx context.Context) error {
 					}
 				}
 			}()
+		default:
+			time.Sleep(time.Microsecond * 200)
 		}
 	}
 
@@ -419,9 +427,15 @@ func (al *AgentLoop) Run(ctx context.Context) error {
 // is active and stops when drainCtx is canceled (i.e., processMessage returns).
 func (al *AgentLoop) drainBusToSteering(ctx context.Context) {
 	for {
-		msg, ok := al.bus.ConsumeInbound(ctx)
-		if !ok {
+		var msg bus.InboundMessage
+		select {
+		case <-ctx.Done():
 			return
+		case m, ok := <-al.bus.InboundChan():
+			if !ok {
+				return
+			}
+			msg = m
 		}
 
 		// Transcribe audio if needed before steering, so the agent sees text.
@@ -861,14 +875,16 @@ func (al *AgentLoop) processMessage(ctx context.Context, msg bus.InboundMessage)
 		})
 
 	opts := processOptions{
-		SessionKey:      sessionKey,
-		Channel:         msg.Channel,
-		ChatID:          msg.ChatID,
-		UserMessage:     msg.Content,
-		Media:           msg.Media,
-		DefaultResponse: defaultResponse,
-		EnableSummary:   true,
-		SendResponse:    false,
+		SessionKey:        sessionKey,
+		Channel:           msg.Channel,
+		ChatID:            msg.ChatID,
+		SenderID:          msg.SenderID,
+		SenderDisplayName: msg.Sender.DisplayName,
+		UserMessage:       msg.Content,
+		Media:             msg.Media,
+		DefaultResponse:   defaultResponse,
+		EnableSummary:     true,
+		SendResponse:      false,
 	}
 
 	// context-dependent commands check their own Runtime fields and report
@@ -1039,6 +1055,8 @@ func (al *AgentLoop) runAgentLoop(
 		opts.Media,
 		opts.Channel,
 		opts.ChatID,
+		opts.SenderID,
+		opts.SenderDisplayName,
 	)
 
 	// Resolve media:// refs: images→base64 data URLs, non-images→local paths in content
@@ -1256,6 +1274,19 @@ func (al *AgentLoop) runLLMIteration(
 		// Build tool definitions
 		providerToolDefs := agent.Tools.ToProviderDefs()
 
+		// Determine whether the provider's native web search should replace
+		// the client-side web_search tool for this request. Only enable when web
+		// search is actually enabled and registered (so users who disabled web
+		// access do not get provider-side search or billing).
+		_, hasWebSearch := agent.Tools.Get("web_search")
+		useNativeSearch := al.cfg.Tools.Web.PreferNative &&
+			isNativeSearchProvider(agent.Provider) &&
+			hasWebSearch
+
+		if useNativeSearch {
+			providerToolDefs = filterClientWebSearch(providerToolDefs)
+		}
+
 		// Log LLM request details
 		logger.DebugCF("agent", "LLM request",
 			map[string]any{
@@ -1264,6 +1295,7 @@ func (al *AgentLoop) runLLMIteration(
 				"model":             activeModel,
 				"messages_count":    len(messages),
 				"tools_count":       len(providerToolDefs),
+				"native_search":     useNativeSearch,
 				"max_tokens":        agent.MaxTokens,
 				"temperature":       agent.Temperature,
 				"system_prompt_len": len(messages[0].Content),
@@ -1285,6 +1317,9 @@ func (al *AgentLoop) runLLMIteration(
 			"max_tokens":       agent.MaxTokens,
 			"temperature":      agent.Temperature,
 			"prompt_cache_key": agent.ID,
+		}
+		if useNativeSearch {
+			llmOpts["native_search"] = true
 		}
 		// parseThinkingLevel guarantees ThinkingOff for empty/unknown values,
 		// so checking != ThinkingOff is sufficient.
@@ -1387,7 +1422,7 @@ func (al *AgentLoop) runLLMIteration(
 				newSummary := agent.Sessions.GetSummary(opts.SessionKey)
 				messages = agent.ContextBuilder.BuildMessages(
 					newHistory, newSummary, "",
-					nil, opts.Channel, opts.ChatID,
+					nil, opts.Channel, opts.ChatID, opts.SenderID, opts.SenderDisplayName,
 				)
 				continue
 			}
@@ -2244,6 +2279,28 @@ func extractParentPeer(msg bus.InboundMessage) *routing.RoutePeer {
 		return nil
 	}
 	return &routing.RoutePeer{Kind: parentKind, ID: parentID}
+}
+
+// isNativeSearchProvider reports whether the given LLM provider implements
+// NativeSearchCapable and returns true for SupportsNativeSearch.
+func isNativeSearchProvider(p providers.LLMProvider) bool {
+	if ns, ok := p.(providers.NativeSearchCapable); ok {
+		return ns.SupportsNativeSearch()
+	}
+	return false
+}
+
+// filterClientWebSearch returns a copy of tools with the client-side
+// web_search tool removed. Used when native provider search is preferred.
+func filterClientWebSearch(tools []providers.ToolDefinition) []providers.ToolDefinition {
+	result := make([]providers.ToolDefinition, 0, len(tools))
+	for _, t := range tools {
+		if strings.EqualFold(t.Function.Name, "web_search") {
+			continue
+		}
+		result = append(result, t)
+	}
+	return result
 }
 
 // Helper to extract provider from registry for cleanup
