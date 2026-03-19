@@ -278,58 +278,64 @@ func (al *AgentLoop) Run(ctx context.Context) error {
 				return nil
 			}
 			// Process message
-			// TODO: Re-enable media cleanup after inbound media is properly consumed by the agent.
-			// Currently disabled because files are deleted before the LLM can access their content.
-			// defer func() {
-			// 	if al.mediaStore != nil && msg.MediaScope != "" {
-			// 		if releaseErr := al.mediaStore.ReleaseAll(msg.MediaScope); releaseErr != nil {
-			// 			logger.WarnCF("agent", "Failed to release media", map[string]any{
-			// 				"scope": msg.MediaScope,
-			// 				"error": releaseErr.Error(),
-			// 			})
-			// 		}
-			// 	}
-			// }()
+			func() {
+				defer func() {
+					if al.channelManager != nil {
+						al.channelManager.InvokeTypingStop(msg.Channel, msg.ChatID)
+					}
+				}()
+				// TODO: Re-enable media cleanup after inbound media is properly consumed by the agent.
+				// Currently disabled because files are deleted before the LLM can access their content.
+				// defer func() {
+				// 	if al.mediaStore != nil && msg.MediaScope != "" {
+				// 		if releaseErr := al.mediaStore.ReleaseAll(msg.MediaScope); releaseErr != nil {
+				// 			logger.WarnCF("agent", "Failed to release media", map[string]any{
+				// 				"scope": msg.MediaScope,
+				// 				"error": releaseErr.Error(),
+				// 			})
+				// 		}
+				// 	}
+				// }()
 
-			response, err := al.processMessage(ctx, msg)
-			if err != nil {
-				response = fmt.Sprintf("Error processing message: %v", err)
-			}
+				response, err := al.processMessage(ctx, msg)
+				if err != nil {
+					response = fmt.Sprintf("Error processing message: %v", err)
+				}
 
-			if response != "" {
-				// Check if the message tool already sent a response during this round.
-				// If so, skip publishing to avoid duplicate messages to the user.
-				// Use default agent's tools to check (message tool is shared).
-				alreadySent := false
-				defaultAgent := al.GetRegistry().GetDefaultAgent()
-				if defaultAgent != nil {
-					if tool, ok := defaultAgent.Tools.Get("message"); ok {
-						if mt, ok := tool.(*tools.MessageTool); ok {
-							alreadySent = mt.HasSentInRound()
+				if response != "" {
+					// Check if the message tool already sent a response during this round.
+					// If so, skip publishing to avoid duplicate messages to the user.
+					// Use default agent's tools to check (message tool is shared).
+					alreadySent := false
+					defaultAgent := al.GetRegistry().GetDefaultAgent()
+					if defaultAgent != nil {
+						if tool, ok := defaultAgent.Tools.Get("message"); ok {
+							if mt, ok := tool.(*tools.MessageTool); ok {
+								alreadySent = mt.HasSentInRound()
+							}
 						}
 					}
-				}
-
-				if !alreadySent {
-					al.bus.PublishOutbound(ctx, bus.OutboundMessage{
-						Channel: msg.Channel,
-						ChatID:  msg.ChatID,
-						Content: response,
-					})
-					logger.InfoCF("agent", "Published outbound response",
-						map[string]any{
-							"channel":     msg.Channel,
-							"chat_id":     msg.ChatID,
-							"content_len": len(response),
+					if !alreadySent {
+						al.bus.PublishOutbound(ctx, bus.OutboundMessage{
+							Channel: msg.Channel,
+							ChatID:  msg.ChatID,
+							Content: response,
 						})
-				} else {
-					logger.DebugCF(
-						"agent",
-						"Skipped outbound (message tool already sent)",
-						map[string]any{"channel": msg.Channel},
-					)
+						logger.InfoCF("agent", "Published outbound response",
+							map[string]any{
+								"channel":     msg.Channel,
+								"chat_id":     msg.ChatID,
+								"content_len": len(response),
+							})
+					} else {
+						logger.DebugCF(
+							"agent",
+							"Skipped outbound (message tool already sent)",
+							map[string]any{"channel": msg.Channel},
+						)
+					}
 				}
-			}
+			}()
 		default:
 			time.Sleep(time.Microsecond * 200)
 		}
