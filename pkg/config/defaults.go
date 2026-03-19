@@ -83,11 +83,12 @@ func DefaultConfig() *Config {
 				AllowFrom: FlexibleStringSlice{},
 			},
 			QQ: QQConfig{
-				Enabled:          false,
-				AppID:            "",
-				AppSecret:        "",
-				AllowFrom:        FlexibleStringSlice{},
-				MaxMessageLength: 2000,
+				Enabled:              false,
+				AppID:                "",
+				AppSecret:            "",
+				AllowFrom:            FlexibleStringSlice{},
+				MaxMessageLength:     2000,
+				MaxBase64FileSizeMiB: 0,
 			},
 			DingTalk: DingTalkConfig{
 				Enabled:      false,
