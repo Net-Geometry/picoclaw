@@ -199,7 +199,7 @@ func (al *AgentLoop) FormatTree(turnInfo *TurnInfo, prefix string, isLast bool) 
 
 // ====================== Helper Functions ======================
 
-func newTurnState(ctx context.Context, id string, parent *turnState) *turnState {
+func newTurnState(ctx context.Context, id string, parent *turnState, maxConcurrent int) *turnState {
 	// Note: We don't create a new context with cancel here because the caller
 	// (spawnSubTurn) already creates one. The turnState stores the context and
 	// cancelFunc provided by the caller to avoid redundant context wrapping.
@@ -216,7 +216,7 @@ func newTurnState(ctx context.Context, id string, parent *turnState) *turnState 
 		// intermediate results to be discarded in deliverSubTurnResult.
 		// For production, consider an unbounded queue or a blocking strategy with backpressure.
 		pendingResults: make(chan *tools.ToolResult, 16),
-		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
+		concurrencySem: make(chan struct{}, maxConcurrent),
 	}
 }
 

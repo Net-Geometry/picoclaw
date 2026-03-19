@@ -16,17 +16,14 @@ import (
 
 // ====================== Config & Constants ======================
 const (
-	maxSubTurnDepth       = 3
-	maxConcurrentSubTurns = 5
-	// concurrencyTimeout is the maximum time to wait for a concurrency slot.
-	// This prevents indefinite blocking when all slots are occupied by slow sub-turns.
-	concurrencyTimeout = 30 * time.Second
+	// Default values for SubTurn configuration (used when config is not set or is zero)
+	defaultMaxSubTurnDepth       = 3
+	defaultMaxConcurrentSubTurns = 5
+	defaultConcurrencyTimeout    = 30 * time.Second
+	defaultSubTurnTimeout        = 5 * time.Minute
 	// maxEphemeralHistorySize limits the number of messages stored in ephemeral sessions.
 	// This prevents memory accumulation in long-running sub-turns.
 	maxEphemeralHistorySize = 50
-	// defaultSubTurnTimeout is the default maximum duration for a SubTurn.
-	// SubTurns that run longer than this will be cancelled.
-	defaultSubTurnTimeout = 5 * time.Minute
 )
 
 var (
@@ -34,6 +31,48 @@ var (
 	ErrInvalidSubTurnConfig = errors.New("invalid sub-turn config")
 	ErrConcurrencyTimeout   = errors.New("timeout waiting for concurrency slot")
 )
+
+// getSubTurnConfig returns the effective SubTurn configuration with defaults applied.
+func (al *AgentLoop) getSubTurnConfig() subTurnRuntimeConfig {
+	cfg := al.cfg.Agents.Defaults.SubTurn
+
+	maxDepth := cfg.MaxDepth
+	if maxDepth <= 0 {
+		maxDepth = defaultMaxSubTurnDepth
+	}
+
+	maxConcurrent := cfg.MaxConcurrent
+	if maxConcurrent <= 0 {
+		maxConcurrent = defaultMaxConcurrentSubTurns
+	}
+
+	concurrencyTimeout := time.Duration(cfg.ConcurrencyTimeoutSec) * time.Second
+	if concurrencyTimeout <= 0 {
+		concurrencyTimeout = defaultConcurrencyTimeout
+	}
+
+	defaultTimeout := time.Duration(cfg.DefaultTimeoutMinutes) * time.Minute
+	if defaultTimeout <= 0 {
+		defaultTimeout = defaultSubTurnTimeout
+	}
+
+	return subTurnRuntimeConfig{
+		maxDepth:           maxDepth,
+		maxConcurrent:      maxConcurrent,
+		concurrencyTimeout: concurrencyTimeout,
+		defaultTimeout:     defaultTimeout,
+		defaultTokenBudget: cfg.DefaultTokenBudget,
+	}
+}
+
+// subTurnRuntimeConfig holds the effective runtime configuration for SubTurn execution.
+type subTurnRuntimeConfig struct {
+	maxDepth           int
+	maxConcurrent      int
+	concurrencyTimeout time.Duration
+	defaultTimeout     time.Duration
+	defaultTokenBudget int
+}
 
 // ====================== SubTurn Config ======================
 
@@ -239,13 +278,16 @@ func SpawnSubTurn(ctx context.Context, cfg SubTurnConfig) (*tools.ToolResult, er
 }
 
 func spawnSubTurn(ctx context.Context, al *AgentLoop, parentTS *turnState, cfg SubTurnConfig) (result *tools.ToolResult, err error) {
+	// Get effective SubTurn configuration
+	rtCfg := al.getSubTurnConfig()
+
 	// 0. Acquire concurrency semaphore FIRST to ensure it's released even if early validation fails.
 	// Blocks if parent already has maxConcurrentSubTurns running, with a timeout to prevent indefinite blocking.
 	// Also respects context cancellation so we don't block forever if parent is aborted.
 	var semAcquired bool
 	if parentTS.concurrencySem != nil {
 		// Create a timeout context for semaphore acquisition
-		timeoutCtx, cancel := context.WithTimeout(ctx, concurrencyTimeout)
+		timeoutCtx, cancel := context.WithTimeout(ctx, rtCfg.concurrencyTimeout)
 		defer cancel()
 
 		select {
@@ -263,16 +305,16 @@ func spawnSubTurn(ctx context.Context, al *AgentLoop, parentTS *turnState, cfg S
 			}
 			// Otherwise it's our timeout
 			return nil, fmt.Errorf("%w: all %d slots occupied for %v",
-				ErrConcurrencyTimeout, maxConcurrentSubTurns, concurrencyTimeout)
+				ErrConcurrencyTimeout, rtCfg.maxConcurrent, rtCfg.concurrencyTimeout)
 		}
 	}
 
 	// 1. Depth limit check
-	if parentTS.depth >= maxSubTurnDepth {
+	if parentTS.depth >= rtCfg.maxDepth {
 		logger.WarnCF("subturn", "Depth limit exceeded", map[string]any{
 			"parent_id": parentTS.turnID,
 			"depth":     parentTS.depth,
-			"max_depth": maxSubTurnDepth,
+			"max_depth": rtCfg.maxDepth,
 		})
 		return nil, ErrDepthLimitExceeded
 	}
@@ -285,7 +327,7 @@ func spawnSubTurn(ctx context.Context, al *AgentLoop, parentTS *turnState, cfg S
 	// 3. Determine timeout for child SubTurn
 	timeout := cfg.Timeout
 	if timeout <= 0 {
-		timeout = defaultSubTurnTimeout
+		timeout = rtCfg.defaultTimeout
 	}
 
 	// 4. Create INDEPENDENT child context (not derived from parent ctx).
@@ -295,7 +337,7 @@ func spawnSubTurn(ctx context.Context, al *AgentLoop, parentTS *turnState, cfg S
 	defer cancel()
 
 	childID := al.generateSubTurnID()
-	childTS := newTurnState(childCtx, childID, parentTS)
+	childTS := newTurnState(childCtx, childID, parentTS, rtCfg.maxConcurrent)
 	// Set the cancel function so Finish(true) can trigger hard cancellation
 	childTS.cancelFunc = cancel
 	childTS.critical = cfg.Critical
@@ -307,6 +349,11 @@ func spawnSubTurn(ctx context.Context, al *AgentLoop, parentTS *turnState, cfg S
 		childTS.tokenBudget = cfg.InitialTokenBudget
 	} else if parentTS.tokenBudget != nil {
 		childTS.tokenBudget = parentTS.tokenBudget
+	} else if rtCfg.defaultTokenBudget > 0 {
+		// Apply default token budget from config if no budget is set
+		budget := &atomic.Int64{}
+		budget.Store(int64(rtCfg.defaultTokenBudget))
+		childTS.tokenBudget = budget
 	}
 
 	// IMPORTANT: Put childTS into childCtx so that code inside runTurn can retrieve it

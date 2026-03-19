@@ -15,6 +15,11 @@ import (
 	"github.com/sipeed/picoclaw/pkg/tools"
 )
 
+// Test constants (use defaults from subturn.go)
+const (
+	testMaxConcurrentSubTurns = defaultMaxConcurrentSubTurns
+)
+
 // ====================== Test Helper: Event Collector ======================
 type eventCollector struct {
 	events []any
@@ -918,7 +923,7 @@ func TestGetActiveTurn(t *testing.T) {
 		childTurnIDs:   []string{},
 		session:        newEphemeralSession(nil),
 		pendingResults: make(chan *tools.ToolResult, 16),
-		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
+		concurrencySem: make(chan struct{}, testMaxConcurrentSubTurns),
 	}
 
 	sessionKey := "test-session"
@@ -975,7 +980,7 @@ func TestGetActiveTurn_WithChildren(t *testing.T) {
 		childTurnIDs:   []string{"child-1", "child-2"},
 		session:        newEphemeralSession(nil),
 		pendingResults: make(chan *tools.ToolResult, 16),
-		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
+		concurrencySem: make(chan struct{}, testMaxConcurrentSubTurns),
 	}
 
 	sessionKey := "test-session-with-children"
@@ -1007,7 +1012,7 @@ func TestTurnStateInfo_ThreadSafety(t *testing.T) {
 		childTurnIDs:   []string{},
 		session:        newEphemeralSession(nil),
 		pendingResults: make(chan *tools.ToolResult, 16),
-		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
+		concurrencySem: make(chan struct{}, testMaxConcurrentSubTurns),
 	}
 
 	// Concurrently read Info() and modify childTurnIDs
@@ -1120,7 +1125,7 @@ func TestInterruptHard_Alias(t *testing.T) {
 		session:              newEphemeralSession(nil),
 		initialHistoryLength: 0,
 		pendingResults:       make(chan *tools.ToolResult, 16),
-		concurrencySem:       make(chan struct{}, maxConcurrentSubTurns),
+		concurrencySem:       make(chan struct{}, testMaxConcurrentSubTurns),
 	}
 
 	sessionKey := "test-session-interrupt"
@@ -1148,7 +1153,7 @@ func TestFinish_ConcurrentCalls(t *testing.T) {
 		turnID:         "parent-concurrent-finish",
 		depth:          0,
 		pendingResults: make(chan *tools.ToolResult, 16),
-		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
+		concurrencySem: make(chan struct{}, testMaxConcurrentSubTurns),
 	}
 	parentTS.ctx, parentTS.cancelFunc = context.WithCancel(ctx)
 
@@ -1214,7 +1219,7 @@ func TestDeliverSubTurnResult_RaceWithFinish(t *testing.T) {
 		turnID:         "parent-race-test",
 		depth:          0,
 		pendingResults: make(chan *tools.ToolResult, 16),
-		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
+		concurrencySem: make(chan struct{}, testMaxConcurrentSubTurns),
 	}
 	parentTS.ctx, parentTS.cancelFunc = context.WithCancel(ctx)
 
@@ -1296,13 +1301,13 @@ func TestConcurrencySemaphore_Timeout(t *testing.T) {
 		depth:          0,
 		session:        newEphemeralSession(nil),
 		pendingResults: make(chan *tools.ToolResult, 16),
-		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
+		concurrencySem: make(chan struct{}, testMaxConcurrentSubTurns),
 	}
 	parentTS.ctx, parentTS.cancelFunc = context.WithCancel(ctx)
 	defer parentTS.Finish(false)
 
 	// Fill all concurrency slots
-	for i := 0; i < maxConcurrentSubTurns; i++ {
+	for i := 0; i < testMaxConcurrentSubTurns; i++ {
 		parentTS.concurrencySem <- struct{}{}
 	}
 
@@ -1339,7 +1344,7 @@ func TestConcurrencySemaphore_Timeout(t *testing.T) {
 	t.Logf("Timeout occurred after %v with error: %v", elapsed, err)
 
 	// Clean up - drain the semaphore
-	for i := 0; i < maxConcurrentSubTurns; i++ {
+	for i := 0; i < testMaxConcurrentSubTurns; i++ {
 		<-parentTS.concurrencySem
 	}
 }
@@ -1396,7 +1401,7 @@ func TestContextWrapping_SingleLayer(t *testing.T) {
 		depth:          0,
 		session:        newEphemeralSession(nil),
 		pendingResults: make(chan *tools.ToolResult, 16),
-		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
+		concurrencySem: make(chan struct{}, testMaxConcurrentSubTurns),
 	}
 	parentTS.ctx, parentTS.cancelFunc = context.WithCancel(ctx)
 	defer parentTS.Finish(false)
@@ -1442,7 +1447,7 @@ func TestSyncSubTurn_NoChannelDelivery(t *testing.T) {
 		depth:          0,
 		session:        newEphemeralSession(nil),
 		pendingResults: make(chan *tools.ToolResult, 16),
-		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
+		concurrencySem: make(chan struct{}, testMaxConcurrentSubTurns),
 	}
 	parentTS.ctx, parentTS.cancelFunc = context.WithCancel(ctx)
 	defer parentTS.Finish(false)
@@ -1499,7 +1504,7 @@ func TestAsyncSubTurn_ChannelDelivery(t *testing.T) {
 		depth:          0,
 		session:        newEphemeralSession(nil),
 		pendingResults: make(chan *tools.ToolResult, 16),
-		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
+		concurrencySem: make(chan struct{}, testMaxConcurrentSubTurns),
 	}
 	parentTS.ctx, parentTS.cancelFunc = context.WithCancel(ctx)
 	defer parentTS.Finish(false)
@@ -1543,7 +1548,7 @@ func TestGrandchildAbort_CascadingCancellation(t *testing.T) {
 		depth:          0,
 		session:        newEphemeralSession(nil),
 		pendingResults: make(chan *tools.ToolResult, 16),
-		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
+		concurrencySem: make(chan struct{}, testMaxConcurrentSubTurns),
 	}
 	grandparentTS.ctx, grandparentTS.cancelFunc = context.WithCancel(ctx)
 
@@ -1557,7 +1562,7 @@ func TestGrandchildAbort_CascadingCancellation(t *testing.T) {
 		depth:          1,
 		session:        newEphemeralSession(nil),
 		pendingResults: make(chan *tools.ToolResult, 16),
-		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
+		concurrencySem: make(chan struct{}, testMaxConcurrentSubTurns),
 	}
 	parentTS.cancelFunc = parentCancel
 
@@ -1571,7 +1576,7 @@ func TestGrandchildAbort_CascadingCancellation(t *testing.T) {
 		depth:          2,
 		session:        newEphemeralSession(nil),
 		pendingResults: make(chan *tools.ToolResult, 16),
-		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
+		concurrencySem: make(chan struct{}, testMaxConcurrentSubTurns),
 	}
 	childTS.cancelFunc = childCancel
 
@@ -1642,7 +1647,7 @@ func TestSpawnDuringAbort_RaceCondition(t *testing.T) {
 		depth:          0,
 		session:        newEphemeralSession(nil),
 		pendingResults: make(chan *tools.ToolResult, 16),
-		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
+		concurrencySem: make(chan struct{}, testMaxConcurrentSubTurns),
 	}
 	parentTS.ctx, parentTS.cancelFunc = context.WithCancel(ctx)
 
@@ -1755,7 +1760,7 @@ func TestAsyncSubTurn_ParentFinishesEarly(t *testing.T) {
 		depth:          0,
 		session:        newEphemeralSession(nil),
 		pendingResults: make(chan *tools.ToolResult, 16),
-		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
+		concurrencySem: make(chan struct{}, testMaxConcurrentSubTurns),
 	}
 	parentTS.ctx, parentTS.cancelFunc = context.WithCancel(ctx)
 
@@ -1828,7 +1833,7 @@ func TestAsyncSubTurn_ParentWaitsForChild(t *testing.T) {
 		depth:          0,
 		session:        newEphemeralSession(nil),
 		pendingResults: make(chan *tools.ToolResult, 16),
-		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
+		concurrencySem: make(chan struct{}, testMaxConcurrentSubTurns),
 	}
 	parentTS.ctx, parentTS.cancelFunc = context.WithCancel(ctx)
 
@@ -1995,7 +2000,7 @@ func TestSubTurn_IndependentContext(t *testing.T) {
 		depth:          0,
 		session:        newEphemeralSession(nil),
 		pendingResults: make(chan *tools.ToolResult, 16),
-		concurrencySem: make(chan struct{}, maxConcurrentSubTurns),
+		concurrencySem: make(chan struct{}, testMaxConcurrentSubTurns),
 	}
 	parentTS.ctx, parentTS.cancelFunc = context.WithCancel(ctx)
 

@@ -1022,7 +1022,7 @@ func (al *AgentLoop) runAgentLoop(
 			session:              agent.Sessions,
 			initialHistoryLength: len(agent.Sessions.GetHistory("")), // Snapshot for rollback on hard abort
 			pendingResults:       make(chan *tools.ToolResult, 16),
-			concurrencySem:       make(chan struct{}, maxConcurrentSubTurns), // maxConcurrentSubTurns
+			concurrencySem:       make(chan struct{}, al.getSubTurnConfig().maxConcurrent), // maxConcurrentSubTurns
 		}
 		ctx = withTurnState(ctx, rootTS)
 		ctx = WithAgentLoop(ctx, al) // Inject AgentLoop for tool access
