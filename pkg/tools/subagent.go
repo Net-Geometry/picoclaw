@@ -17,15 +17,17 @@ type SubTurnSpawner interface {
 
 // SubTurnConfig holds configuration for spawning a sub-turn.
 type SubTurnConfig struct {
-	Model        string
-	Tools        []Tool
-	SystemPrompt string
-	MaxTokens    int
-	Temperature  float64
-	Async        bool          // true for async (spawn), false for sync (subagent)
-	Critical     bool          // continue running after parent finishes gracefully
-	Timeout      time.Duration // 0 = use default (5 minutes)
-	MaxContextRunes int        // 0 = auto, -1 = no limit, >0 = explicit limit
+	Model              string
+	Tools              []Tool
+	SystemPrompt       string
+	MaxTokens          int
+	Temperature        float64
+	Async              bool          // true for async (spawn), false for sync (subagent)
+	Critical           bool          // continue running after parent finishes gracefully
+	Timeout            time.Duration // 0 = use default (5 minutes)
+	MaxContextRunes    int           // 0 = auto, -1 = no limit, >0 = explicit limit
+	ActualSystemPrompt string
+	InitialMessages    []providers.Message
 }
 
 type SubagentTask struct {
@@ -203,7 +205,7 @@ After completing the task, provide a clear summary of what was done.`
 			MaxIterations: maxIter,
 			LLMOptions:    llmOptions,
 		}, messages, task.OriginChannel, task.OriginChatID)
-		
+
 		if err == nil {
 			result = &ToolResult{
 				ForLLM: fmt.Sprintf(

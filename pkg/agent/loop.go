@@ -64,6 +64,7 @@ type processOptions struct {
 	SenderID                string   // Current sender ID for dynamic context
 	SenderDisplayName       string   // Current sender display name for dynamic context
 	UserMessage             string   // User message content (may include prefix)
+	SystemPromptOverride    string   // Override the default system prompt (Used by SubTurns)
 	Media                   []string // media:// refs from inbound message
 	DefaultResponse         string   // Response when LLM returns empty
 	EnableSummary           bool     // Whether to trigger summarization
@@ -1068,6 +1069,17 @@ func (al *AgentLoop) runAgentLoop(
 	cfg := al.GetConfig()
 	maxMediaSize := cfg.Agents.Defaults.GetMaxMediaSize()
 	messages = resolveMediaRefs(messages, al.mediaStore, maxMediaSize)
+
+	// 1.5 Override the System prompt (e.g., for Evaluator/Optimizer specific personas)
+	if opts.SystemPromptOverride != "" {
+		for i, msg := range messages {
+			if msg.Role == "system" {
+				messages[i].Content = opts.SystemPromptOverride
+				messages[i].SystemParts = []providers.ContentBlock{{Type: "text", Text: opts.SystemPromptOverride}}
+				break
+			}
+		}
+	}
 
 	// 2. Save user message to session
 	if !opts.SkipAddUserMessage && opts.UserMessage != "" {

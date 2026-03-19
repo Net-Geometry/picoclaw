@@ -119,6 +119,14 @@ type SubTurnConfig struct {
 	// truncated while preserving system messages and recent context.
 	MaxContextRunes int
 
+	// ActualSystemPrompt is injected as the true 'system' role message for the childAgent.
+	// The legacy SystemPrompt field is actually used as the first 'user' message (task description).
+	ActualSystemPrompt string
+
+	// InitialMessages preloads the ephemeral session history before the agent loop starts.
+	// Used by evaluator-optimizer patterns to pass the full worker context across multiple iterations.
+	InitialMessages []providers.Message
+
 	// Can be extended with temperature, topP, etc.
 }
 
@@ -186,14 +194,16 @@ func (s *AgentLoopSpawner) SpawnSubTurn(ctx context.Context, cfg tools.SubTurnCo
 
 	// Convert tools.SubTurnConfig to agent.SubTurnConfig
 	agentCfg := SubTurnConfig{
-		Model:           cfg.Model,
-		Tools:           cfg.Tools,
-		SystemPrompt:    cfg.SystemPrompt,
-		MaxTokens:       cfg.MaxTokens,
-		Async:           cfg.Async,
-		Critical:        cfg.Critical,
-		Timeout:         cfg.Timeout,
-		MaxContextRunes: cfg.MaxContextRunes,
+		Model:              cfg.Model,
+		Tools:              cfg.Tools,
+		SystemPrompt:       cfg.SystemPrompt,
+		ActualSystemPrompt: cfg.ActualSystemPrompt,
+		InitialMessages:    cfg.InitialMessages,
+		MaxTokens:          cfg.MaxTokens,
+		Async:              cfg.Async,
+		Critical:           cfg.Critical,
+		Timeout:            cfg.Timeout,
+		MaxContextRunes:    cfg.MaxContextRunes,
 	}
 
 	return spawnSubTurn(ctx, s.al, parentTS, agentCfg)
@@ -481,6 +491,19 @@ func runTurn(ctx context.Context, al *AgentLoop, ts *turnState, cfg SubTurnConfi
 		childAgent.MaxTokens = parentAgent.MaxTokens
 	}
 
+	if cfg.ActualSystemPrompt != "" {
+		childAgent.Sessions.AddMessage(ts.turnID, "system", cfg.ActualSystemPrompt)
+	}
+
+	promptAlreadyAdded := false
+
+	// Preload ephemeral session history
+	if len(cfg.InitialMessages) > 0 {
+		existing := childAgent.Sessions.GetHistory(ts.turnID)
+		childAgent.Sessions.SetHistory(ts.turnID, append(existing, cfg.InitialMessages...))
+		promptAlreadyAdded = true // InitialMessages 中已含 user 消息，跳过再次添加
+	}
+
 	// Resolve MaxContextRunes configuration
 	maxContextRunes := utils.ResolveMaxContextRunes(cfg.MaxContextRunes, childAgent.ContextWindow)
 
@@ -501,7 +524,6 @@ func runTurn(ctx context.Context, al *AgentLoop, ts *turnState, cfg SubTurnConfi
 	truncationRetryCount := 0
 	contextRetryCount := 0
 	currentPrompt := cfg.SystemPrompt
-	promptAlreadyAdded := false
 
 	for {
 		// Soft context limit: check and truncate before LLM call
@@ -535,12 +557,13 @@ func runTurn(ctx context.Context, al *AgentLoop, ts *turnState, cfg SubTurnConfi
 
 		// Call the agent loop
 		finalContent, err := al.runAgentLoop(ctx, childAgent, processOptions{
-			SessionKey:         ts.turnID,
-			UserMessage:        currentPrompt,
-			DefaultResponse:    "",
-			EnableSummary:      false,
-			SendResponse:       false,
-			SkipAddUserMessage: promptAlreadyAdded,
+			SessionKey:           ts.turnID,
+			UserMessage:          currentPrompt,
+			SystemPromptOverride: cfg.ActualSystemPrompt,
+			DefaultResponse:      "",
+			EnableSummary:        false,
+			SendResponse:         false,
+			SkipAddUserMessage:   promptAlreadyAdded,
 		})
 
 		// Mark the prompt as added so subsequent truncation retries
@@ -600,8 +623,11 @@ func runTurn(ctx context.Context, al *AgentLoop, ts *turnState, cfg SubTurnConfi
 			continue // Retry with recovery prompt
 		}
 
-		// 3. Success - return result
-		return &tools.ToolResult{ForLLM: finalContent}, nil
+		// 3. Success - return result with session history
+		return &tools.ToolResult{
+			ForLLM:   finalContent,
+			Messages: childAgent.Sessions.GetHistory(ts.turnID),
+		}, nil
 	}
 }
 
