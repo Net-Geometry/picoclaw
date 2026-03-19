@@ -36,6 +36,10 @@ func DefaultConfig() *Config {
 				SummarizeMessageThreshold: 20,
 				SummarizeTokenPercent:     75,
 				SteeringMode:              "one-at-a-time",
+				ToolFeedback: ToolFeedbackConfig{
+					Enabled:       true,
+					MaxArgsLength: 300,
+				},
 			},
 		},
 		Bindings: []AgentBinding{},

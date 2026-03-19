@@ -1569,8 +1569,29 @@ func (al *AgentLoop) runLLMIteration(
 					"iteration": iteration,
 				})
 
+			// Send tool feedback to chat channel if enabled
+			if al.cfg.Agents.Defaults.IsToolFeedbackEnabled() && opts.Channel != "" {
+				feedbackPreview := utils.Truncate(
+					string(argsJSON),
+					al.cfg.Agents.Defaults.GetToolFeedbackMaxArgsLength(),
+				)
+				feedbackMsg := fmt.Sprintf("\U0001f527 `%s`\n```\n%s\n```", tc.Name, feedbackPreview)
+				fbCtx, fbCancel := context.WithTimeout(ctx, 3*time.Second)
+				_ = al.bus.PublishOutbound(fbCtx, bus.OutboundMessage{
+					Channel: opts.Channel,
+					ChatID:  opts.ChatID,
+					Content: feedbackMsg,
+				})
+				fbCancel()
+			}
+
 			// Create async callback for tools that implement AsyncExecutor.
+			// When the background work completes, this publishes the result
+			// as an inbound system message so processSystemMessage routes it
+			// back to the user via the normal agent loop.
 			asyncCallback := func(_ context.Context, result *tools.ToolResult) {
+				// Send ForUser content directly to the user (immediate feedback),
+				// mirroring the synchronous tool execution path.
 				if !result.Silent && result.ForUser != "" {
 					outCtx, outCancel := context.WithTimeout(context.Background(), 5*time.Second)
 					defer outCancel()
@@ -1581,6 +1602,7 @@ func (al *AgentLoop) runLLMIteration(
 					})
 				}
 
+				// Determine content for the agent loop (ForLLM or error).
 				content := result.ForLLM
 				if content == "" && result.Err != nil {
 					content = result.Err.Error()
