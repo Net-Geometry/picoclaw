@@ -491,10 +491,6 @@ func runTurn(ctx context.Context, al *AgentLoop, ts *turnState, cfg SubTurnConfi
 		childAgent.MaxTokens = parentAgent.MaxTokens
 	}
 
-	if cfg.ActualSystemPrompt != "" {
-		childAgent.Sessions.AddMessage(ts.turnID, "system", cfg.ActualSystemPrompt)
-	}
-
 	promptAlreadyAdded := false
 
 	// Preload ephemeral session history
