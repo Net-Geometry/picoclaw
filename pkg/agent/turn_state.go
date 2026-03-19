@@ -67,6 +67,17 @@ type turnState struct {
 	// Used by SubTurn to detect truncation and retry.
 	// MUST be accessed under mu lock.
 	lastFinishReason string
+
+	// Token budget tracking
+	// tokenBudget is a shared atomic counter for tracking remaining tokens across team members.
+	// Inherited from parent or initialized from SubTurnConfig.InitialTokenBudget.
+	// Nil if no budget is set.
+	tokenBudget *atomic.Int64
+
+	// lastUsage stores the token usage from the last LLM call.
+	// Used by SubTurn to deduct from tokenBudget after each LLM iteration.
+	// MUST be accessed under mu lock.
+	lastUsage *providers.UsageInfo
 }
 
 // ====================== Public API ======================
@@ -134,7 +145,7 @@ func (al *AgentLoop) FormatTree(turnInfo *TurnInfo, prefix string, isLast bool) 
 	}
 
 	var sb strings.Builder
-	
+
 	// Print current node
 	marker := "├── "
 	if isLast {
@@ -154,7 +165,7 @@ func (al *AgentLoop) FormatTree(turnInfo *TurnInfo, prefix string, isLast bool) 
 		orphanMarker = " (Orphaned)"
 	}
 
-	sb.WriteString(fmt.Sprintf("%s%s[%s] Depth:%d (%s)%s\n", prefix, marker, turnInfo.TurnID, turnInfo.Depth, status, orphanMarker))
+	fmt.Fprintf(&sb, "%s%s[%s] Depth:%d (%s)%s\n", prefix, marker, turnInfo.TurnID, turnInfo.Depth, status, orphanMarker)
 
 	// Prepare prefix for children
 	childPrefix := prefix
@@ -179,7 +190,7 @@ func (al *AgentLoop) FormatTree(turnInfo *TurnInfo, prefix string, isLast bool) 
 			if isLastChild {
 				cMarker = "└── "
 			}
-			sb.WriteString(fmt.Sprintf("%s%s[%s] (Completed/Cleaned Up)\n", childPrefix, cMarker, childID))
+			fmt.Fprintf(&sb, "%s%s[%s] (Completed/Cleaned Up)\n", childPrefix, cMarker, childID)
 		}
 	}
 
@@ -193,12 +204,12 @@ func newTurnState(ctx context.Context, id string, parent *turnState) *turnState 
 	// (spawnSubTurn) already creates one. The turnState stores the context and
 	// cancelFunc provided by the caller to avoid redundant context wrapping.
 	return &turnState{
-		ctx:            ctx,
-		cancelFunc:     nil, // Will be set by the caller
-		turnID:         id,
-		parentTurnID:   parent.turnID,
-		depth:          parent.depth + 1,
-		session:        newEphemeralSession(parent.session),
+		ctx:             ctx,
+		cancelFunc:      nil, // Will be set by the caller
+		turnID:          id,
+		parentTurnID:    parent.turnID,
+		depth:           parent.depth + 1,
+		session:         newEphemeralSession(parent.session),
 		parentTurnState: parent, // Store reference to parent for IsParentEnded() checks
 		// NOTE: In this PoC, I use a fixed-size channel (16).
 		// Under high concurrency or long-running sub-turns, this might fill up and cause
@@ -231,6 +242,22 @@ func (ts *turnState) GetLastFinishReason() string {
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
 	return ts.lastFinishReason
+}
+
+// SetLastUsage stores the token usage from the last LLM call.
+// This is used by SubTurn to track token consumption for budget enforcement.
+func (ts *turnState) SetLastUsage(usage *providers.UsageInfo) {
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
+	ts.lastUsage = usage
+}
+
+// GetLastUsage retrieves the token usage from the last LLM call.
+// Returns nil if no LLM call has been made yet.
+func (ts *turnState) GetLastUsage() *providers.UsageInfo {
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
+	return ts.lastUsage
 }
 
 // IsParentEnded is a convenience method to check if parent ended.

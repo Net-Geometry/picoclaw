@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/sipeed/picoclaw/pkg/providers"
@@ -28,6 +29,7 @@ type SubTurnConfig struct {
 	MaxContextRunes    int           // 0 = auto, -1 = no limit, >0 = explicit limit
 	ActualSystemPrompt string
 	InitialMessages    []providers.Message
+	InitialTokenBudget *atomic.Int64 // Shared token budget for team members; nil if no budget
 }
 
 type SubagentTask struct {

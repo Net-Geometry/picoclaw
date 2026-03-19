@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/sipeed/picoclaw/pkg/logger"
@@ -127,6 +128,12 @@ type SubTurnConfig struct {
 	// Used by evaluator-optimizer patterns to pass the full worker context across multiple iterations.
 	InitialMessages []providers.Message
 
+	// InitialTokenBudget is a shared atomic counter for tracking remaining tokens.
+	// If set, the SubTurn will inherit this budget and deduct tokens after each LLM call.
+	// If nil, the SubTurn will inherit the parent's tokenBudget (if any).
+	// Used by team tool to enforce token limits across all team members.
+	InitialTokenBudget *atomic.Int64
+
 	// Can be extended with temperature, topP, etc.
 }
 
@@ -199,6 +206,7 @@ func (s *AgentLoopSpawner) SpawnSubTurn(ctx context.Context, cfg tools.SubTurnCo
 		SystemPrompt:       cfg.SystemPrompt,
 		ActualSystemPrompt: cfg.ActualSystemPrompt,
 		InitialMessages:    cfg.InitialMessages,
+		InitialTokenBudget: cfg.InitialTokenBudget,
 		MaxTokens:          cfg.MaxTokens,
 		Async:              cfg.Async,
 		Critical:           cfg.Critical,
@@ -291,6 +299,15 @@ func spawnSubTurn(ctx context.Context, al *AgentLoop, parentTS *turnState, cfg S
 	// Set the cancel function so Finish(true) can trigger hard cancellation
 	childTS.cancelFunc = cancel
 	childTS.critical = cfg.Critical
+
+	// Token budget initialization/inheritance
+	// If InitialTokenBudget is explicitly provided (e.g., by team tool), use it.
+	// Otherwise, inherit from parent's tokenBudget (for nested SubTurns).
+	if cfg.InitialTokenBudget != nil {
+		childTS.tokenBudget = cfg.InitialTokenBudget
+	} else if parentTS.tokenBudget != nil {
+		childTS.tokenBudget = parentTS.tokenBudget
+	}
 
 	// IMPORTANT: Put childTS into childCtx so that code inside runTurn can retrieve it
 	childCtx = withTurnState(childCtx, childTS)
@@ -619,7 +636,39 @@ func runTurn(ctx context.Context, al *AgentLoop, ts *turnState, cfg SubTurnConfi
 			continue // Retry with recovery prompt
 		}
 
-		// 3. Success - return result with session history
+		// 3. Token budget enforcement (if configured)
+		// Check if budget is exhausted after this LLM call. If so, return gracefully
+		// with current result instead of continuing iterations.
+		if ts.tokenBudget != nil {
+			if usage := ts.GetLastUsage(); usage != nil {
+				newBudget := ts.tokenBudget.Add(-int64(usage.TotalTokens))
+
+				if newBudget <= 0 {
+					logger.WarnCF("subturn", "Token budget exhausted",
+						map[string]any{
+							"turn_id":      ts.turnID,
+							"deficit":      -newBudget,
+							"tokens_used":  usage.TotalTokens,
+							"final_budget": newBudget,
+						})
+
+					// Budget exhausted - return current result with marker
+					return &tools.ToolResult{
+						ForLLM:   finalContent + "\n\n[Token budget exhausted]",
+						Messages: childAgent.Sessions.GetHistory(ts.turnID),
+					}, nil
+				}
+
+				logger.DebugCF("subturn", "Token budget updated",
+					map[string]any{
+						"turn_id":         ts.turnID,
+						"tokens_used":     usage.TotalTokens,
+						"remaining_budget": newBudget,
+					})
+			}
+		}
+
+		// 4. Success - return result with session history
 		return &tools.ToolResult{
 			ForLLM:   finalContent,
 			Messages: childAgent.Sessions.GetHistory(ts.turnID),

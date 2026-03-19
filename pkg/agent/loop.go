@@ -1460,6 +1460,10 @@ func (al *AgentLoop) runLLMIteration(
 		// Save finishReason to turnState for SubTurn truncation detection
 		if ts := turnStateFromContext(ctx); ts != nil {
 			ts.SetLastFinishReason(response.FinishReason)
+			// Save usage for token budget tracking
+			if response.Usage != nil {
+				ts.SetLastUsage(response.Usage)
+			}
 		}
 
 		go al.handleReasoning(
