@@ -17,9 +17,9 @@ func (a *App) newSchemesPage() tview.Primitive {
 	table := tview.NewTable().
 		SetBorders(false).
 		SetSelectable(true, false)
-	table.SetBorder(true).SetTitle(" Provider Schemes ")
-	table.SetTitleColor(tcell.ColorAqua).SetBorderColor(tcell.ColorDarkCyan)
-	table.SetSelectedStyle(tcell.StyleDefault.Background(tcell.ColorTeal).Foreground(tcell.ColorWhite))
+	table.SetBorder(true).SetTitle(" [#00f0ff::b] PROVIDER SCHEMES ").SetTitleColor(tcell.NewHexColor(0x00f0ff)).SetBorderColor(tcell.NewHexColor(0x00f0ff))
+	table.SetSelectedStyle(tcell.StyleDefault.Background(tcell.NewHexColor(0xff00ff)).Foreground(tcell.NewHexColor(0xffffff)))
+	table.SetBackgroundColor(tcell.NewHexColor(0x050510))
 
 	rowToIdx := func(row int) int { return row / 2 }
 
@@ -43,7 +43,7 @@ func (a *App) newSchemesPage() tview.Primitive {
 
 			table.SetCell(nameRow, 0,
 				tview.NewTableCell(" "+s.Name).
-					SetTextColor(tcell.ColorWhite).
+					SetTextColor(tcell.NewHexColor(0xe0e0e0)).
 					SetExpansion(1).
 					SetSelectable(true),
 			)
@@ -57,14 +57,13 @@ func (a *App) newSchemesPage() tview.Primitive {
 				}
 			}
 			table.SetCell(detailRow, 0,
-				tview.NewTableCell(fmt.Sprintf("  (%d/%d)%s", m, n, s.BaseURL)).
-					SetTextColor(tcell.ColorDarkGray).
+				tview.NewTableCell(fmt.Sprintf("  [#808080](%d/%d) %s", m, n, s.BaseURL)).
+					SetTextColor(tcell.NewHexColor(0x808080)).
 					SetExpansion(1).
 					SetSelectable(false),
 			)
 			table.SetCell(detailRow, 1,
-				tview.NewTableCell(s.Type+"  ").
-					SetTextColor(tcell.ColorDarkGray).
+				tview.NewTableCell("[#00f0ff]"+s.Type+"  ").
 					SetAlign(tview.AlignRight).
 					SetSelectable(false),
 			)
@@ -166,20 +165,20 @@ func (a *App) newSchemesPage() tview.Primitive {
 		return event
 	})
 
-	return a.buildShell("schemes", table, " a: add  e: edit  d: delete  Enter: open  ESC: back ")
+	return a.buildShell("schemes", table, " [#00f0ff]a:[-] add  [#00f0ff]e:[-] edit  [#ff2a2a]d:[-] delete  [#39ff14]Enter:[-] open  [#ff00ff]ESC:[-] back ")
 }
 
 func (a *App) showSchemeForm(existing *tuicfg.Scheme, onSave func(tuicfg.Scheme)) {
 	name := ""
 	baseURL := ""
 	schemeType := "openai-compatible"
-	title := " Add Scheme "
+	title := " ADD SCHEME "
 
 	if existing != nil {
 		name = existing.Name
 		baseURL = existing.BaseURL
 		schemeType = existing.Type
-		title = " Edit Scheme "
+		title = " EDIT SCHEME "
 	}
 
 	typeOptions := []string{"openai-compatible", "anthropic"}
@@ -194,10 +193,10 @@ func (a *App) showSchemeForm(existing *tuicfg.Scheme, onSave func(tuicfg.Scheme)
 	form := tview.NewForm()
 
 	form.
-		AddInputField("Name", name, 32, nil, func(text string) { name = text }).
-		AddInputField("Base URL", baseURL, 32, nil, func(text string) { baseURL = text }).
+		AddInputField("Name", name, 20, nil, func(text string) { name = text }).
+		AddInputField("Base URL", baseURL, 28, nil, func(text string) { baseURL = text }).
 		AddDropDown("Type", typeOptions, typeIdx, func(option string, _ int) { schemeType = option }).
-		AddButton("Save", func() {
+		AddButton("SAVE", func() {
 			if name == "" {
 				a.showError("Name is required")
 				return
@@ -217,17 +216,17 @@ func (a *App) showSchemeForm(existing *tuicfg.Scheme, onSave func(tuicfg.Scheme)
 			a.hideModal("scheme-form")
 			onSave(tuicfg.Scheme{Name: name, BaseURL: baseURL, Type: schemeType})
 		}).
-		AddButton("Cancel", func() {
+		AddButton("CANCEL", func() {
 			a.hideModal("scheme-form")
 		})
 
-	form.SetBorder(true).SetTitle(title).SetTitleColor(tcell.ColorLime)
-	form.SetBorderColor(tcell.ColorDarkCyan)
-	form.SetFieldBackgroundColor(tcell.ColorBlack)
-	form.SetFieldTextColor(tcell.ColorWhite)
-	form.SetLabelColor(tcell.ColorAqua)
-	form.SetButtonBackgroundColor(tcell.ColorDarkCyan)
-	form.SetButtonTextColor(tcell.ColorWhite)
+	form.SetBorder(true).SetTitle(" [::b]" + title + " ").SetTitleColor(tcell.NewHexColor(0x39ff14)).SetBorderColor(tcell.NewHexColor(0x00f0ff))
+	form.SetBackgroundColor(tcell.NewHexColor(0x1a1a2e))
+	form.SetFieldBackgroundColor(tcell.NewHexColor(0x050510))
+	form.SetFieldTextColor(tcell.NewHexColor(0x00f0ff))
+	form.SetLabelColor(tcell.NewHexColor(0xe0e0e0))
+	form.SetButtonBackgroundColor(tcell.NewHexColor(0xff00ff))
+	form.SetButtonTextColor(tcell.NewHexColor(0xffffff))
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			a.hideModal("scheme-form")
@@ -236,5 +235,5 @@ func (a *App) showSchemeForm(existing *tuicfg.Scheme, onSave func(tuicfg.Scheme)
 		return event
 	})
 
-	a.showModal("scheme-form", centeredForm(form, 6, 12))
+	a.showModal("scheme-form", centeredForm(form, 4, 12))
 }

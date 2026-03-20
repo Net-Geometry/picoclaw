@@ -17,9 +17,9 @@ func (a *App) newUsersPage(schemeName string) tview.Primitive {
 	table := tview.NewTable().
 		SetBorders(false).
 		SetSelectable(true, false)
-	table.SetBorder(true).SetTitle(fmt.Sprintf(" Users · %s ", schemeName))
-	table.SetTitleColor(tcell.ColorAqua).SetBorderColor(tcell.ColorDarkCyan)
-	table.SetSelectedStyle(tcell.StyleDefault.Background(tcell.ColorTeal).Foreground(tcell.ColorWhite))
+	table.SetBorder(true).SetTitle(fmt.Sprintf(" [#00f0ff::b] USERS · %s ", schemeName)).SetTitleColor(tcell.NewHexColor(0x00f0ff)).SetBorderColor(tcell.NewHexColor(0x00f0ff))
+	table.SetSelectedStyle(tcell.StyleDefault.Background(tcell.NewHexColor(0xff00ff)).Foreground(tcell.NewHexColor(0xffffff)))
+	table.SetBackgroundColor(tcell.NewHexColor(0x050510))
 
 	visibleUsers := func() []tuicfg.User {
 		var out []tuicfg.User
@@ -62,7 +62,7 @@ func (a *App) newUsersPage(schemeName string) tview.Primitive {
 
 			table.SetCell(nameRow, 0,
 				tview.NewTableCell(" "+u.Name).
-					SetTextColor(tcell.ColorWhite).
+					SetTextColor(tcell.NewHexColor(0xe0e0e0)).
 					SetExpansion(1).
 					SetSelectable(true),
 			)
@@ -74,19 +74,18 @@ func (a *App) newUsersPage(schemeName string) tview.Primitive {
 			models := a.cachedModels(schemeName, u.Name)
 			var detailText string
 			if len(models) > 0 {
-				detailText = fmt.Sprintf("  %d models", len(models))
+				detailText = fmt.Sprintf("  [#39ff14]%d models available[-]", len(models))
 			} else {
-				detailText = "  [red]Inactive[-]"
+				detailText = "  [#ff2a2a]Inactive / No Access[-]"
 			}
 			table.SetCell(detailRow, 0,
 				tview.NewTableCell(detailText).
-					SetTextColor(tcell.ColorDarkGray).
+					SetTextColor(tcell.NewHexColor(0x808080)).
 					SetExpansion(1).
 					SetSelectable(false),
 			)
 			table.SetCell(detailRow, 1,
-				tview.NewTableCell(u.Type+"  ").
-					SetTextColor(tcell.ColorDarkGray).
+				tview.NewTableCell("[#00f0ff]"+u.Type+"  ").
 					SetAlign(tview.AlignRight).
 					SetSelectable(false),
 			)
@@ -180,20 +179,20 @@ func (a *App) newUsersPage(schemeName string) tview.Primitive {
 		return event
 	})
 
-	return a.buildShell("users", table, " a: add  e: edit  d: delete  Enter: models  ESC: back ")
+	return a.buildShell("users", table, " [#00f0ff]a:[-] add  [#00f0ff]e:[-] edit  [#ff2a2a]d:[-] delete  [#39ff14]Enter:[-] models  [#ff00ff]ESC:[-] back ")
 }
 
 func (a *App) showUserForm(schemeName string, existing *tuicfg.User, onSave func(tuicfg.User)) {
 	name := ""
 	userType := "key"
 	key := ""
-	title := " Add User "
+	title := " ADD USER "
 
 	if existing != nil {
 		name = existing.Name
 		userType = existing.Type
 		key = existing.Key
-		title = " Edit User "
+		title = " EDIT USER "
 	}
 
 	typeOptions := []string{"key", "OAuth"}
@@ -207,10 +206,10 @@ func (a *App) showUserForm(schemeName string, existing *tuicfg.User, onSave func
 
 	form := tview.NewForm()
 	form.
-		AddInputField("Name", name, 32, nil, func(text string) { name = text }).
+		AddInputField("Name", name, 20, nil, func(text string) { name = text }).
 		AddDropDown("Type", typeOptions, typeIdx, func(option string, _ int) { userType = option }).
-		AddPasswordField("Key", key, 32, '*', func(text string) { key = text }).
-		AddButton("Save", func() {
+		AddPasswordField("Key", key, 28, '*', func(text string) { key = text }).
+		AddButton("SAVE", func() {
 			if name == "" {
 				a.showError("Name is required")
 				return
@@ -226,17 +225,17 @@ func (a *App) showUserForm(schemeName string, existing *tuicfg.User, onSave func
 			a.hideModal("user-form")
 			onSave(tuicfg.User{Name: name, Scheme: schemeName, Type: userType, Key: key})
 		}).
-		AddButton("Cancel", func() {
+		AddButton("CANCEL", func() {
 			a.hideModal("user-form")
 		})
 
-	form.SetBorder(true).SetTitle(title).SetTitleColor(tcell.ColorLime)
-	form.SetBorderColor(tcell.ColorDarkCyan)
-	form.SetFieldBackgroundColor(tcell.ColorBlack)
-	form.SetFieldTextColor(tcell.ColorWhite)
-	form.SetLabelColor(tcell.ColorAqua)
-	form.SetButtonBackgroundColor(tcell.ColorDarkCyan)
-	form.SetButtonTextColor(tcell.ColorWhite)
+	form.SetBorder(true).SetTitle(" [::b]" + title + " ").SetTitleColor(tcell.NewHexColor(0x39ff14)).SetBorderColor(tcell.NewHexColor(0x00f0ff))
+	form.SetBackgroundColor(tcell.NewHexColor(0x1a1a2e))
+	form.SetFieldBackgroundColor(tcell.NewHexColor(0x050510))
+	form.SetFieldTextColor(tcell.NewHexColor(0x00f0ff))
+	form.SetLabelColor(tcell.NewHexColor(0xe0e0e0))
+	form.SetButtonBackgroundColor(tcell.NewHexColor(0xff00ff))
+	form.SetButtonTextColor(tcell.NewHexColor(0xffffff))
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			a.hideModal("user-form")
@@ -245,5 +244,5 @@ func (a *App) showUserForm(schemeName string, existing *tuicfg.User, onSave func
 		return event
 	})
 
-	a.showModal("user-form", centeredForm(form, 6, 13))
+	a.showModal("user-form", centeredForm(form, 4, 13))
 }

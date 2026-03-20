@@ -12,20 +12,20 @@ import (
 
 func (a *App) newHomePage() tview.Primitive {
 	list := tview.NewList()
-	list.SetBorder(true).SetTitle(" Active Configuration ").SetTitleColor(tcell.ColorAqua).SetBorderColor(tcell.ColorDarkCyan)
-	list.SetMainTextColor(tcell.ColorWhite)
-	list.SetSecondaryTextColor(tcell.ColorDarkGray)
-	list.SetSelectedStyle(tcell.StyleDefault.Background(tcell.ColorTeal).Foreground(tcell.ColorWhite))
-	list.SetSelectedBackgroundColor(tcell.ColorTeal)
-	list.SetSelectedTextColor(tcell.ColorWhite)
+	list.SetBorder(true).SetTitle(" [#00f0ff::b] ACTIVE CONFIGURATION ").SetTitleColor(tcell.NewHexColor(0x00f0ff)).SetBorderColor(tcell.NewHexColor(0x00f0ff))
+	list.SetMainTextColor(tcell.NewHexColor(0xe0e0e0))
+	list.SetSecondaryTextColor(tcell.NewHexColor(0x808080))
+	list.SetSelectedStyle(tcell.StyleDefault.Background(tcell.NewHexColor(0x39ff14)).Foreground(tcell.NewHexColor(0x050510)))
+	list.SetHighlightFullLine(true)
+	list.SetBackgroundColor(tcell.NewHexColor(0x050510))
 
 	rebuildList := func() {
 		sel := list.GetCurrentItem()
 		list.Clear()
-		list.AddItem("model: "+a.cfg.CurrentModelLabel(), "Enter to configure", 'm', func() {
+		list.AddItem("MODEL: "+a.cfg.CurrentModelLabel(), "Select to configure AI model", 'm', func() {
 			a.navigateTo("schemes", a.newSchemesPage())
 		})
-		list.AddItem("Quit", "", 'q', func() { a.tapp.Stop() })
+		list.AddItem("QUIT SYSTEM", "Exit PicoClaw Launcher", 'q', func() { a.tapp.Stop() })
 		if sel >= 0 && sel < list.GetItemCount() {
 			list.SetCurrentItem(sel)
 		}
@@ -34,5 +34,5 @@ func (a *App) newHomePage() tview.Primitive {
 
 	a.pageRefreshFns["home"] = rebuildList
 
-	return a.buildShell("home", list, " m: configure model  q: quit ")
+	return a.buildShell("home", list, " [#00f0ff]m:[-] configure model  [#ff2a2a]q:[-] quit ")
 }

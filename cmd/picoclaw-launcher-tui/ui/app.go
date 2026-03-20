@@ -102,17 +102,23 @@ func (a *App) refreshModelCache(onDone func()) {
 
 // New creates and wires up the TUI application.
 func New(cfg *tuicfg.TUIConfig, configPath string) *App {
-	tview.Styles.PrimitiveBackgroundColor = tcell.ColorBlack
-	tview.Styles.ContrastBackgroundColor = tcell.ColorTeal
-	tview.Styles.MoreContrastBackgroundColor = tcell.ColorLime
-	tview.Styles.BorderColor = tcell.ColorDarkCyan
-	tview.Styles.TitleColor = tcell.ColorAqua
-	tview.Styles.GraphicsColor = tcell.ColorDarkCyan
-	tview.Styles.PrimaryTextColor = tcell.ColorWhite
-	tview.Styles.SecondaryTextColor = tcell.ColorSilver
-	tview.Styles.TertiaryTextColor = tcell.ColorAqua
-	tview.Styles.InverseTextColor = tcell.ColorBlack
-	tview.Styles.ContrastSecondaryTextColor = tcell.ColorNavy
+	// Cyberpunk Theme Colors
+	// Dark background
+	tview.Styles.PrimitiveBackgroundColor = tcell.NewHexColor(0x050510) // Deep Void
+	tview.Styles.ContrastBackgroundColor = tcell.NewHexColor(0x1a1a2e)  // Dark Indigo
+	tview.Styles.MoreContrastBackgroundColor = tcell.NewHexColor(0x2a2a40)
+
+	// Borders and Titles
+	tview.Styles.BorderColor = tcell.NewHexColor(0x00f0ff)   // Neon Cyan
+	tview.Styles.TitleColor = tcell.NewHexColor(0x00f0ff)    // Neon Cyan
+	tview.Styles.GraphicsColor = tcell.NewHexColor(0xff00ff) // Neon Magenta
+
+	// Text
+	tview.Styles.PrimaryTextColor = tcell.NewHexColor(0xe0e0e0)           // Off-white
+	tview.Styles.SecondaryTextColor = tcell.NewHexColor(0x00f0ff)         // Neon Cyan
+	tview.Styles.TertiaryTextColor = tcell.NewHexColor(0x39ff14)          // Neon Lime
+	tview.Styles.InverseTextColor = tcell.NewHexColor(0x000000)           // Black
+	tview.Styles.ContrastSecondaryTextColor = tcell.NewHexColor(0xff00ff) // Neon Magenta
 
 	a := &App{
 		tapp:           tview.NewApplication(),
@@ -127,7 +133,7 @@ func New(cfg *tuicfg.TUIConfig, configPath string) *App {
 	a.tapp.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			if len(a.modalOpen) > 0 {
-				return nil
+				return event
 			}
 			return a.goBack()
 		}
@@ -192,21 +198,22 @@ func (a *App) save() {
 
 func (a *App) showError(msg string) {
 	modal := tview.NewModal().
-		SetText("Error: " + msg).
+		SetText(" [red::b]ERROR[-::-]\n\n" + msg).
 		AddButtons([]string{"OK"}).
 		SetDoneFunc(func(_ int, _ string) {
 			a.hideModal("error")
 		})
-	modal.SetBackgroundColor(tcell.ColorNavy)
-	modal.SetTextColor(tcell.ColorWhite)
-	modal.SetButtonBackgroundColor(tcell.ColorDarkCyan)
-	modal.SetButtonTextColor(tcell.ColorWhite)
+	// Cyberpunk Modal Style
+	modal.SetBackgroundColor(tcell.NewHexColor(0x1a1a2e))       // Deep Indigo
+	modal.SetTextColor(tcell.NewHexColor(0xffffff))             // White
+	modal.SetButtonBackgroundColor(tcell.NewHexColor(0xff2a2a)) // Neon Red
+	modal.SetButtonTextColor(tcell.NewHexColor(0xffffff))       // White
 	a.showModal("error", modal)
 }
 
 func (a *App) confirmDelete(label string, onConfirm func()) {
 	modal := tview.NewModal().
-		SetText("Delete " + label + "?\nThis cannot be undone.").
+		SetText(" [red::b]DELETE WARNING[-::-]\n\nDelete " + label + "?\n[gray]This action cannot be undone.[-]").
 		AddButtons([]string{"Delete", "Cancel"}).
 		SetDoneFunc(func(_ int, buttonLabel string) {
 			a.hideModal("confirm-delete")
@@ -214,10 +221,11 @@ func (a *App) confirmDelete(label string, onConfirm func()) {
 				onConfirm()
 			}
 		})
-	modal.SetBackgroundColor(tcell.ColorNavy)
-	modal.SetTextColor(tcell.ColorWhite)
-	modal.SetButtonBackgroundColor(tcell.ColorDarkCyan)
-	modal.SetButtonTextColor(tcell.ColorWhite)
+	// Cyberpunk Modal Style
+	modal.SetBackgroundColor(tcell.NewHexColor(0x1a1a2e))       // Deep Indigo
+	modal.SetTextColor(tcell.NewHexColor(0xffffff))             // White
+	modal.SetButtonBackgroundColor(tcell.NewHexColor(0xff2a2a)) // Neon Red for danger
+	modal.SetButtonTextColor(tcell.NewHexColor(0xffffff))       // White
 	a.showModal("confirm-delete", modal)
 }
 
@@ -234,9 +242,10 @@ func centeredForm(form *tview.Form, widthPct, height int) tview.Primitive {
 func hintBar(text string) *tview.TextView {
 	tv := tview.NewTextView().
 		SetText(text).
+		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
-		SetTextColor(tcell.ColorAqua)
-	tv.SetBackgroundColor(tcell.ColorMidnightBlue)
+		SetTextColor(tcell.NewHexColor(0x00f0ff)) // Neon Cyan
+	tv.SetBackgroundColor(tcell.NewHexColor(0x2a2a40)) // Darker Indigo
 	return tv
 }
 
@@ -246,21 +255,21 @@ func (a *App) buildShell(pageID string, content tview.Primitive, hint string) tv
 		if a.headerModelTV == nil {
 			a.headerModelTV = tview.NewTextView()
 			a.headerModelTV.SetTextAlign(tview.AlignRight).
-				SetTextColor(tcell.ColorYellow).
+				SetTextColor(tcell.NewHexColor(0x39ff14)). // Neon Lime
 				SetDynamicColors(true).
-				SetBackgroundColor(tcell.ColorBlack)
+				SetBackgroundColor(tcell.NewHexColor(0x050510))
 		}
 		modelTV = a.headerModelTV
-		modelTV.SetText(a.cfg.CurrentModelLabel() + "  ")
+		modelTV.SetText("MODEL: " + a.cfg.CurrentModelLabel() + " ")
 	} else {
 		modelTV = tview.NewTextView()
-		modelTV.SetBackgroundColor(tcell.ColorBlack)
+		modelTV.SetBackgroundColor(tcell.NewHexColor(0x050510))
 	}
 
 	headerLeft := tview.NewTextView().
-		SetText("  ▓▓ PICOCLAW LAUNCHER ▓▓").
-		SetTextColor(tcell.ColorAqua).
-		SetBackgroundColor(tcell.ColorBlack)
+		SetText(" [#ff00ff::b]///[#00f0ff] PICOCLAW LAUNCHER [#ff00ff]///").
+		SetDynamicColors(true).
+		SetBackgroundColor(tcell.NewHexColor(0x050510))
 
 	header := tview.NewFlex().
 		AddItem(headerLeft, 0, 1, false).
@@ -269,32 +278,27 @@ func (a *App) buildShell(pageID string, content tview.Primitive, hint string) tv
 	sidebar := tview.NewTextView().
 		SetDynamicColors(true).
 		SetWrap(false)
-	sidebar.SetBackgroundColor(tcell.ColorNavy)
+	sidebar.SetBackgroundColor(tcell.NewHexColor(0x1a1a2e)) // Deep Indigo
 
-	activeColor := "[lime]▶ "
-	inactiveColor := "[gray]  "
+	// Cyberpunk Sidebar Styling
+	activePrefix := "[#39ff14::b]>> " // Neon Lime arrow
+	activeSuffix := "[-]"
+	inactivePrefix := "[#808080]   "
+	inactiveSuffix := "[-]"
 
-	sbText := "\n"
-	if pageID == "home" {
-		sbText += activeColor + "HOME[-]\n"
-	} else {
-		sbText += inactiveColor + "HOME[-]\n"
+	sbText := "\n\n" // Top padding
+
+	menuItem := func(id, label string) string {
+		if pageID == id {
+			return activePrefix + label + activeSuffix + "\n\n"
+		}
+		return inactivePrefix + label + inactiveSuffix + "\n\n"
 	}
-	if pageID == "schemes" {
-		sbText += activeColor + "SCHEMES[-]\n"
-	} else {
-		sbText += inactiveColor + "SCHEMES[-]\n"
-	}
-	if pageID == "users" {
-		sbText += activeColor + "USERS[-]\n"
-	} else {
-		sbText += inactiveColor + "USERS[-]\n"
-	}
-	if pageID == "models" {
-		sbText += activeColor + "MODELS[-]\n"
-	} else {
-		sbText += inactiveColor + "MODELS[-]\n"
-	}
+
+	sbText += menuItem("home", "HOME")
+	sbText += menuItem("schemes", "SCHEMES")
+	sbText += menuItem("users", "USERS")
+	sbText += menuItem("models", "MODELS")
 
 	sidebar.SetText(sbText)
 
@@ -302,11 +306,14 @@ func (a *App) buildShell(pageID string, content tview.Primitive, hint string) tv
 
 	grid := tview.NewGrid().
 		SetRows(1, 0, 1).
-		SetColumns(16, 0).
+		SetColumns(20, 0). // Slightly wider sidebar
 		AddItem(header, 0, 0, 1, 2, 0, 0, false).
 		AddItem(sidebar, 1, 0, 1, 1, 0, 0, false).
 		AddItem(content, 1, 1, 1, 1, 0, 0, true).
 		AddItem(footer, 2, 0, 1, 2, 0, 0, false)
+
+	// Add a border around the content area if possible, or ensure content has its own border
+	// grid.SetBorders(false) // Grid borders usually look bad, handled by components
 
 	return grid
 }
