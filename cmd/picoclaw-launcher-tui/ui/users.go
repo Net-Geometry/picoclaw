@@ -14,98 +14,173 @@ import (
 )
 
 func (a *App) newUsersPage(schemeName string) tview.Primitive {
-	list := tview.NewList()
-	list.SetBorder(true).SetTitle(fmt.Sprintf(" Users for scheme %q  (a:add  e:edit  d:delete  Enter:models) ", schemeName))
+	table := tview.NewTable().
+		SetBorders(false).
+		SetSelectable(true, false)
+	table.SetBorder(true).SetTitle(fmt.Sprintf(" Users · %s ", schemeName))
+	table.SetTitleColor(tcell.ColorAqua).SetBorderColor(tcell.ColorDarkCyan)
+	table.SetSelectedStyle(tcell.StyleDefault.Background(tcell.ColorTeal).Foreground(tcell.ColorWhite))
 
-	indexInCfg := func(visibleIdx int) int {
-		count := 0
-		for i, u := range a.cfg.Provider.Users {
+	visibleUsers := func() []tuicfg.User {
+		var out []tuicfg.User
+		for _, u := range a.cfg.Provider.Users {
 			if u.Scheme == schemeName {
-				if count == visibleIdx {
-					return i
-				}
-				count++
+				out = append(out, u)
+			}
+		}
+		return out
+	}
+
+	findUserGlobalIdx := func(userName string) int {
+		for i, u := range a.cfg.Provider.Users {
+			if u.Scheme == schemeName && u.Name == userName {
+				return i
 			}
 		}
 		return -1
 	}
 
+	rowToVisIdx := func(row int) int { return row / 2 }
+
+	selectedUserName := func() string {
+		row, _ := table.GetSelection()
+		users := visibleUsers()
+		visIdx := rowToVisIdx(row)
+		if visIdx >= 0 && visIdx < len(users) {
+			return users[visIdx].Name
+		}
+		return ""
+	}
+
 	rebuild := func() {
-		sel := list.GetCurrentItem()
-		list.Clear()
-		for _, u := range a.cfg.Provider.Users {
-			if u.Scheme != schemeName {
-				continue
+		selName := selectedUserName()
+		table.Clear()
+		users := visibleUsers()
+		for i, u := range users {
+			nameRow := i * 2
+			detailRow := nameRow + 1
+
+			table.SetCell(nameRow, 0,
+				tview.NewTableCell(" "+u.Name).
+					SetTextColor(tcell.ColorWhite).
+					SetExpansion(1).
+					SetSelectable(true),
+			)
+			table.SetCell(nameRow, 1,
+				tview.NewTableCell("").
+					SetSelectable(false),
+			)
+
+			models := a.cachedModels(schemeName, u.Name)
+			var detailText string
+			if len(models) > 0 {
+				detailText = fmt.Sprintf("  %d models", len(models))
+			} else {
+				detailText = "  [red]Inactive[-]"
 			}
-			uName := u.Name
-			uType := u.Type
-			list.AddItem(
-				fmt.Sprintf("%s  ·  %s", u.Name, uType),
-				"",
-				0,
-				func() {
-					a.pages.RemovePage("models")
-					scheme := a.cfg.Provider.SchemeByName(schemeName)
-					if scheme == nil {
-						a.showError(fmt.Sprintf("Scheme %q not found", schemeName))
-						return
-					}
-					a.navigateTo("models", a.newModelsPage(schemeName, uName, scheme.BaseURL))
-				},
+			table.SetCell(detailRow, 0,
+				tview.NewTableCell(detailText).
+					SetTextColor(tcell.ColorDarkGray).
+					SetExpansion(1).
+					SetSelectable(false),
+			)
+			table.SetCell(detailRow, 1,
+				tview.NewTableCell(u.Type+"  ").
+					SetTextColor(tcell.ColorDarkGray).
+					SetAlign(tview.AlignRight).
+					SetSelectable(false),
 			)
 		}
-		if sel >= 0 && sel < list.GetItemCount() {
-			list.SetCurrentItem(sel)
+		if selName != "" {
+			for i, u := range users {
+				if u.Name == selName {
+					table.Select(i*2, 0)
+					return
+				}
+			}
+		}
+		if table.GetRowCount() > 0 {
+			table.Select(0, 0)
 		}
 	}
 	rebuild()
 
-	list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	a.refreshModelCache(rebuild)
+	a.pageRefreshFns["users"] = func() { a.refreshModelCache(rebuild) }
+
+	table.SetSelectedFunc(func(row, _ int) {
+		visIdx := rowToVisIdx(row)
+		users := visibleUsers()
+		if visIdx < 0 || visIdx >= len(users) {
+			return
+		}
+		uName := users[visIdx].Name
+		scheme := a.cfg.Provider.SchemeByName(schemeName)
+		if scheme == nil {
+			a.showError(fmt.Sprintf("Scheme %q not found", schemeName))
+			return
+		}
+		a.navigateTo("models", a.newModelsPage(schemeName, uName, scheme.BaseURL))
+	})
+
+	table.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		row, _ := table.GetSelection()
+		visIdx := rowToVisIdx(row)
+		users := visibleUsers()
 		switch event.Rune() {
 		case 'a':
 			a.showUserForm(schemeName, nil, func(u tuicfg.User) {
 				a.cfg.Provider.Users = append(a.cfg.Provider.Users, u)
 				a.save()
-				rebuild()
+				a.refreshModelCache(rebuild)
 			})
 			return nil
 		case 'e':
-			visIdx := list.GetCurrentItem()
-			cfgIdx := indexInCfg(visIdx)
-			if cfgIdx < 0 {
+			if visIdx < 0 || visIdx >= len(users) {
 				return nil
 			}
-			orig := a.cfg.Provider.Users[cfgIdx]
+			origName := users[visIdx].Name
+			orig := a.cfg.Provider.Users[findUserGlobalIdx(origName)]
 			a.showUserForm(schemeName, &orig, func(u tuicfg.User) {
+				cfgIdx := findUserGlobalIdx(origName)
+				if cfgIdx < 0 {
+					a.showError(fmt.Sprintf("User %q no longer exists", origName))
+					return
+				}
 				a.cfg.Provider.Users[cfgIdx] = u
 				a.save()
-				rebuild()
+				a.refreshModelCache(func() {
+					rebuild()
+					for i, usr := range visibleUsers() {
+						if usr.Name == u.Name {
+							table.Select(i*2, 0)
+							break
+						}
+					}
+				})
 			})
 			return nil
 		case 'd':
-			visIdx := list.GetCurrentItem()
-			cfgIdx := indexInCfg(visIdx)
-			if cfgIdx < 0 {
+			if visIdx < 0 || visIdx >= len(users) {
 				return nil
 			}
-			uName := a.cfg.Provider.Users[cfgIdx].Name
+			uName := users[visIdx].Name
 			a.confirmDelete(fmt.Sprintf("user %q", uName), func() {
-				users := a.cfg.Provider.Users
-				a.cfg.Provider.Users = append(users[:cfgIdx], users[cfgIdx+1:]...)
+				cfgIdx := findUserGlobalIdx(uName)
+				if cfgIdx < 0 {
+					return
+				}
+				all := a.cfg.Provider.Users
+				a.cfg.Provider.Users = append(all[:cfgIdx], all[cfgIdx+1:]...)
 				a.save()
-				rebuild()
+				a.refreshModelCache(rebuild)
 			})
 			return nil
 		}
 		return event
 	})
 
-	footer := hintBar(" Enter: select model  a: add  e: edit  d: delete  ESC: back ")
-
-	return tview.NewFlex().
-		SetDirection(tview.FlexRow).
-		AddItem(list, 0, 1, true).
-		AddItem(footer, 1, 0, false)
+	return a.buildShell("users", table, " a: add  e: edit  d: delete  Enter: models  ESC: back ")
 }
 
 func (a *App) showUserForm(schemeName string, existing *tuicfg.User, onSave func(tuicfg.User)) {
@@ -132,9 +207,9 @@ func (a *App) showUserForm(schemeName string, existing *tuicfg.User, onSave func
 
 	form := tview.NewForm()
 	form.
-		AddInputField("Name", name, 40, nil, func(text string) { name = text }).
+		AddInputField("Name", name, 32, nil, func(text string) { name = text }).
 		AddDropDown("Type", typeOptions, typeIdx, func(option string, _ int) { userType = option }).
-		AddPasswordField("Key", key, 60, '*', func(text string) { key = text }).
+		AddPasswordField("Key", key, 32, '*', func(text string) { key = text }).
 		AddButton("Save", func() {
 			if name == "" {
 				a.showError("Name is required")
@@ -155,7 +230,20 @@ func (a *App) showUserForm(schemeName string, existing *tuicfg.User, onSave func
 			a.hideModal("user-form")
 		})
 
-	form.SetBorder(true).SetTitle(title)
+	form.SetBorder(true).SetTitle(title).SetTitleColor(tcell.ColorLime)
+	form.SetBorderColor(tcell.ColorDarkCyan)
+	form.SetFieldBackgroundColor(tcell.ColorBlack)
+	form.SetFieldTextColor(tcell.ColorWhite)
+	form.SetLabelColor(tcell.ColorAqua)
+	form.SetButtonBackgroundColor(tcell.ColorDarkCyan)
+	form.SetButtonTextColor(tcell.ColorWhite)
+	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape {
+			a.hideModal("user-form")
+			return nil
+		}
+		return event
+	})
 
-	a.showModal("user-form", centeredForm(form, 68, 13))
+	a.showModal("user-form", centeredForm(form, 6, 13))
 }

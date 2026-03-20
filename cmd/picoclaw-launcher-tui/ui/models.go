@@ -33,7 +33,9 @@ func (a *App) newModelsPage(schemeName, userName, baseURL string) tview.Primitiv
 		SetBorders(false).
 		SetSelectable(true, false).
 		SetFixed(0, 0)
-	table.SetBorder(true).SetTitle(fmt.Sprintf(" Models  %s / %s ", schemeName, userName))
+	table.SetBorder(true).SetTitle(fmt.Sprintf(" Models · %s / %s ", schemeName, userName))
+	table.SetTitleColor(tcell.ColorAqua).SetBorderColor(tcell.ColorDarkCyan)
+	table.SetSelectedStyle(tcell.StyleDefault.Background(tcell.ColorTeal).Foreground(tcell.ColorWhite))
 
 	var modelIDs []string
 
@@ -41,19 +43,35 @@ func (a *App) newModelsPage(schemeName, userName, baseURL string) tview.Primitiv
 		SetTextAlign(tview.AlignCenter).
 		SetDynamicColors(true).
 		SetText("[yellow]Fetching models…[-]")
-
-	footer := hintBar(" Enter: select  ESC: back ")
+	status.SetBackgroundColor(tcell.ColorBlack)
 
 	flex := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(status, 1, 0, false).
-		AddItem(table, 0, 1, false).
-		AddItem(footer, 1, 0, false)
+		AddItem(table, 0, 1, false)
 
 	apiKey := a.resolveKey(schemeName, userName)
 
 	go func() {
-		entries, err := fetchModels(baseURL, apiKey)
+		var entries []modelEntry
+		var err error
+		if apiKey == "" {
+			err = fmt.Errorf("key is required")
+		} else {
+			entries, err = fetchModels(baseURL, apiKey)
+		}
+
+		a.modelCacheMu.Lock()
+		if a.modelCache == nil {
+			a.modelCache = make(map[string][]modelEntry)
+		}
+		if err == nil && len(entries) > 0 {
+			a.modelCache[cacheKey(schemeName, userName)] = entries
+		} else {
+			a.modelCache[cacheKey(schemeName, userName)] = nil
+		}
+		a.modelCacheMu.Unlock()
+
 		a.tapp.QueueUpdateDraw(func() {
 			if err != nil {
 				status.SetText(fmt.Sprintf("[red]Error: %s[-]", err.Error()))
@@ -68,7 +86,7 @@ func (a *App) newModelsPage(schemeName, userName, baseURL string) tview.Primitiv
 				return
 			}
 
-			status.SetText(fmt.Sprintf("[green]%d model(s) loaded[-]", len(entries)))
+			status.SetText(fmt.Sprintf("[lime]%d model(s) loaded[-]", len(entries)))
 			for i, m := range entries {
 				modelIDs = append(modelIDs, m.ID)
 				table.SetCell(i, 0,
@@ -80,7 +98,8 @@ func (a *App) newModelsPage(schemeName, userName, baseURL string) tview.Primitiv
 				table.SetCell(i, 1,
 					tview.NewTableCell(" "+m.ID).
 						SetAlign(tview.AlignLeft).
-						SetExpansion(1),
+						SetExpansion(1).
+						SetTextColor(tcell.ColorWhite),
 				)
 			}
 			a.tapp.SetFocus(table)
@@ -100,7 +119,7 @@ func (a *App) newModelsPage(schemeName, userName, baseURL string) tview.Primitiv
 		a.goBack()
 	})
 
-	return flex
+	return a.buildShell("models", flex, " Enter: select  ESC: back ")
 }
 
 func (a *App) resolveKey(schemeName, userName string) string {
@@ -135,9 +154,20 @@ func fetchModels(baseURL, apiKey string) ([]modelEntry, error) {
 		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 
-	var result modelsAPIResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("decode response: %w", err)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read response: %w", err)
 	}
-	return result.Data, nil
+
+	var result modelsAPIResponse
+	if err := json.Unmarshal(body, &result); err == nil && len(result.Data) > 0 {
+		return result.Data, nil
+	}
+
+	var arr []modelEntry
+	if err := json.Unmarshal(body, &arr); err == nil {
+		return arr, nil
+	}
+
+	return nil, fmt.Errorf("decode response: unrecognised shape: %s", strings.TrimSpace(string(body[:min(len(body), 256)])))
 }

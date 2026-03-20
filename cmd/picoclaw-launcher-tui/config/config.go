@@ -95,6 +95,9 @@ func Load(path string) (*TUIConfig, error) {
 
 // Save writes cfg to path atomically (safe for flash / SD storage).
 func Save(path string, cfg *TUIConfig) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return fmt.Errorf("failed to create config directory: %w", err)
+	}
 	var buf bytes.Buffer
 	enc := toml.NewEncoder(&buf)
 	if err := enc.Encode(cfg); err != nil {
