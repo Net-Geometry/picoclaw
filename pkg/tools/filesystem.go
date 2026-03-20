@@ -98,11 +98,112 @@ func isAllowedPath(path string, patterns []*regexp.Regexp) bool {
 }
 
 func matchesAllowedPath(path string, patterns []*regexp.Regexp) bool {
+	cleaned := filepath.Clean(path)
 	for _, pattern := range patterns {
-		if pattern.MatchString(path) {
+		if pattern.MatchString(cleaned) {
+			return true
+		}
+		if root, ok := extractAllowedPathRoot(pattern); ok && isWithinAllowedRoot(cleaned, root) {
 			return true
 		}
 	}
+	return false
+}
+
+func extractAllowedPathRoot(pattern *regexp.Regexp) (string, bool) {
+	raw := pattern.String()
+	if !strings.HasPrefix(raw, "^") {
+		return "", false
+	}
+
+	literal := strings.TrimPrefix(raw, "^")
+
+	// Recognize the common "directory prefix" form: ^<literal>(?:/|$)
+	literal = strings.TrimSuffix(literal, "(?:/|$)")
+	literal = strings.TrimSuffix(literal, `(?:\\|$)`)
+
+	// Reject patterns that still contain regex operators after removing the
+	// optional anchored-directory suffix. That keeps arbitrary regex behavior
+	// unchanged and only enables normalized prefix matching for literal paths.
+	if containsUnescapedRegexMeta(literal) {
+		return "", false
+	}
+
+	unescaped, ok := unescapeRegexLiteral(literal)
+	if !ok || unescaped == "" {
+		return "", false
+	}
+
+	return filepath.Clean(unescaped), filepath.IsAbs(unescaped)
+}
+
+func appendUniquePath(paths []string, path string) []string {
+	for _, existing := range paths {
+		if existing == path {
+			return paths
+		}
+	}
+	return append(paths, path)
+}
+
+func containsUnescapedRegexMeta(s string) bool {
+	escaped := false
+	for _, r := range s {
+		if escaped {
+			escaped = false
+			continue
+		}
+		if r == '\\' {
+			escaped = true
+			continue
+		}
+		switch r {
+		case '.', '+', '*', '?', '(', ')', '[', ']', '{', '}', '|':
+			return true
+		}
+	}
+	return escaped
+}
+
+func unescapeRegexLiteral(s string) (string, bool) {
+	var b strings.Builder
+	b.Grow(len(s))
+
+	escaped := false
+	for _, r := range s {
+		if escaped {
+			b.WriteRune(r)
+			escaped = false
+			continue
+		}
+		if r == '\\' {
+			escaped = true
+			continue
+		}
+		b.WriteRune(r)
+	}
+
+	if escaped {
+		return "", false
+	}
+
+	return b.String(), true
+}
+
+func isWithinAllowedRoot(path, root string) bool {
+	candidate := filepath.Clean(path)
+	allowedVariants := []string{filepath.Clean(root)}
+
+	if resolvedRoot, err := resolvePathAgainstExistingAncestor(root); err == nil {
+		allowedVariants = appendUniquePath(allowedVariants, filepath.Clean(resolvedRoot))
+	}
+
+	for _, allowedRoot := range allowedVariants {
+		if isWithinWorkspace(candidate, allowedRoot) {
+			return true
+		}
+	}
+
 	return false
 }
 
@@ -144,7 +245,7 @@ func resolvePathAgainstExistingAncestor(path string) (string, error) {
 
 func isWithinWorkspace(candidate, workspace string) bool {
 	rel, err := filepath.Rel(filepath.Clean(workspace), filepath.Clean(candidate))
-	return err == nil && filepath.IsLocal(rel)
+	return err == nil && (rel == "." || filepath.IsLocal(rel))
 }
 
 type ReadFileTool struct {
@@ -395,7 +496,7 @@ func (t *WriteFileTool) Name() string {
 }
 
 func (t *WriteFileTool) Description() string {
-	return "Write content to a file"
+	return "Write content to a file. If the file already exists, you must set overwrite=true to replace it."
 }
 
 func (t *WriteFileTool) Parameters() map[string]any {
@@ -409,6 +510,11 @@ func (t *WriteFileTool) Parameters() map[string]any {
 			"content": map[string]any{
 				"type":        "string",
 				"description": "Content to write to the file",
+			},
+			"overwrite": map[string]any{
+				"type":        "boolean",
+				"description": "Must be set to true to overwrite an existing file.",
+				"default":     false,
 			},
 		},
 		"required": []string{"path", "content"},
@@ -424,6 +530,14 @@ func (t *WriteFileTool) Execute(ctx context.Context, args map[string]any) *ToolR
 	content, ok := args["content"].(string)
 	if !ok {
 		return ErrorResult("content is required")
+	}
+
+	overwrite, _ := args["overwrite"].(bool)
+
+	if !overwrite {
+		if _, err := t.fs.Open(path); err == nil {
+			return ErrorResult(fmt.Sprintf("file: %s already exists. Set overwrite=true to replace.", path))
+		}
 	}
 
 	if err := t.fs.WriteFile(path, []byte(content)); err != nil {
