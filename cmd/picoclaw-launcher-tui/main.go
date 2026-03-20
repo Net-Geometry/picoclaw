@@ -8,6 +8,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 
 	tuicfg "github.com/sipeed/picoclaw/cmd/picoclaw-launcher-tui/config"
 	"github.com/sipeed/picoclaw/cmd/picoclaw-launcher-tui/ui"
@@ -17,6 +19,15 @@ func main() {
 	configPath := tuicfg.DefaultConfigPath()
 	if len(os.Args) > 1 {
 		configPath = os.Args[1]
+	}
+
+	configDir := filepath.Dir(configPath)
+	if _, err := os.Stat(configDir); os.IsNotExist(err) {
+		cmd := exec.Command("picoclaw", "onboard")
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		_ = cmd.Run()
 	}
 
 	cfg, err := tuicfg.Load(configPath)
