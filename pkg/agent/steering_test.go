@@ -1036,7 +1036,7 @@ func TestAgentLoop_Continue_PreservesSteeringMedia(t *testing.T) {
 		0x00, 0x00, 0x00,
 		0x90, 0x77, 0x53, 0xDE,
 	}
-	if err := os.WriteFile(pngPath, pngHeader, 0o644); err != nil {
+	if err = os.WriteFile(pngPath, pngHeader, 0o644); err != nil {
 		t.Fatalf("WriteFile failed: %v", err)
 	}
 	ref, err := store.Store(pngPath, media.MediaMeta{Filename: "steer.png", ContentType: "image/png"}, "test")
@@ -1060,7 +1060,7 @@ func TestAgentLoop_Continue_PreservesSteeringMedia(t *testing.T) {
 	al := NewAgentLoop(cfg, msgBus, provider)
 	al.SetMediaStore(store)
 
-	if err := al.Steer(providers.Message{
+	if err = al.Steer(providers.Message{
 		Role:    "user",
 		Content: "describe this image",
 		Media:   []string{ref},

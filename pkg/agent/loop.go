@@ -440,13 +440,6 @@ func (al *AgentLoop) publishResponseIfNeeded(ctx context.Context, channel, chatI
 		})
 }
 
-func (al *AgentLoop) pendingSteeringCount() int {
-	if al.steering == nil {
-		return 0
-	}
-	return al.steering.len()
-}
-
 func (al *AgentLoop) buildContinuationTarget(msg bus.InboundMessage) (*continuationTarget, error) {
 	if msg.Channel == "system" {
 		return nil, nil
