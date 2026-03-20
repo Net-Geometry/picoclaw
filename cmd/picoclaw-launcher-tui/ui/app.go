@@ -25,6 +25,10 @@ type App struct {
 	headerModelTV  *tview.TextView
 	modalOpen      map[string]bool
 
+	// OnModelSelected is called when a model is selected in the UI.
+	// Can be nil to disable.
+	OnModelSelected func(scheme tuicfg.Scheme, user tuicfg.User, modelID string)
+
 	modelCache   map[string][]modelEntry
 	modelCacheMu sync.RWMutex
 	refreshMu    sync.Mutex

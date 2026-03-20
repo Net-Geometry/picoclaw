@@ -8,6 +8,7 @@ package config
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -147,6 +148,78 @@ func (p *Provider) UsersForScheme(schemeName string) []User {
 		}
 	}
 	return out
+}
+
+// SyncSelectedModelToMainConfig syncs the currently selected model to ~/.picoclaw/config.json
+// Adds/replaces a "tui-prefer" model entry and sets it as the default model.
+// Preserves all other existing fields in the config file unchanged.
+func SyncSelectedModelToMainConfig(scheme Scheme, user User, modelID string) error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		home = "."
+	}
+	mainConfigPath := filepath.Join(home, ".picoclaw", "config.json")
+
+	var cfg map[string]interface{}
+	if data, err := os.ReadFile(mainConfigPath); err == nil {
+		if err := json.Unmarshal(data, &cfg); err != nil {
+			cfg = make(map[string]interface{})
+		}
+	} else {
+		cfg = make(map[string]interface{})
+	}
+
+	if _, ok := cfg["agents"]; !ok {
+		cfg["agents"] = make(map[string]interface{})
+	}
+	agents, ok := cfg["agents"].(map[string]interface{})
+	if ok {
+		if _, ok := agents["defaults"]; !ok {
+			agents["defaults"] = make(map[string]interface{})
+		}
+		defaults, ok := agents["defaults"].(map[string]interface{})
+		if ok {
+			defaults["model"] = "tui-prefer"
+		}
+	}
+
+	tuiModel := map[string]interface{}{
+		"model_name": "tui-prefer",
+		"model":      modelID,
+		"api_key":    user.Key,
+		"api_base":   scheme.BaseURL,
+	}
+
+	modelList := []interface{}{}
+	if ml, ok := cfg["model_list"].([]interface{}); ok {
+		modelList = ml
+	}
+
+	found := false
+	for i, m := range modelList {
+		if entry, ok := m.(map[string]interface{}); ok {
+			if name, ok := entry["model_name"].(string); ok && name == "tui-prefer" {
+				modelList[i] = tuiModel
+				found = true
+				break
+			}
+		}
+	}
+	if !found {
+		modelList = append(modelList, tuiModel)
+	}
+	cfg["model_list"] = modelList
+
+	data, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(filepath.Dir(mainConfigPath), 0o700); err != nil {
+		return err
+	}
+
+	return os.WriteFile(mainConfigPath, data, 0o600)
 }
 
 func (cfg *TUIConfig) CurrentModelLabel() string {

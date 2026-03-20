@@ -116,6 +116,24 @@ func (a *App) newModelsPage(schemeName, userName, baseURL string) tview.Primitiv
 			Model:  modelIDs[row],
 		}
 		a.save()
+
+		// Trigger model selected callback if set
+		if a.OnModelSelected != nil && a.cfg.Model.Type == "provider" {
+			scheme := a.cfg.Provider.SchemeByName(schemeName)
+			if scheme == nil {
+				a.goBack()
+				return
+			}
+			var user tuicfg.User
+			for _, u := range a.cfg.Provider.Users {
+				if u.Scheme == schemeName && u.Name == userName {
+					user = u
+					break
+				}
+			}
+			a.OnModelSelected(*scheme, user, modelIDs[row])
+		}
+
 		a.goBack()
 	})
 
