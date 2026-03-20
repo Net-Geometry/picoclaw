@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/sipeed/picoclaw/pkg/bus"
 	"github.com/sipeed/picoclaw/pkg/config"
 	"github.com/sipeed/picoclaw/pkg/providers"
+	"github.com/sipeed/picoclaw/pkg/routing"
 	"github.com/sipeed/picoclaw/pkg/tools"
 )
 
@@ -396,6 +398,103 @@ func (m *toolCallProvider) GetDefaultModel() string {
 	return "tool-call-mock"
 }
 
+type gracefulCaptureProvider struct {
+	mu                 sync.Mutex
+	calls              int
+	toolCalls          []providers.ToolCall
+	finalResp          string
+	terminalMessages   []providers.Message
+	terminalToolsCount int
+}
+
+func (p *gracefulCaptureProvider) Chat(
+	ctx context.Context,
+	messages []providers.Message,
+	tools []providers.ToolDefinition,
+	model string,
+	opts map[string]any,
+) (*providers.LLMResponse, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.calls++
+
+	if p.calls == 1 {
+		return &providers.LLMResponse{
+			ToolCalls: p.toolCalls,
+		}, nil
+	}
+
+	p.terminalMessages = append([]providers.Message(nil), messages...)
+	p.terminalToolsCount = len(tools)
+	return &providers.LLMResponse{
+		Content: p.finalResp,
+	}, nil
+}
+
+func (p *gracefulCaptureProvider) GetDefaultModel() string {
+	return "graceful-capture-mock"
+}
+
+type lateSteeringProvider struct {
+	mu                 sync.Mutex
+	calls              int
+	firstCallStarted   chan struct{}
+	releaseFirstCall   chan struct{}
+	firstStartOnce     sync.Once
+	secondCallMessages []providers.Message
+}
+
+func (p *lateSteeringProvider) Chat(
+	ctx context.Context,
+	messages []providers.Message,
+	tools []providers.ToolDefinition,
+	model string,
+	opts map[string]any,
+) (*providers.LLMResponse, error) {
+	p.mu.Lock()
+	p.calls++
+	call := p.calls
+	p.mu.Unlock()
+
+	if call == 1 {
+		p.firstStartOnce.Do(func() { close(p.firstCallStarted) })
+		<-p.releaseFirstCall
+		return &providers.LLMResponse{Content: "first response"}, nil
+	}
+
+	p.mu.Lock()
+	p.secondCallMessages = append([]providers.Message(nil), messages...)
+	p.mu.Unlock()
+	return &providers.LLMResponse{Content: "continued response"}, nil
+}
+
+func (p *lateSteeringProvider) GetDefaultModel() string {
+	return "late-steering-mock"
+}
+
+type interruptibleTool struct {
+	name    string
+	started chan struct{}
+	once    sync.Once
+}
+
+func (t *interruptibleTool) Name() string        { return t.name }
+func (t *interruptibleTool) Description() string { return "interruptible tool for testing" }
+func (t *interruptibleTool) Parameters() map[string]any {
+	return map[string]any{
+		"type":       "object",
+		"properties": map[string]any{},
+	}
+}
+
+func (t *interruptibleTool) Execute(ctx context.Context, args map[string]any) *tools.ToolResult {
+	if t.started != nil {
+		t.once.Do(func() { close(t.started) })
+	}
+	<-ctx.Done()
+	return tools.ErrorResult(ctx.Err().Error()).WithError(ctx.Err())
+}
+
 func TestAgentLoop_Steering_SkipsRemainingTools(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "agent-test-*")
 	if err != nil {
@@ -565,6 +664,427 @@ func TestAgentLoop_Steering_InitialPoll(t *testing.T) {
 	}
 	if !found {
 		t.Fatal("expected steering message to be injected into conversation context")
+	}
+}
+
+func TestAgentLoop_Run_AutoContinuesLateSteeringMessage(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "agent-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	cfg := &config.Config{
+		Agents: config.AgentsConfig{
+			Defaults: config.AgentDefaults{
+				Workspace:         tmpDir,
+				Model:             "test-model",
+				MaxTokens:         4096,
+				MaxToolIterations: 10,
+			},
+		},
+	}
+
+	msgBus := bus.NewMessageBus()
+	provider := &lateSteeringProvider{
+		firstCallStarted: make(chan struct{}),
+		releaseFirstCall: make(chan struct{}),
+	}
+	al := NewAgentLoop(cfg, msgBus, provider)
+
+	runCtx, cancelRun := context.WithCancel(context.Background())
+	defer cancelRun()
+
+	runErrCh := make(chan error, 1)
+	go func() {
+		runErrCh <- al.Run(runCtx)
+	}()
+
+	first := bus.InboundMessage{
+		Channel:  "test",
+		SenderID: "user1",
+		ChatID:   "chat1",
+		Content:  "first message",
+		Peer: bus.Peer{
+			Kind: "direct",
+			ID:   "user1",
+		},
+	}
+	late := bus.InboundMessage{
+		Channel:  "test",
+		SenderID: "user1",
+		ChatID:   "chat1",
+		Content:  "late append",
+		Peer: bus.Peer{
+			Kind: "direct",
+			ID:   "user1",
+		},
+	}
+
+	pubCtx, pubCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer pubCancel()
+	if err := msgBus.PublishInbound(pubCtx, first); err != nil {
+		t.Fatalf("publish first inbound: %v", err)
+	}
+
+	select {
+	case <-provider.firstCallStarted:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timeout waiting for first provider call to start")
+	}
+
+	if err := msgBus.PublishInbound(pubCtx, late); err != nil {
+		t.Fatalf("publish late inbound: %v", err)
+	}
+
+	close(provider.releaseFirstCall)
+
+	subCtx, subCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer subCancel()
+
+	out1, ok := msgBus.SubscribeOutbound(subCtx)
+	if !ok {
+		t.Fatal("expected first outbound response")
+	}
+	if out1.Content != "first response" {
+		t.Fatalf("expected first response, got %q", out1.Content)
+	}
+
+	out2, ok := msgBus.SubscribeOutbound(subCtx)
+	if !ok {
+		t.Fatal("expected continued outbound response")
+	}
+	if out2.Content != "continued response" {
+		t.Fatalf("expected continued response, got %q", out2.Content)
+	}
+
+	cancelRun()
+	select {
+	case err := <-runErrCh:
+		if err != nil {
+			t.Fatalf("Run returned error: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timeout waiting for Run to stop")
+	}
+
+	provider.mu.Lock()
+	calls := provider.calls
+	secondMessages := append([]providers.Message(nil), provider.secondCallMessages...)
+	provider.mu.Unlock()
+
+	if calls != 2 {
+		t.Fatalf("expected 2 provider calls, got %d", calls)
+	}
+
+	foundLateMessage := false
+	for _, msg := range secondMessages {
+		if msg.Role == "user" && msg.Content == "late append" {
+			foundLateMessage = true
+			break
+		}
+	}
+	if !foundLateMessage {
+		t.Fatal("expected queued late message to be processed in an automatic follow-up turn")
+	}
+}
+
+func TestAgentLoop_InterruptGraceful_UsesTerminalNoToolCall(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "agent-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	cfg := &config.Config{
+		Agents: config.AgentsConfig{
+			Defaults: config.AgentDefaults{
+				Workspace:         tmpDir,
+				Model:             "test-model",
+				MaxTokens:         4096,
+				MaxToolIterations: 10,
+			},
+		},
+	}
+
+	tool1ExecCh := make(chan struct{})
+	tool1 := &slowTool{name: "tool_one", duration: 50 * time.Millisecond, execCh: tool1ExecCh}
+	tool2 := &slowTool{name: "tool_two", duration: 50 * time.Millisecond}
+
+	provider := &gracefulCaptureProvider{
+		toolCalls: []providers.ToolCall{
+			{
+				ID:   "call_1",
+				Type: "function",
+				Name: "tool_one",
+				Function: &providers.FunctionCall{
+					Name:      "tool_one",
+					Arguments: "{}",
+				},
+				Arguments: map[string]any{},
+			},
+			{
+				ID:   "call_2",
+				Type: "function",
+				Name: "tool_two",
+				Function: &providers.FunctionCall{
+					Name:      "tool_two",
+					Arguments: "{}",
+				},
+				Arguments: map[string]any{},
+			},
+		},
+		finalResp: "graceful summary",
+	}
+
+	msgBus := bus.NewMessageBus()
+	al := NewAgentLoop(cfg, msgBus, provider)
+	al.RegisterTool(tool1)
+	al.RegisterTool(tool2)
+	sessionKey := routing.BuildAgentMainSessionKey(routing.DefaultAgentID)
+
+	sub := al.SubscribeEvents(32)
+	defer al.UnsubscribeEvents(sub.ID)
+
+	type result struct {
+		resp string
+		err  error
+	}
+	resultCh := make(chan result, 1)
+	go func() {
+		resp, err := al.ProcessDirectWithChannel(
+			context.Background(),
+			"do something",
+			sessionKey,
+			"test",
+			"chat1",
+		)
+		resultCh <- result{resp: resp, err: err}
+	}()
+
+	select {
+	case <-tool1ExecCh:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timeout waiting for tool_one to start")
+	}
+
+	active := al.GetActiveTurn()
+	if active == nil {
+		t.Fatal("expected active turn while tool is running")
+	}
+	if active.SessionKey != sessionKey {
+		t.Fatalf("expected active session %q, got %q", sessionKey, active.SessionKey)
+	}
+	if active.Channel != "test" || active.ChatID != "chat1" {
+		t.Fatalf("unexpected active turn target: %#v", active)
+	}
+
+	if err := al.InterruptGraceful("wrap it up"); err != nil {
+		t.Fatalf("InterruptGraceful failed: %v", err)
+	}
+
+	select {
+	case r := <-resultCh:
+		if r.err != nil {
+			t.Fatalf("unexpected error: %v", r.err)
+		}
+		if r.resp != "graceful summary" {
+			t.Fatalf("expected graceful summary, got %q", r.resp)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("timeout waiting for graceful interrupt result")
+	}
+
+	if active := al.GetActiveTurn(); active != nil {
+		t.Fatalf("expected no active turn after completion, got %#v", active)
+	}
+
+	provider.mu.Lock()
+	terminalMessages := append([]providers.Message(nil), provider.terminalMessages...)
+	terminalToolsCount := provider.terminalToolsCount
+	calls := provider.calls
+	provider.mu.Unlock()
+
+	if calls != 2 {
+		t.Fatalf("expected 2 provider calls, got %d", calls)
+	}
+	if terminalToolsCount != 0 {
+		t.Fatalf("expected graceful terminal call to disable tools, got %d tool defs", terminalToolsCount)
+	}
+
+	foundHint := false
+	foundSkipped := false
+	expectedHint := "Interrupt requested. Stop scheduling tools and provide a short final summary.\n\n" +
+		"Interrupt hint: wrap it up"
+	for _, msg := range terminalMessages {
+		if msg.Role == "user" && msg.Content == expectedHint {
+			foundHint = true
+		}
+		if msg.Role == "tool" && msg.ToolCallID == "call_2" && msg.Content == "Skipped due to graceful interrupt." {
+			foundSkipped = true
+		}
+	}
+	if !foundHint {
+		t.Fatal("expected graceful terminal call to include interrupt hint message")
+	}
+	if !foundSkipped {
+		t.Fatal("expected remaining tool to be marked as skipped after graceful interrupt")
+	}
+
+	events := collectEventStream(sub.C)
+	interruptEvt, ok := findEvent(events, EventKindInterruptReceived)
+	if !ok {
+		t.Fatal("expected interrupt received event")
+	}
+	interruptPayload, ok := interruptEvt.Payload.(InterruptReceivedPayload)
+	if !ok {
+		t.Fatalf("expected InterruptReceivedPayload, got %T", interruptEvt.Payload)
+	}
+	if interruptPayload.Kind != InterruptKindGraceful {
+		t.Fatalf("expected graceful interrupt payload, got %q", interruptPayload.Kind)
+	}
+
+	turnEndEvt, ok := findEvent(events, EventKindTurnEnd)
+	if !ok {
+		t.Fatal("expected turn end event")
+	}
+	turnEndPayload, ok := turnEndEvt.Payload.(TurnEndPayload)
+	if !ok {
+		t.Fatalf("expected TurnEndPayload, got %T", turnEndEvt.Payload)
+	}
+	if turnEndPayload.Status != TurnEndStatusCompleted {
+		t.Fatalf("expected completed turn after graceful interrupt, got %q", turnEndPayload.Status)
+	}
+}
+
+func TestAgentLoop_InterruptHard_RestoresSession(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "agent-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	cfg := &config.Config{
+		Agents: config.AgentsConfig{
+			Defaults: config.AgentDefaults{
+				Workspace:         tmpDir,
+				Model:             "test-model",
+				MaxTokens:         4096,
+				MaxToolIterations: 10,
+			},
+		},
+	}
+
+	msgBus := bus.NewMessageBus()
+	provider := &toolCallProvider{
+		toolCalls: []providers.ToolCall{
+			{
+				ID:   "call_1",
+				Type: "function",
+				Name: "cancel_tool",
+				Function: &providers.FunctionCall{
+					Name:      "cancel_tool",
+					Arguments: "{}",
+				},
+				Arguments: map[string]any{},
+			},
+		},
+		finalResp: "should not happen",
+	}
+
+	al := NewAgentLoop(cfg, msgBus, provider)
+	started := make(chan struct{})
+	al.RegisterTool(&interruptibleTool{name: "cancel_tool", started: started})
+	sessionKey := routing.BuildAgentMainSessionKey(routing.DefaultAgentID)
+
+	defaultAgent := al.registry.GetDefaultAgent()
+	if defaultAgent == nil {
+		t.Fatal("expected default agent")
+	}
+
+	originalHistory := []providers.Message{
+		{Role: "user", Content: "before"},
+		{Role: "assistant", Content: "after"},
+	}
+	defaultAgent.Sessions.SetHistory(sessionKey, originalHistory)
+
+	sub := al.SubscribeEvents(16)
+	defer al.UnsubscribeEvents(sub.ID)
+
+	type result struct {
+		resp string
+		err  error
+	}
+	resultCh := make(chan result, 1)
+	go func() {
+		resp, err := al.ProcessDirectWithChannel(
+			context.Background(),
+			"do work",
+			sessionKey,
+			"test",
+			"chat1",
+		)
+		resultCh <- result{resp: resp, err: err}
+	}()
+
+	select {
+	case <-started:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timeout waiting for interruptible tool to start")
+	}
+
+	if active := al.GetActiveTurn(); active == nil {
+		t.Fatal("expected active turn before hard abort")
+	}
+
+	if err := al.InterruptHard(); err != nil {
+		t.Fatalf("InterruptHard failed: %v", err)
+	}
+
+	select {
+	case r := <-resultCh:
+		if r.err != nil {
+			t.Fatalf("unexpected error: %v", r.err)
+		}
+		if r.resp != "" {
+			t.Fatalf("expected no final response after hard abort, got %q", r.resp)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("timeout waiting for hard abort result")
+	}
+
+	if active := al.GetActiveTurn(); active != nil {
+		t.Fatalf("expected no active turn after hard abort, got %#v", active)
+	}
+
+	finalHistory := defaultAgent.Sessions.GetHistory(sessionKey)
+	if !reflect.DeepEqual(finalHistory, originalHistory) {
+		t.Fatalf("expected history rollback after hard abort, got %#v", finalHistory)
+	}
+
+	events := collectEventStream(sub.C)
+	interruptEvt, ok := findEvent(events, EventKindInterruptReceived)
+	if !ok {
+		t.Fatal("expected interrupt received event")
+	}
+	interruptPayload, ok := interruptEvt.Payload.(InterruptReceivedPayload)
+	if !ok {
+		t.Fatalf("expected InterruptReceivedPayload, got %T", interruptEvt.Payload)
+	}
+	if interruptPayload.Kind != InterruptKindHard {
+		t.Fatalf("expected hard interrupt payload, got %q", interruptPayload.Kind)
+	}
+
+	turnEndEvt, ok := findEvent(events, EventKindTurnEnd)
+	if !ok {
+		t.Fatal("expected turn end event")
+	}
+	turnEndPayload, ok := turnEndEvt.Payload.(TurnEndPayload)
+	if !ok {
+		t.Fatalf("expected TurnEndPayload, got %T", turnEndEvt.Payload)
+	}
+	if turnEndPayload.Status != TurnEndStatusAborted {
+		t.Fatalf("expected aborted turn, got %q", turnEndPayload.Status)
 	}
 }
 
