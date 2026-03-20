@@ -15,6 +15,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+
 	tuicfg "github.com/sipeed/picoclaw/cmd/picoclaw-launcher-tui/config"
 )
 
@@ -33,8 +34,13 @@ func (a *App) newModelsPage(schemeName, userName, baseURL string) tview.Primitiv
 		SetBorders(false).
 		SetSelectable(true, false).
 		SetFixed(0, 0)
-	table.SetBorder(true).SetTitle(fmt.Sprintf(" [#00f0ff::b] MODELS · %s / %s ", schemeName, userName)).SetTitleColor(tcell.NewHexColor(0x00f0ff)).SetBorderColor(tcell.NewHexColor(0x00f0ff))
-	table.SetSelectedStyle(tcell.StyleDefault.Background(tcell.NewHexColor(0xff00ff)).Foreground(tcell.NewHexColor(0xffffff)))
+	table.SetBorder(true).
+		SetTitle(fmt.Sprintf(" [#00f0ff::b] MODELS · %s / %s ", schemeName, userName)).
+		SetTitleColor(tcell.NewHexColor(0x00f0ff)).
+		SetBorderColor(tcell.NewHexColor(0x00f0ff))
+	table.SetSelectedStyle(
+		tcell.StyleDefault.Background(tcell.NewHexColor(0xff00ff)).Foreground(tcell.NewHexColor(0xffffff)),
+	)
 	table.SetBackgroundColor(tcell.NewHexColor(0x050510))
 
 	var modelIDs []string
@@ -187,5 +193,8 @@ func fetchModels(baseURL, apiKey string) ([]modelEntry, error) {
 		return arr, nil
 	}
 
-	return nil, fmt.Errorf("decode response: unrecognised shape: %s", strings.TrimSpace(string(body[:min(len(body), 256)])))
+	return nil, fmt.Errorf(
+		"decode response: unrecognized shape: %s",
+		strings.TrimSpace(string(body[:min(len(body), 256)])),
+	)
 }

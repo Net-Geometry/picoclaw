@@ -98,7 +98,14 @@ func startGateway() error {
 	time.Sleep(1 * time.Second)
 
 	if runtime.GOOS == "windows" {
-		cmd := exec.Command("wmic", "process", "where", "name='picoclaw.exe' and commandline like '%gateway%'", "get", "processid")
+		cmd := exec.Command(
+			"wmic",
+			"process",
+			"where",
+			"name='picoclaw.exe' and commandline like '%gateway%'",
+			"get",
+			"processid",
+		)
 		output, err := cmd.Output()
 		if err != nil {
 			return fmt.Errorf("failed to get gateway PID: %w", err)
@@ -154,7 +161,10 @@ func stopGateway() error {
 
 func (a *App) newGatewayPage() tview.Primitive {
 	flex := tview.NewFlex().SetDirection(tview.FlexRow)
-	flex.SetBorder(true).SetTitle(" [#00f0ff::b] GATEWAY MANAGEMENT ").SetTitleColor(tcell.NewHexColor(0x00f0ff)).SetBorderColor(tcell.NewHexColor(0x00f0ff))
+	flex.SetBorder(true).
+		SetTitle(" [#00f0ff::b] GATEWAY MANAGEMENT ").
+		SetTitleColor(tcell.NewHexColor(0x00f0ff)).
+		SetBorderColor(tcell.NewHexColor(0x00f0ff))
 	flex.SetBackgroundColor(tcell.NewHexColor(0x050510))
 
 	statusTV := tview.NewTextView().

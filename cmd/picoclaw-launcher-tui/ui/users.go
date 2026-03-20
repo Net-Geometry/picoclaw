@@ -10,6 +10,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+
 	tuicfg "github.com/sipeed/picoclaw/cmd/picoclaw-launcher-tui/config"
 )
 
@@ -17,8 +18,13 @@ func (a *App) newUsersPage(schemeName string) tview.Primitive {
 	table := tview.NewTable().
 		SetBorders(false).
 		SetSelectable(true, false)
-	table.SetBorder(true).SetTitle(fmt.Sprintf(" [#00f0ff::b] USERS · %s ", schemeName)).SetTitleColor(tcell.NewHexColor(0x00f0ff)).SetBorderColor(tcell.NewHexColor(0x00f0ff))
-	table.SetSelectedStyle(tcell.StyleDefault.Background(tcell.NewHexColor(0xff00ff)).Foreground(tcell.NewHexColor(0xffffff)))
+	table.SetBorder(true).
+		SetTitle(fmt.Sprintf(" [#00f0ff::b] USERS · %s ", schemeName)).
+		SetTitleColor(tcell.NewHexColor(0x00f0ff)).
+		SetBorderColor(tcell.NewHexColor(0x00f0ff))
+	table.SetSelectedStyle(
+		tcell.StyleDefault.Background(tcell.NewHexColor(0xff00ff)).Foreground(tcell.NewHexColor(0xffffff)),
+	)
 	table.SetBackgroundColor(tcell.NewHexColor(0x050510))
 
 	visibleUsers := func() []tuicfg.User {
@@ -179,7 +185,11 @@ func (a *App) newUsersPage(schemeName string) tview.Primitive {
 		return event
 	})
 
-	return a.buildShell("users", table, " [#00f0ff]a:[-] add  [#00f0ff]e:[-] edit  [#ff2a2a]d:[-] delete  [#39ff14]Enter:[-] models  [#ff00ff]ESC:[-] back ")
+	return a.buildShell(
+		"users",
+		table,
+		" [#00f0ff]a:[-] add  [#00f0ff]e:[-] edit  [#ff2a2a]d:[-] delete  [#39ff14]Enter:[-] models  [#ff00ff]ESC:[-] back ",
+	)
 }
 
 func (a *App) showUserForm(schemeName string, existing *tuicfg.User, onSave func(tuicfg.User)) {
@@ -229,7 +239,10 @@ func (a *App) showUserForm(schemeName string, existing *tuicfg.User, onSave func
 			a.hideModal("user-form")
 		})
 
-	form.SetBorder(true).SetTitle(" [::b]" + title + " ").SetTitleColor(tcell.NewHexColor(0x39ff14)).SetBorderColor(tcell.NewHexColor(0x00f0ff))
+	form.SetBorder(true).
+		SetTitle(" [::b]" + title + " ").
+		SetTitleColor(tcell.NewHexColor(0x39ff14)).
+		SetBorderColor(tcell.NewHexColor(0x00f0ff))
 	form.SetBackgroundColor(tcell.NewHexColor(0x1a1a2e))
 	form.SetFieldBackgroundColor(tcell.NewHexColor(0x050510))
 	form.SetFieldTextColor(tcell.NewHexColor(0x00f0ff))

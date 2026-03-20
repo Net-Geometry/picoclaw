@@ -15,10 +15,15 @@ import (
 
 func (a *App) newHomePage() tview.Primitive {
 	list := tview.NewList()
-	list.SetBorder(true).SetTitle(" [#00f0ff::b] ACTIVE CONFIGURATION ").SetTitleColor(tcell.NewHexColor(0x00f0ff)).SetBorderColor(tcell.NewHexColor(0x00f0ff))
+	list.SetBorder(true).
+		SetTitle(" [#00f0ff::b] ACTIVE CONFIGURATION ").
+		SetTitleColor(tcell.NewHexColor(0x00f0ff)).
+		SetBorderColor(tcell.NewHexColor(0x00f0ff))
 	list.SetMainTextColor(tcell.NewHexColor(0xe0e0e0))
 	list.SetSecondaryTextColor(tcell.NewHexColor(0x808080))
-	list.SetSelectedStyle(tcell.StyleDefault.Background(tcell.NewHexColor(0x39ff14)).Foreground(tcell.NewHexColor(0x050510)))
+	list.SetSelectedStyle(
+		tcell.StyleDefault.Background(tcell.NewHexColor(0x39ff14)).Foreground(tcell.NewHexColor(0x050510)),
+	)
 	list.SetHighlightFullLine(true)
 	list.SetBackgroundColor(tcell.NewHexColor(0x050510))
 
@@ -28,9 +33,14 @@ func (a *App) newHomePage() tview.Primitive {
 		list.AddItem("MODEL: "+a.cfg.CurrentModelLabel(), "Select to configure AI model", 'm', func() {
 			a.navigateTo("schemes", a.newSchemesPage())
 		})
-		list.AddItem("CHANNELS: Configure communication channels", "Manage Telegram/Discord/WeChat channels", 'n', func() {
-			a.navigateTo("channels", a.newChannelsPage())
-		})
+		list.AddItem(
+			"CHANNELS: Configure communication channels",
+			"Manage Telegram/Discord/WeChat channels",
+			'n',
+			func() {
+				a.navigateTo("channels", a.newChannelsPage())
+			},
+		)
 		list.AddItem("GATEWAY MANAGEMENT", "Manage PicoClaw gateway daemon", 'g', func() {
 			a.navigateTo("gateway", a.newGatewayPage())
 		})
@@ -52,5 +62,9 @@ func (a *App) newHomePage() tview.Primitive {
 
 	a.pageRefreshFns["home"] = rebuildList
 
-	return a.buildShell("home", list, " [#00f0ff]m:[-] model  [#00f0ff]n:[-] channels  [#00f0ff]g:[-] gateway  [#00f0ff]c:[-] chat  [#ff2a2a]q:[-] quit ")
+	return a.buildShell(
+		"home",
+		list,
+		" [#00f0ff]m:[-] model  [#00f0ff]n:[-] channels  [#00f0ff]g:[-] gateway  [#00f0ff]c:[-] chat  [#ff2a2a]q:[-] quit ",
+	)
 }

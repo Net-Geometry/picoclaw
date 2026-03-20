@@ -19,10 +19,15 @@ import (
 
 func (a *App) newChannelsPage() tview.Primitive {
 	list := tview.NewList()
-	list.SetBorder(true).SetTitle(" [#00f0ff::b] COMMUNICATION CHANNELS ").SetTitleColor(tcell.NewHexColor(0x00f0ff)).SetBorderColor(tcell.NewHexColor(0x00f0ff))
+	list.SetBorder(true).
+		SetTitle(" [#00f0ff::b] COMMUNICATION CHANNELS ").
+		SetTitleColor(tcell.NewHexColor(0x00f0ff)).
+		SetBorderColor(tcell.NewHexColor(0x00f0ff))
 	list.SetMainTextColor(tcell.NewHexColor(0xe0e0e0))
 	list.SetSecondaryTextColor(tcell.NewHexColor(0x808080))
-	list.SetSelectedStyle(tcell.StyleDefault.Background(tcell.NewHexColor(0xff00ff)).Foreground(tcell.NewHexColor(0x050510)))
+	list.SetSelectedStyle(
+		tcell.StyleDefault.Background(tcell.NewHexColor(0xff00ff)).Foreground(tcell.NewHexColor(0x050510)),
+	)
 	list.SetHighlightFullLine(true)
 	list.SetBackgroundColor(tcell.NewHexColor(0x050510))
 
@@ -36,14 +41,14 @@ func (a *App) newChannelsPage() tview.Primitive {
 		}
 		configPath := filepath.Join(home, ".picoclaw", "config.json")
 
-		var cfg map[string]interface{}
+		var cfg map[string]any
 		if data, err := os.ReadFile(configPath); err == nil {
 			_ = json.Unmarshal(data, &cfg)
 		}
 
-		if chRaw, ok := cfg["channels"].(map[string]interface{}); ok {
+		if chRaw, ok := cfg["channels"].(map[string]any); ok {
 			for name, ch := range chRaw {
-				chMap, ok := ch.(map[string]interface{})
+				chMap, ok := ch.(map[string]any)
 				enabled := "disabled"
 				if ok {
 					if e, ok := chMap["enabled"].(bool); ok && e {
@@ -74,9 +79,12 @@ func (a *App) newChannelsPage() tview.Primitive {
 	return a.buildShell("channels", list, " [#ff00ff]Enter:[-] edit  [#ff2a2a]ESC:[-] back ")
 }
 
-func (a *App) showChannelEditForm(configPath, channelName string, existing map[string]interface{}) {
+func (a *App) showChannelEditForm(configPath, channelName string, existing map[string]any) {
 	form := tview.NewForm()
-	form.SetBorder(true).SetTitle(" [::b]EDIT CHANNEL ").SetTitleColor(tcell.NewHexColor(0x39ff14)).SetBorderColor(tcell.NewHexColor(0x00f0ff))
+	form.SetBorder(true).
+		SetTitle(" [::b]EDIT CHANNEL ").
+		SetTitleColor(tcell.NewHexColor(0x39ff14)).
+		SetBorderColor(tcell.NewHexColor(0x00f0ff))
 	form.SetBackgroundColor(tcell.NewHexColor(0x1a1a2e))
 	form.SetFieldBackgroundColor(tcell.NewHexColor(0x050510))
 	form.SetFieldTextColor(tcell.NewHexColor(0x00f0ff))
@@ -109,21 +117,21 @@ func (a *App) showChannelEditForm(configPath, channelName string, existing map[s
 	}
 
 	form.AddButton("SAVE", func() {
-		var cfg map[string]interface{}
+		var cfg map[string]any
 		if data, err := os.ReadFile(configPath); err == nil {
 			if err := json.Unmarshal(data, &cfg); err != nil {
-				cfg = make(map[string]interface{})
+				cfg = make(map[string]any)
 			}
 		} else {
-			cfg = make(map[string]interface{})
+			cfg = make(map[string]any)
 		}
 
 		if _, ok := cfg["channels"]; !ok {
-			cfg["channels"] = make(map[string]interface{})
+			cfg["channels"] = make(map[string]any)
 		}
-		channels, ok := cfg["channels"].(map[string]interface{})
+		channels, ok := cfg["channels"].(map[string]any)
 		if !ok {
-			channels = make(map[string]interface{})
+			channels = make(map[string]any)
 			cfg["channels"] = channels
 		}
 
@@ -136,7 +144,7 @@ func (a *App) showChannelEditForm(configPath, channelName string, existing map[s
 			finalName = nameField.GetText()
 		}
 
-		updated := make(map[string]interface{})
+		updated := make(map[string]any)
 		if existing != nil {
 			for k, v := range existing {
 				updated[k] = v

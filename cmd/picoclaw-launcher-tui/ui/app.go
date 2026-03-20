@@ -11,6 +11,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+
 	tuicfg "github.com/sipeed/picoclaw/cmd/picoclaw-launcher-tui/config"
 )
 
@@ -79,7 +80,6 @@ func (a *App) refreshModelCache(onDone func()) {
 				continue
 			}
 			wg.Add(1)
-			u := u
 			bURL := baseURL
 			go func() {
 				defer wg.Done()

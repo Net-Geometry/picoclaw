@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 
 	"github.com/BurntSushi/toml"
+
 	"github.com/sipeed/picoclaw/pkg/fileutil"
 )
 
@@ -160,44 +161,44 @@ func SyncSelectedModelToMainConfig(scheme Scheme, user User, modelID string) err
 	}
 	mainConfigPath := filepath.Join(home, ".picoclaw", "config.json")
 
-	var cfg map[string]interface{}
-	if data, err := os.ReadFile(mainConfigPath); err == nil {
-		if err := json.Unmarshal(data, &cfg); err != nil {
-			cfg = make(map[string]interface{})
+	var cfg map[string]any
+	if data, readErr := os.ReadFile(mainConfigPath); readErr == nil {
+		if unmarshalErr := json.Unmarshal(data, &cfg); unmarshalErr != nil {
+			cfg = make(map[string]any)
 		}
 	} else {
-		cfg = make(map[string]interface{})
+		cfg = make(map[string]any)
 	}
 
 	if _, ok := cfg["agents"]; !ok {
-		cfg["agents"] = make(map[string]interface{})
+		cfg["agents"] = make(map[string]any)
 	}
-	agents, ok := cfg["agents"].(map[string]interface{})
+	agents, ok := cfg["agents"].(map[string]any)
 	if ok {
 		if _, ok := agents["defaults"]; !ok {
-			agents["defaults"] = make(map[string]interface{})
+			agents["defaults"] = make(map[string]any)
 		}
-		defaults, ok := agents["defaults"].(map[string]interface{})
+		defaults, ok := agents["defaults"].(map[string]any)
 		if ok {
 			defaults["model"] = "tui-prefer"
 		}
 	}
 
-	tuiModel := map[string]interface{}{
+	tuiModel := map[string]any{
 		"model_name": "tui-prefer",
 		"model":      modelID,
 		"api_key":    user.Key,
 		"api_base":   scheme.BaseURL,
 	}
 
-	modelList := []interface{}{}
-	if ml, ok := cfg["model_list"].([]interface{}); ok {
+	modelList := []any{}
+	if ml, ok := cfg["model_list"].([]any); ok {
 		modelList = ml
 	}
 
 	found := false
 	for i, m := range modelList {
-		if entry, ok := m.(map[string]interface{}); ok {
+		if entry, ok := m.(map[string]any); ok {
 			if name, ok := entry["model_name"].(string); ok && name == "tui-prefer" {
 				modelList[i] = tuiModel
 				found = true
