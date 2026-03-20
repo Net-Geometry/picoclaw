@@ -97,7 +97,8 @@ func TestSpawnSubTurn(t *testing.T) {
 		},
 	}
 
-	al, _, _, _, cleanup := newTestAgentLoop(t)
+	al, _, _, provider, cleanup := newTestAgentLoop(t)
+	_ = provider
 	defer cleanup()
 
 	for _, tt := range tests {
@@ -164,7 +165,8 @@ func TestSpawnSubTurn(t *testing.T) {
 
 // ====================== Extra Independent Test: Ephemeral Session Isolation ======================
 func TestSpawnSubTurn_EphemeralSessionIsolation(t *testing.T) {
-	al, _, _, _, cleanup := newTestAgentLoop(t)
+	al, _, _, provider, cleanup := newTestAgentLoop(t)
+	_ = provider
 	defer cleanup()
 
 	parentSession := &ephemeralSessionStore{}
@@ -192,7 +194,8 @@ func TestSpawnSubTurn_EphemeralSessionIsolation(t *testing.T) {
 
 // ====================== Extra Independent Test: Result Delivery Path (Async) ======================
 func TestSpawnSubTurn_ResultDelivery(t *testing.T) {
-	al, _, _, _, cleanup := newTestAgentLoop(t)
+	al, _, _, provider, cleanup := newTestAgentLoop(t)
+	_ = provider
 	defer cleanup()
 
 	parent := &turnState{
@@ -221,7 +224,8 @@ func TestSpawnSubTurn_ResultDelivery(t *testing.T) {
 
 // ====================== Extra Independent Test: Result Delivery Path (Sync) ======================
 func TestSpawnSubTurn_ResultDeliverySync(t *testing.T) {
-	al, _, _, _, cleanup := newTestAgentLoop(t)
+	al, _, _, provider, cleanup := newTestAgentLoop(t)
+	_ = provider
 	defer cleanup()
 
 	parent := &turnState{
@@ -290,7 +294,8 @@ func TestSpawnSubTurn_OrphanResultRouting(t *testing.T) {
 
 // ====================== Extra Independent Test: Result Channel Registration ======================
 func TestSubTurnResultChannelRegistration(t *testing.T) {
-	al, _, _, _, cleanup := newTestAgentLoop(t)
+	al, _, _, provider, cleanup := newTestAgentLoop(t)
+	_ = provider
 	defer cleanup()
 
 	parent := &turnState{
@@ -313,7 +318,8 @@ func TestSubTurnResultChannelRegistration(t *testing.T) {
 
 // ====================== Extra Independent Test: Dequeue Pending SubTurn Results ======================
 func TestDequeuePendingSubTurnResults(t *testing.T) {
-	al, _, _, _, cleanup := newTestAgentLoop(t)
+	al, _, _, provider, cleanup := newTestAgentLoop(t)
+	_ = provider
 	defer cleanup()
 
 	sessionKey := "test-session-dequeue"
@@ -361,7 +367,8 @@ func TestDequeuePendingSubTurnResults(t *testing.T) {
 
 // ====================== Extra Independent Test: Concurrency Semaphore ======================
 func TestSubTurnConcurrencySemaphore(t *testing.T) {
-	al, _, _, _, cleanup := newTestAgentLoop(t)
+	al, _, _, provider, cleanup := newTestAgentLoop(t)
+	_ = provider
 	defer cleanup()
 
 	parent := &turnState{
@@ -402,7 +409,8 @@ func TestSubTurnConcurrencySemaphore(t *testing.T) {
 
 // ====================== Extra Independent Test: Hard Abort Cascading ======================
 func TestHardAbortCascading(t *testing.T) {
-	al, _, _, _, cleanup := newTestAgentLoop(t)
+	al, _, _, provider, cleanup := newTestAgentLoop(t)
+	_ = provider
 	defer cleanup()
 
 	sessionKey := "test-session-abort"
@@ -483,7 +491,8 @@ func TestHardAbortCascading(t *testing.T) {
 // TestHardAbortSessionRollback verifies that HardAbort rolls back session history
 // to the state before the turn started, discarding all messages added during the turn.
 func TestHardAbortSessionRollback(t *testing.T) {
-	al, _, _, _, cleanup := newTestAgentLoop(t)
+	al, _, _, provider, cleanup := newTestAgentLoop(t)
+	_ = provider
 	defer cleanup()
 
 	// Create a session with initial history
@@ -538,7 +547,8 @@ func TestHardAbortSessionRollback(t *testing.T) {
 // TestNestedSubTurnHierarchy verifies that nested SubTurns maintain correct
 // parent-child relationships and depth tracking when recursively calling runAgentLoop.
 func TestNestedSubTurnHierarchy(t *testing.T) {
-	al, _, _, _, cleanup := newTestAgentLoop(t)
+	al, _, _, provider, cleanup := newTestAgentLoop(t)
+	_ = provider
 	defer cleanup()
 
 	// Track spawned turns and their depths
@@ -657,7 +667,8 @@ func TestDeliverSubTurnResultNoDeadlock(t *testing.T) {
 // rolling back session history, minimizing the race window where new messages
 // could be added after rollback.
 func TestHardAbortOrderOfOperations(t *testing.T) {
-	al, _, _, _, cleanup := newTestAgentLoop(t)
+	al, _, _, provider, cleanup := newTestAgentLoop(t)
+	_ = provider
 	defer cleanup()
 
 	sess := &ephemeralSessionStore{
@@ -756,7 +767,8 @@ func TestFinishedChannelClosedState(t *testing.T) {
 // TestFinalPollCapturesLateResults verifies that the final poll before Finish()
 // captures results that arrive after the last iteration poll.
 func TestFinalPollCapturesLateResults(t *testing.T) {
-	al, _, _, _, cleanup := newTestAgentLoop(t)
+	al, _, _, provider, cleanup := newTestAgentLoop(t)
+	_ = provider
 	defer cleanup()
 
 	sessionKey := "test-session-final-poll"
