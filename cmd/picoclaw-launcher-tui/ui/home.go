@@ -6,6 +6,9 @@
 package ui
 
 import (
+	"os"
+	"os/exec"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -31,6 +34,15 @@ func (a *App) newHomePage() tview.Primitive {
 		list.AddItem("GATEWAY MANAGEMENT", "Manage PicoClaw gateway daemon", 'g', func() {
 			a.navigateTo("gateway", a.newGatewayPage())
 		})
+		list.AddItem("CHAT: Start AI agent chat", "Launch interactive chat session", 'c', func() {
+			a.tapp.Suspend(func() {
+				cmd := exec.Command("picoclaw", "agent")
+				cmd.Stdin = os.Stdin
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+				_ = cmd.Run()
+			})
+		})
 		list.AddItem("QUIT SYSTEM", "Exit PicoClaw Launcher", 'q', func() { a.tapp.Stop() })
 		if sel >= 0 && sel < list.GetItemCount() {
 			list.SetCurrentItem(sel)
@@ -40,5 +52,5 @@ func (a *App) newHomePage() tview.Primitive {
 
 	a.pageRefreshFns["home"] = rebuildList
 
-	return a.buildShell("home", list, " [#00f0ff]m:[-] configure model  [#ff2a2a]q:[-] quit ")
+	return a.buildShell("home", list, " [#00f0ff]m:[-] model  [#00f0ff]n:[-] channels  [#00f0ff]g:[-] gateway  [#00f0ff]c:[-] chat  [#ff2a2a]q:[-] quit ")
 }
