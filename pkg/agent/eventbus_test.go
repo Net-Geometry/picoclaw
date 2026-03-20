@@ -357,7 +357,7 @@ func TestAgentLoop_EmitsContextCompressEventOnRetry(t *testing.T) {
 		},
 	}
 
-	contextErr := errString("InvalidParameter: Total tokens of image and text exceed max message tokens")
+	contextErr := stringError("InvalidParameter: Total tokens of image and text exceed max message tokens")
 	provider := &failFirstMockProvider{
 		failures:    1,
 		failError:   contextErr,
@@ -630,9 +630,9 @@ func findEvent(events []Event, kind EventKind) (Event, bool) {
 	return Event{}, false
 }
 
-type errString string
+type stringError string
 
-func (e errString) Error() string {
+func (e stringError) Error() string {
 	return string(e)
 }
 
@@ -675,5 +675,7 @@ func (t *asyncFollowUpTool) ExecuteAsync(
 	return tools.AsyncResult("async follow-up scheduled")
 }
 
-var _ tools.Tool = (*mockCustomTool)(nil)
-var _ tools.AsyncExecutor = (*asyncFollowUpTool)(nil)
+var (
+	_ tools.Tool          = (*mockCustomTool)(nil)
+	_ tools.AsyncExecutor = (*asyncFollowUpTool)(nil)
+)
