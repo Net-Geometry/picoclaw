@@ -105,6 +105,8 @@ const (
 	TurnEndStatusCompleted TurnEndStatus = "completed"
 	// TurnEndStatusError indicates the turn ended because of an error.
 	TurnEndStatusError TurnEndStatus = "error"
+	// TurnEndStatusAborted indicates the turn was hard-aborted and rolled back.
+	TurnEndStatusAborted TurnEndStatus = "aborted"
 )
 
 // TurnStartPayload describes the start of a turn.
@@ -215,11 +217,21 @@ type FollowUpQueuedPayload struct {
 	ContentLen int
 }
 
-// InterruptReceivedPayload describes a queued soft interrupt.
+type InterruptKind string
+
+const (
+	InterruptKindSteering InterruptKind = "steering"
+	InterruptKindGraceful InterruptKind = "graceful"
+	InterruptKindHard     InterruptKind = "hard_abort"
+)
+
+// InterruptReceivedPayload describes accepted turn-control input.
 type InterruptReceivedPayload struct {
+	Kind       InterruptKind
 	Role       string
 	ContentLen int
 	QueueDepth int
+	HintLen    int
 }
 
 // SubTurnSpawnPayload describes the creation of a child turn.

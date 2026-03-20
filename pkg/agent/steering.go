@@ -122,20 +122,23 @@ func (al *AgentLoop) Steer(msg providers.Message) error {
 		"content_len": len(msg.Content),
 		"queue_len":   al.steering.len(),
 	})
-	agentID := ""
-	if registry := al.GetRegistry(); registry != nil {
+
+	meta := EventMeta{
+		Source:    "Steer",
+		TracePath: "turn.interrupt.received",
+	}
+	if ts := al.getActiveTurnState(); ts != nil {
+		meta = ts.eventMeta("Steer", "turn.interrupt.received")
+	} else if registry := al.GetRegistry(); registry != nil {
 		if agent := registry.GetDefaultAgent(); agent != nil {
-			agentID = agent.ID
+			meta.AgentID = agent.ID
 		}
 	}
 	al.emitEvent(
 		EventKindInterruptReceived,
-		EventMeta{
-			AgentID:   agentID,
-			Source:    "Steer",
-			TracePath: "turn.interrupt.received",
-		},
+		meta,
 		InterruptReceivedPayload{
+			Kind:       InterruptKindSteering,
 			Role:       msg.Role,
 			ContentLen: len(msg.Content),
 			QueueDepth: al.steering.len(),
@@ -177,6 +180,10 @@ func (al *AgentLoop) dequeueSteeringMessages() []providers.Message {
 //
 // If no steering messages are pending, it returns an empty string.
 func (al *AgentLoop) Continue(ctx context.Context, sessionKey, channel, chatID string) (string, error) {
+	if active := al.GetActiveTurn(); active != nil {
+		return "", fmt.Errorf("turn %s is still active", active.TurnID)
+	}
+
 	steeringMsgs := al.dequeueSteeringMessages()
 	if len(steeringMsgs) == 0 {
 		return "", nil
@@ -185,6 +192,12 @@ func (al *AgentLoop) Continue(ctx context.Context, sessionKey, channel, chatID s
 	agent := al.GetRegistry().GetDefaultAgent()
 	if agent == nil {
 		return "", fmt.Errorf("no default agent available")
+	}
+
+	if tool, ok := agent.Tools.Get("message"); ok {
+		if resetter, ok := tool.(interface{ ResetSentInRound() }); ok {
+			resetter.ResetSentInRound()
+		}
 	}
 
 	// Build a combined user message from the steering messages.
@@ -204,4 +217,45 @@ func (al *AgentLoop) Continue(ctx context.Context, sessionKey, channel, chatID s
 		SendResponse:            false,
 		SkipInitialSteeringPoll: true,
 	})
+}
+
+func (al *AgentLoop) InterruptGraceful(hint string) error {
+	ts := al.getActiveTurnState()
+	if ts == nil {
+		return fmt.Errorf("no active turn")
+	}
+	if !ts.requestGracefulInterrupt(hint) {
+		return fmt.Errorf("turn %s cannot accept graceful interrupt", ts.turnID)
+	}
+
+	al.emitEvent(
+		EventKindInterruptReceived,
+		ts.eventMeta("InterruptGraceful", "turn.interrupt.received"),
+		InterruptReceivedPayload{
+			Kind:    InterruptKindGraceful,
+			HintLen: len(hint),
+		},
+	)
+
+	return nil
+}
+
+func (al *AgentLoop) InterruptHard() error {
+	ts := al.getActiveTurnState()
+	if ts == nil {
+		return fmt.Errorf("no active turn")
+	}
+	if !ts.requestHardAbort() {
+		return fmt.Errorf("turn %s is already aborting", ts.turnID)
+	}
+
+	al.emitEvent(
+		EventKindInterruptReceived,
+		ts.eventMeta("InterruptHard", "turn.interrupt.received"),
+		InterruptReceivedPayload{
+			Kind: InterruptKindHard,
+		},
+	)
+
+	return nil
 }
