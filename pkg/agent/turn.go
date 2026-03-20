@@ -60,8 +60,7 @@ type turnState struct {
 	startedAt    time.Time
 	finalContent string
 
-	pendingSteering []providers.Message
-	followUps       []bus.InboundMessage
+	followUps []bus.InboundMessage
 
 	gracefulInterrupt     bool
 	gracefulInterruptHint string

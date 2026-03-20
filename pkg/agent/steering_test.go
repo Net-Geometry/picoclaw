@@ -914,8 +914,10 @@ func TestAgentLoop_InterruptGraceful_UsesTerminalNoToolCall(t *testing.T) {
 
 	foundHint := false
 	foundSkipped := false
+	expectedHint := "Interrupt requested. Stop scheduling tools and provide a short final summary.\n\n" +
+		"Interrupt hint: wrap it up"
 	for _, msg := range terminalMessages {
-		if msg.Role == "user" && msg.Content == "Interrupt requested. Stop scheduling tools and provide a short final summary.\n\nInterrupt hint: wrap it up" {
+		if msg.Role == "user" && msg.Content == expectedHint {
 			foundHint = true
 		}
 		if msg.Role == "tool" && msg.ToolCallID == "call_2" && msg.Content == "Skipped due to graceful interrupt." {
