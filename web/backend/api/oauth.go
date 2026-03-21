@@ -776,28 +776,28 @@ func modelBelongsToProvider(provider, model string) bool {
 	}
 }
 
-func defaultModelConfigForProvider(provider, authMethod string) config.ModelConfig {
+func defaultModelConfigForProvider(provider, authMethod string) *config.ModelConfig {
 	switch provider {
 	case oauthProviderOpenAI:
-		return config.ModelConfig{
+		return &config.ModelConfig{
 			ModelName:  "gpt-5.4",
 			Model:      "openai/gpt-5.4",
 			AuthMethod: authMethod,
 		}
 	case oauthProviderAnthropic:
-		return config.ModelConfig{
+		return &config.ModelConfig{
 			ModelName:  "claude-sonnet-4.6",
 			Model:      "anthropic/claude-sonnet-4.6",
 			AuthMethod: authMethod,
 		}
 	case oauthProviderGoogleAntigravity:
-		return config.ModelConfig{
+		return &config.ModelConfig{
 			ModelName:  "gemini-flash",
 			Model:      "antigravity/gemini-3-flash",
 			AuthMethod: authMethod,
 		}
 	default:
-		return config.ModelConfig{}
+		return &config.ModelConfig{}
 	}
 }
 

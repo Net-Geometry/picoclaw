@@ -168,8 +168,8 @@ func (t *GroqTranscriber) Name() string {
 func DetectTranscriber(cfg *config.Config) Transcriber {
 	// return any model-list entry that uses the groq/ protocol.
 	for _, mc := range cfg.ModelList {
-		if strings.HasPrefix(mc.Model, "groq/") && mc.APIKey != "" {
-			return NewGroqTranscriber(mc.APIKey)
+		if strings.HasPrefix(mc.Model, "groq/") && mc.APIKey() != "" {
+			return NewGroqTranscriber(mc.APIKey())
 		}
 	}
 	return nil

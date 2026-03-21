@@ -49,7 +49,7 @@ func (s *appState) modelMenu() tview.Primitive {
 			Action: func() {
 				newName := s.nextAvailableModelName("new-model")
 				s.addModel(
-					picoclawconfig.ModelConfig{ModelName: newName, Model: "openai/gpt-5.4"},
+					&picoclawconfig.ModelConfig{ModelName: newName, Model: "openai/gpt-5.4"},
 				)
 				s.push(
 					fmt.Sprintf("model-%d", len(s.config.ModelList)-1),
@@ -90,7 +90,7 @@ func (s *appState) modelMenu() tview.Primitive {
 }
 
 func (s *appState) modelForm(index int) tview.Primitive {
-	model := &s.config.ModelList[index]
+	model := s.config.ModelList[index]
 	form := tview.NewForm()
 	form.SetBorder(true).SetTitle(fmt.Sprintf("Model: %s", model.ModelName))
 
@@ -131,8 +131,8 @@ func (s *appState) modelForm(index int) tview.Primitive {
 			refreshModelMenuFromState(menu, s)
 		}
 	})
-	addInput(form, "API Key", model.APIKey, func(value string) {
-		model.APIKey = value
+	addInput(form, "API Key", model.APIKey(), func(value string) {
+		model.SetAPIKey(value)
 		s.dirty = true
 		refreshMainMenuIfPresent(s)
 		if menu, ok := s.menus["model"]; ok {
@@ -215,7 +215,7 @@ func addIntInput(form *tview.Form, label string, value int, onChange func(int)) 
 	})
 }
 
-func (s *appState) addModel(model picoclawconfig.ModelConfig) {
+func (s *appState) addModel(model *picoclawconfig.ModelConfig) {
 	s.config.ModelList = append(s.config.ModelList, model)
 }
 
@@ -236,7 +236,7 @@ func modelStatusColor(valid bool, selected bool) *tcell.Color {
 	return &color
 }
 
-func refreshModelMenu(menu *Menu, currentModel string, models []picoclawconfig.ModelConfig) {
+func refreshModelMenu(menu *Menu, currentModel string, models []*picoclawconfig.ModelConfig) {
 	for i, model := range models {
 		row := i
 		label := fmt.Sprintf("%s (%s)", model.ModelName, model.Model)
@@ -291,7 +291,7 @@ func refreshModelMenuFromState(menu *Menu, s *appState) {
 			Action: func() {
 				newName := s.nextAvailableModelName("new-model")
 				s.addModel(
-					picoclawconfig.ModelConfig{ModelName: newName, Model: "openai/gpt-5.4"},
+					&picoclawconfig.ModelConfig{ModelName: newName, Model: "openai/gpt-5.4"},
 				)
 				s.push(fmt.Sprintf("model-%d", len(s.config.ModelList)-1), s.modelForm(len(s.config.ModelList)-1))
 			},
@@ -300,8 +300,8 @@ func refreshModelMenuFromState(menu *Menu, s *appState) {
 	menu.applyItems(items)
 }
 
-func isModelValid(model picoclawconfig.ModelConfig) bool {
-	hasKey := strings.TrimSpace(model.APIKey) != "" ||
+func isModelValid(model *picoclawconfig.ModelConfig) bool {
+	hasKey := strings.TrimSpace(model.APIKey()) != "" ||
 		strings.TrimSpace(model.AuthMethod) == "oauth"
 	hasModel := strings.TrimSpace(model.Model) != ""
 	return hasKey && hasModel
@@ -343,7 +343,7 @@ func (s *appState) testModel(model *picoclawconfig.ModelConfig) {
 	if model == nil {
 		return
 	}
-	if strings.TrimSpace(model.APIKey) == "" {
+	if strings.TrimSpace(model.APIKey()) == "" {
 		s.showMessage("Missing API Key", "Set api_key before testing")
 		return
 	}
@@ -375,7 +375,7 @@ func (s *appState) testModel(model *picoclawconfig.ModelConfig) {
 		return
 	}
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Authorization", "Bearer "+strings.TrimSpace(model.APIKey))
+	request.Header.Set("Authorization", "Bearer "+strings.TrimSpace(model.APIKey()))
 
 	resp, err := client.Do(request)
 	if err != nil {

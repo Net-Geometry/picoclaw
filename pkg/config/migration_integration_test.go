@@ -103,8 +103,8 @@ func TestMigration_Integration_LegacyConfigWithoutWorkspace(t *testing.T) {
 	if !cfg.Channels.Telegram.Enabled {
 		t.Error("Telegram.Enabled should be true")
 	}
-	if cfg.Channels.Telegram.Token != "test-token" {
-		t.Errorf("Telegram.Token = %q, want %q", cfg.Channels.Telegram.Token, "test-token")
+	if cfg.Channels.Telegram.Token() != "test-token" {
+		t.Errorf("Telegram.Token = %q, want %q", cfg.Channels.Telegram.Token(), "test-token")
 	}
 	if cfg.Gateway.Port != 18790 {
 		t.Errorf("Gateway.Port = %d, want %d", cfg.Gateway.Port, 18790)

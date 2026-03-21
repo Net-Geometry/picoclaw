@@ -68,7 +68,7 @@ func authLoginOpenAI(useDeviceCode bool) error {
 
 		// If no openai in ModelList, add it
 		if !foundOpenAI {
-			appCfg.ModelList = append(appCfg.ModelList, config.ModelConfig{
+			appCfg.ModelList = append(appCfg.ModelList, &config.ModelConfig{
 				ModelName:  "gpt-5.4",
 				Model:      "openai/gpt-5.4",
 				AuthMethod: "oauth",
@@ -139,7 +139,7 @@ func authLoginGoogleAntigravity() error {
 
 		// If no antigravity in ModelList, add it
 		if !foundAntigravity {
-			appCfg.ModelList = append(appCfg.ModelList, config.ModelConfig{
+			appCfg.ModelList = append(appCfg.ModelList, &config.ModelConfig{
 				ModelName:  "gemini-flash",
 				Model:      "antigravity/gemini-3-flash",
 				AuthMethod: "oauth",
@@ -213,7 +213,7 @@ func authLoginAnthropicSetupToken() error {
 			}
 		}
 		if !found {
-			appCfg.ModelList = append(appCfg.ModelList, config.ModelConfig{
+			appCfg.ModelList = append(appCfg.ModelList, &config.ModelConfig{
 				ModelName:  defaultAnthropicModel,
 				Model:      "anthropic/" + defaultAnthropicModel,
 				AuthMethod: "oauth",
@@ -289,7 +289,7 @@ func authLoginPasteToken(provider string) error {
 				}
 			}
 			if !found {
-				appCfg.ModelList = append(appCfg.ModelList, config.ModelConfig{
+				appCfg.ModelList = append(appCfg.ModelList, &config.ModelConfig{
 					ModelName:  defaultAnthropicModel,
 					Model:      "anthropic/" + defaultAnthropicModel,
 					AuthMethod: "token",
@@ -307,7 +307,7 @@ func authLoginPasteToken(provider string) error {
 				}
 			}
 			if !found {
-				appCfg.ModelList = append(appCfg.ModelList, config.ModelConfig{
+				appCfg.ModelList = append(appCfg.ModelList, &config.ModelConfig{
 					ModelName:  "gpt-5.4",
 					Model:      "openai/gpt-5.4",
 					AuthMethod: "token",

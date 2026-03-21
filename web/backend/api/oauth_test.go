@@ -166,7 +166,7 @@ func TestOAuthLogoutClearsCredentialAndConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadConfig error: %v", err)
 	}
-	cfg.ModelList = append(cfg.ModelList, config.ModelConfig{
+	cfg.ModelList = append(cfg.ModelList, &config.ModelConfig{
 		ModelName:  "gpt-5.4",
 		Model:      "openai/gpt-5.4",
 		AuthMethod: "oauth",
@@ -229,12 +229,18 @@ func setupOAuthTestEnv(t *testing.T) (string, func()) {
 	}
 
 	cfg := config.DefaultConfig()
-	cfg.ModelList = []config.ModelConfig{{
+	cfg.ModelList = []*config.ModelConfig{{
 		ModelName: "custom-default",
 		Model:     "openai/gpt-4o",
-		APIKey:    "sk-default",
 	}}
 	cfg.Agents.Defaults.ModelName = "custom-default"
+	cfg.WithSecurity(&config.SecurityConfig{
+		ModelList: map[string]config.ModelSecurityEntry{
+			"custom-default": {
+				APIKeys: []string{"sk-default"},
+			},
+		},
+	})
 
 	configPath := filepath.Join(tmp, "config.json")
 	if err := config.SaveConfig(configPath, cfg); err != nil {

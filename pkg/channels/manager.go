@@ -240,7 +240,7 @@ func (m *Manager) initChannel(name, displayName string) {
 func (m *Manager) initChannels(channels *config.ChannelsConfig) error {
 	logger.InfoC("channels", "Initializing channel manager")
 
-	if channels.Telegram.Enabled && channels.Telegram.Token != "" {
+	if channels.Telegram.Enabled && channels.Telegram.Token() != "" {
 		m.initChannel("telegram", "Telegram")
 	}
 
@@ -257,7 +257,7 @@ func (m *Manager) initChannels(channels *config.ChannelsConfig) error {
 		m.initChannel("feishu", "Feishu")
 	}
 
-	if channels.Discord.Enabled && channels.Discord.Token != "" {
+	if channels.Discord.Enabled && channels.Discord.Token() != "" {
 		m.initChannel("discord", "Discord")
 	}
 
@@ -273,18 +273,18 @@ func (m *Manager) initChannels(channels *config.ChannelsConfig) error {
 		m.initChannel("dingtalk", "DingTalk")
 	}
 
-	if channels.Slack.Enabled && channels.Slack.BotToken != "" {
+	if channels.Slack.Enabled && channels.Slack.BotToken() != "" {
 		m.initChannel("slack", "Slack")
 	}
 
 	if channels.Matrix.Enabled &&
 		m.config.Channels.Matrix.Homeserver != "" &&
 		m.config.Channels.Matrix.UserID != "" &&
-		m.config.Channels.Matrix.AccessToken != "" {
+		m.config.Channels.Matrix.AccessToken() != "" {
 		m.initChannel("matrix", "Matrix")
 	}
 
-	if channels.LINE.Enabled && channels.LINE.ChannelAccessToken != "" {
+	if channels.LINE.Enabled && channels.LINE.ChannelAccessToken() != "" {
 		m.initChannel("line", "LINE")
 	}
 
@@ -292,11 +292,11 @@ func (m *Manager) initChannels(channels *config.ChannelsConfig) error {
 		m.initChannel("onebot", "OneBot")
 	}
 
-	if channels.WeCom.Enabled && channels.WeCom.Token != "" {
+	if channels.WeCom.Enabled && channels.WeCom.Token() != "" {
 		m.initChannel("wecom", "WeCom")
 	}
 
-	if channels.WeComAIBot.Enabled && channels.WeComAIBot.Token != "" {
+	if channels.WeComAIBot.Enabled && channels.WeComAIBot.Token() != "" {
 		m.initChannel("wecom_aibot", "WeCom AI Bot")
 	}
 
@@ -304,7 +304,7 @@ func (m *Manager) initChannels(channels *config.ChannelsConfig) error {
 		m.initChannel("wecom_app", "WeCom App")
 	}
 
-	if channels.Pico.Enabled && channels.Pico.Token != "" {
+	if channels.Pico.Enabled && channels.Pico.Token() != "" {
 		m.initChannel("pico", "Pico")
 	}
 
