@@ -470,6 +470,13 @@ func TestDefaultConfig_CronAllowCommandEnabled(t *testing.T) {
 	}
 }
 
+func TestDefaultConfig_LogLevel(t *testing.T) {
+	cfg := DefaultConfig()
+	if cfg.Agents.Defaults.LogLevel != "fatal" {
+		t.Errorf("LogLevel = %q, want \"fatal\"", cfg.Agents.Defaults.LogLevel)
+	}
+}
+
 func TestLoadConfig_OpenAIWebSearchDefaultsTrueWhenUnset(t *testing.T) {
 	dir := t.TempDir()
 	configPath := filepath.Join(dir, "config.json")
@@ -1087,7 +1094,8 @@ func TestConfigLogLevelEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadConfig: %v", err)
 	}
-	if cfg.Agents.Defaults.LogLevel != "" {
-		t.Errorf("LogLevel = %q, want \"\"", cfg.Agents.Defaults.LogLevel)
+	// When config omits log_level, the DefaultConfig value ("fatal") is preserved.
+	if cfg.Agents.Defaults.LogLevel != "fatal" {
+		t.Errorf("LogLevel = %q, want \"fatal\"", cfg.Agents.Defaults.LogLevel)
 	}
 }
