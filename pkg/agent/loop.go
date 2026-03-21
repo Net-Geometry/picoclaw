@@ -49,6 +49,7 @@ type AgentLoop struct {
 	transcriber    voice.Transcriber
 	cmdRegistry    *commands.Registry
 	mcp            mcpRuntime
+	hookRuntime    hookRuntime
 	steering       *steeringQueue
 	mu             sync.RWMutex
 	activeTurnMu   sync.RWMutex
@@ -122,6 +123,7 @@ func NewAgentLoop(
 		steering:    newSteeringQueue(parseSteeringMode(cfg.Agents.Defaults.SteeringMode)),
 	}
 	al.hooks = NewHookManager(eventBus)
+	configureHookManagerFromConfig(al.hooks, cfg)
 
 	return al
 }
@@ -259,6 +261,9 @@ func registerSharedTools(
 func (al *AgentLoop) Run(ctx context.Context) error {
 	al.running.Store(true)
 
+	if err := al.ensureHooksInitialized(ctx); err != nil {
+		return err
+	}
 	if err := al.ensureMCPInitialized(ctx); err != nil {
 		return err
 	}
@@ -773,6 +778,9 @@ func (al *AgentLoop) ReloadProviderAndConfig(
 
 	al.mu.Unlock()
 
+	al.hookRuntime.reset(al)
+	configureHookManagerFromConfig(al.hooks, cfg)
+
 	// Close old provider after releasing the lock
 	// This prevents blocking readers while closing
 	if oldProvider, ok := extractProvider(oldRegistry); ok {
@@ -987,6 +995,9 @@ func (al *AgentLoop) ProcessDirectWithChannel(
 	ctx context.Context,
 	content, sessionKey, channel, chatID string,
 ) (string, error) {
+	if err := al.ensureHooksInitialized(ctx); err != nil {
+		return "", err
+	}
 	if err := al.ensureMCPInitialized(ctx); err != nil {
 		return "", err
 	}
@@ -1008,6 +1019,13 @@ func (al *AgentLoop) ProcessHeartbeat(
 	ctx context.Context,
 	content, channel, chatID string,
 ) (string, error) {
+	if err := al.ensureHooksInitialized(ctx); err != nil {
+		return "", err
+	}
+	if err := al.ensureMCPInitialized(ctx); err != nil {
+		return "", err
+	}
+
 	agent := al.GetRegistry().GetDefaultAgent()
 	if agent == nil {
 		return "", fmt.Errorf("no default agent for heartbeat")

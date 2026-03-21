@@ -47,6 +47,39 @@ func newHookTestLoop(
 	}
 }
 
+func TestHookManager_SortsInProcessBeforeProcess(t *testing.T) {
+	hm := NewHookManager(nil)
+	defer hm.Close()
+
+	if err := hm.Mount(HookRegistration{
+		Name:     "process",
+		Priority: -10,
+		Source:   HookSourceProcess,
+		Hook:     struct{}{},
+	}); err != nil {
+		t.Fatalf("mount process hook: %v", err)
+	}
+	if err := hm.Mount(HookRegistration{
+		Name:     "in-process",
+		Priority: 100,
+		Source:   HookSourceInProcess,
+		Hook:     struct{}{},
+	}); err != nil {
+		t.Fatalf("mount in-process hook: %v", err)
+	}
+
+	ordered := hm.snapshotHooks()
+	if len(ordered) != 2 {
+		t.Fatalf("expected 2 hooks, got %d", len(ordered))
+	}
+	if ordered[0].Name != "in-process" {
+		t.Fatalf("expected in-process hook first, got %q", ordered[0].Name)
+	}
+	if ordered[1].Name != "process" {
+		t.Fatalf("expected process hook second, got %q", ordered[1].Name)
+	}
+}
+
 type llmHookTestProvider struct {
 	mu        sync.Mutex
 	lastModel string

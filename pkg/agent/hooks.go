@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"fmt"
+	"io"
 	"sort"
 	"sync"
 	"time"
@@ -30,8 +31,8 @@ const (
 )
 
 type HookDecision struct {
-	Action HookAction
-	Reason string
+	Action HookAction `json:"action"`
+	Reason string     `json:"reason,omitempty"`
 }
 
 func (d HookDecision) normalizedAction() HookAction {
@@ -42,20 +43,29 @@ func (d HookDecision) normalizedAction() HookAction {
 }
 
 type ApprovalDecision struct {
-	Approved bool
-	Reason   string
+	Approved bool   `json:"approved"`
+	Reason   string `json:"reason,omitempty"`
 }
+
+type HookSource uint8
+
+const (
+	HookSourceInProcess HookSource = iota
+	HookSourceProcess
+)
 
 type HookRegistration struct {
 	Name     string
 	Priority int
+	Source   HookSource
 	Hook     any
 }
 
 func NamedHook(name string, hook any) HookRegistration {
 	return HookRegistration{
-		Name: name,
-		Hook: hook,
+		Name:   name,
+		Source: HookSourceInProcess,
+		Hook:   hook,
 	}
 }
 
@@ -78,14 +88,14 @@ type ToolApprover interface {
 }
 
 type LLMHookRequest struct {
-	Meta             EventMeta
-	Model            string
-	Messages         []providers.Message
-	Tools            []providers.ToolDefinition
-	Options          map[string]any
-	Channel          string
-	ChatID           string
-	GracefulTerminal bool
+	Meta             EventMeta                  `json:"meta"`
+	Model            string                     `json:"model"`
+	Messages         []providers.Message        `json:"messages,omitempty"`
+	Tools            []providers.ToolDefinition `json:"tools,omitempty"`
+	Options          map[string]any             `json:"options,omitempty"`
+	Channel          string                     `json:"channel,omitempty"`
+	ChatID           string                     `json:"chat_id,omitempty"`
+	GracefulTerminal bool                       `json:"graceful_terminal,omitempty"`
 }
 
 func (r *LLMHookRequest) Clone() *LLMHookRequest {
@@ -100,11 +110,11 @@ func (r *LLMHookRequest) Clone() *LLMHookRequest {
 }
 
 type LLMHookResponse struct {
-	Meta     EventMeta
-	Model    string
-	Response *providers.LLMResponse
-	Channel  string
-	ChatID   string
+	Meta     EventMeta              `json:"meta"`
+	Model    string                 `json:"model"`
+	Response *providers.LLMResponse `json:"response,omitempty"`
+	Channel  string                 `json:"channel,omitempty"`
+	ChatID   string                 `json:"chat_id,omitempty"`
 }
 
 func (r *LLMHookResponse) Clone() *LLMHookResponse {
@@ -117,11 +127,11 @@ func (r *LLMHookResponse) Clone() *LLMHookResponse {
 }
 
 type ToolCallHookRequest struct {
-	Meta      EventMeta
-	Tool      string
-	Arguments map[string]any
-	Channel   string
-	ChatID    string
+	Meta      EventMeta      `json:"meta"`
+	Tool      string         `json:"tool"`
+	Arguments map[string]any `json:"arguments,omitempty"`
+	Channel   string         `json:"channel,omitempty"`
+	ChatID    string         `json:"chat_id,omitempty"`
 }
 
 func (r *ToolCallHookRequest) Clone() *ToolCallHookRequest {
@@ -134,11 +144,11 @@ func (r *ToolCallHookRequest) Clone() *ToolCallHookRequest {
 }
 
 type ToolApprovalRequest struct {
-	Meta      EventMeta
-	Tool      string
-	Arguments map[string]any
-	Channel   string
-	ChatID    string
+	Meta      EventMeta      `json:"meta"`
+	Tool      string         `json:"tool"`
+	Arguments map[string]any `json:"arguments,omitempty"`
+	Channel   string         `json:"channel,omitempty"`
+	ChatID    string         `json:"chat_id,omitempty"`
 }
 
 func (r *ToolApprovalRequest) Clone() *ToolApprovalRequest {
@@ -151,13 +161,13 @@ func (r *ToolApprovalRequest) Clone() *ToolApprovalRequest {
 }
 
 type ToolResultHookResponse struct {
-	Meta      EventMeta
-	Tool      string
-	Arguments map[string]any
-	Result    *tools.ToolResult
-	Duration  time.Duration
-	Channel   string
-	ChatID    string
+	Meta      EventMeta         `json:"meta"`
+	Tool      string            `json:"tool"`
+	Arguments map[string]any    `json:"arguments,omitempty"`
+	Result    *tools.ToolResult `json:"result,omitempty"`
+	Duration  time.Duration     `json:"duration"`
+	Channel   string            `json:"channel,omitempty"`
+	ChatID    string            `json:"chat_id,omitempty"`
 }
 
 func (r *ToolResultHookResponse) Clone() *ToolResultHookResponse {
@@ -215,7 +225,23 @@ func (hm *HookManager) Close() {
 			hm.eventBus.Unsubscribe(hm.sub.ID)
 		}
 		<-hm.done
+		hm.closeAllHooks()
 	})
+}
+
+func (hm *HookManager) ConfigureTimeouts(observer, interceptor, approval time.Duration) {
+	if hm == nil {
+		return
+	}
+	if observer > 0 {
+		hm.observerTimeout = observer
+	}
+	if interceptor > 0 {
+		hm.interceptorTimeout = interceptor
+	}
+	if approval > 0 {
+		hm.approvalTimeout = approval
+	}
 }
 
 func (hm *HookManager) Mount(reg HookRegistration) error {
@@ -232,6 +258,9 @@ func (hm *HookManager) Mount(reg HookRegistration) error {
 	hm.mu.Lock()
 	defer hm.mu.Unlock()
 
+	if existing, ok := hm.hooks[reg.Name]; ok {
+		closeHookIfPossible(existing.Hook)
+	}
 	hm.hooks[reg.Name] = reg
 	hm.rebuildOrdered()
 	return nil
@@ -245,6 +274,9 @@ func (hm *HookManager) Unmount(name string) {
 	hm.mu.Lock()
 	defer hm.mu.Unlock()
 
+	if existing, ok := hm.hooks[name]; ok {
+		closeHookIfPossible(existing.Hook)
+	}
 	delete(hm.hooks, name)
 	hm.rebuildOrdered()
 }
@@ -425,6 +457,9 @@ func (hm *HookManager) rebuildOrdered() {
 		hm.ordered = append(hm.ordered, reg)
 	}
 	sort.SliceStable(hm.ordered, func(i, j int) bool {
+		if hm.ordered[i].Source != hm.ordered[j].Source {
+			return hm.ordered[i].Source < hm.ordered[j].Source
+		}
 		if hm.ordered[i].Priority == hm.ordered[j].Priority {
 			return hm.ordered[i].Name < hm.ordered[j].Name
 		}
@@ -439,6 +474,17 @@ func (hm *HookManager) snapshotHooks() []HookRegistration {
 	snapshot := make([]HookRegistration, len(hm.ordered))
 	copy(snapshot, hm.ordered)
 	return snapshot
+}
+
+func (hm *HookManager) closeAllHooks() {
+	hm.mu.Lock()
+	defer hm.mu.Unlock()
+
+	for name, reg := range hm.hooks {
+		closeHookIfPossible(reg.Hook)
+		delete(hm.hooks, name)
+	}
+	hm.ordered = nil
 }
 
 func (hm *HookManager) runObserver(name string, observer EventObserver, evt Event) {
@@ -748,4 +794,16 @@ func cloneToolResult(result *tools.ToolResult) *tools.ToolResult {
 		cloned.Media = append([]string(nil), result.Media...)
 	}
 	return &cloned
+}
+
+func closeHookIfPossible(hook any) {
+	closer, ok := hook.(io.Closer)
+	if !ok {
+		return
+	}
+	if err := closer.Close(); err != nil {
+		logger.WarnCF("hooks", "Failed to close hook", map[string]any{
+			"error": err.Error(),
+		})
+	}
 }
