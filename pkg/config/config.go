@@ -234,31 +234,56 @@ type RoutingConfig struct {
 	Threshold  float64 `json:"threshold"`   // complexity score in [0,1]; score >= threshold → primary model
 }
 
-type AgentDefaults struct {
-	Workspace                 string         `json:"workspace"                       env:"PICOCLAW_AGENTS_DEFAULTS_WORKSPACE"`
-	RestrictToWorkspace       bool           `json:"restrict_to_workspace"           env:"PICOCLAW_AGENTS_DEFAULTS_RESTRICT_TO_WORKSPACE"`
-	AllowReadOutsideWorkspace bool           `json:"allow_read_outside_workspace"    env:"PICOCLAW_AGENTS_DEFAULTS_ALLOW_READ_OUTSIDE_WORKSPACE"`
-	Provider                  string         `json:"provider"                        env:"PICOCLAW_AGENTS_DEFAULTS_PROVIDER"`
-	ModelName                 string         `json:"model_name"                      env:"PICOCLAW_AGENTS_DEFAULTS_MODEL_NAME"`
-	ModelFallbacks            []string       `json:"model_fallbacks,omitempty"`
-	ImageModel                string         `json:"image_model,omitempty"           env:"PICOCLAW_AGENTS_DEFAULTS_IMAGE_MODEL"`
-	ImageModelFallbacks       []string       `json:"image_model_fallbacks,omitempty"`
-	MaxTokens                 int            `json:"max_tokens"                      env:"PICOCLAW_AGENTS_DEFAULTS_MAX_TOKENS"`
-	Temperature               *float64       `json:"temperature,omitempty"           env:"PICOCLAW_AGENTS_DEFAULTS_TEMPERATURE"`
-	MaxToolIterations         int            `json:"max_tool_iterations"             env:"PICOCLAW_AGENTS_DEFAULTS_MAX_TOOL_ITERATIONS"`
-	SummarizeMessageThreshold int            `json:"summarize_message_threshold"     env:"PICOCLAW_AGENTS_DEFAULTS_SUMMARIZE_MESSAGE_THRESHOLD"`
-	SummarizeTokenPercent     int            `json:"summarize_token_percent"         env:"PICOCLAW_AGENTS_DEFAULTS_SUMMARIZE_TOKEN_PERCENT"`
-	MaxMediaSize              int            `json:"max_media_size,omitempty"        env:"PICOCLAW_AGENTS_DEFAULTS_MAX_MEDIA_SIZE"`
-	Routing                   *RoutingConfig `json:"routing,omitempty"`
+// ToolFeedbackConfig controls whether tool execution details are sent to the
+// chat channel as real-time feedback messages. When enabled, every tool call
+// produces a short notification with the tool name and its parameters.
+type ToolFeedbackConfig struct {
+	Enabled       bool `json:"enabled"         env:"PICOCLAW_AGENTS_DEFAULTS_TOOL_FEEDBACK_ENABLED"`
+	MaxArgsLength int  `json:"max_args_length" env:"PICOCLAW_AGENTS_DEFAULTS_TOOL_FEEDBACK_MAX_ARGS_LENGTH"`
 }
 
-const DefaultMaxMediaSize = 20 * 1024 * 1024 // 20 MB
+type AgentDefaults struct {
+	Workspace                 string             `json:"workspace"                       env:"PICOCLAW_AGENTS_DEFAULTS_WORKSPACE"`
+	RestrictToWorkspace       bool               `json:"restrict_to_workspace"           env:"PICOCLAW_AGENTS_DEFAULTS_RESTRICT_TO_WORKSPACE"`
+	AllowReadOutsideWorkspace bool               `json:"allow_read_outside_workspace"    env:"PICOCLAW_AGENTS_DEFAULTS_ALLOW_READ_OUTSIDE_WORKSPACE"`
+	Provider                  string             `json:"provider"                        env:"PICOCLAW_AGENTS_DEFAULTS_PROVIDER"`
+	ModelName                 string             `json:"model_name"                      env:"PICOCLAW_AGENTS_DEFAULTS_MODEL_NAME"`
+	ModelFallbacks            []string           `json:"model_fallbacks,omitempty"`
+	ImageModel                string             `json:"image_model,omitempty"           env:"PICOCLAW_AGENTS_DEFAULTS_IMAGE_MODEL"`
+	ImageModelFallbacks       []string           `json:"image_model_fallbacks,omitempty"`
+	MaxTokens                 int                `json:"max_tokens"                      env:"PICOCLAW_AGENTS_DEFAULTS_MAX_TOKENS"`
+	Temperature               *float64           `json:"temperature,omitempty"           env:"PICOCLAW_AGENTS_DEFAULTS_TEMPERATURE"`
+	MaxToolIterations         int                `json:"max_tool_iterations"             env:"PICOCLAW_AGENTS_DEFAULTS_MAX_TOOL_ITERATIONS"`
+	SummarizeMessageThreshold int                `json:"summarize_message_threshold"     env:"PICOCLAW_AGENTS_DEFAULTS_SUMMARIZE_MESSAGE_THRESHOLD"`
+	SummarizeTokenPercent     int                `json:"summarize_token_percent"         env:"PICOCLAW_AGENTS_DEFAULTS_SUMMARIZE_TOKEN_PERCENT"`
+	MaxMediaSize              int                `json:"max_media_size,omitempty"        env:"PICOCLAW_AGENTS_DEFAULTS_MAX_MEDIA_SIZE"`
+	Routing                   *RoutingConfig     `json:"routing,omitempty"`
+	ToolFeedback              ToolFeedbackConfig `json:"tool_feedback,omitempty"`
+}
+
+const (
+	DefaultMaxMediaSize                = 20 * 1024 * 1024 // 20 MB
+	DefaultWeComAIBotProcessingMessage = "⏳ Processing, please wait. The results will be sent shortly."
+)
 
 func (d *AgentDefaults) GetMaxMediaSize() int {
 	if d.MaxMediaSize > 0 {
 		return d.MaxMediaSize
 	}
 	return DefaultMaxMediaSize
+}
+
+// GetToolFeedbackMaxArgsLength returns the max args preview length for tool feedback messages.
+func (d *AgentDefaults) GetToolFeedbackMaxArgsLength() int {
+	if d.ToolFeedback.MaxArgsLength > 0 {
+		return d.ToolFeedback.MaxArgsLength
+	}
+	return 300
+}
+
+// IsToolFeedbackEnabled returns true when tool feedback messages should be sent to the chat.
+func (d *AgentDefaults) IsToolFeedbackEnabled() bool {
+	return d.ToolFeedback.Enabled
 }
 
 // GetModelName returns the effective model name for the agent defaults.
@@ -283,6 +308,7 @@ type ChannelsConfig struct {
 	WeComApp   WeComAppConfig   `json:"wecom_app"`
 	WeComAIBot WeComAIBotConfig `json:"wecom_aibot"`
 	Pico       PicoConfig       `json:"pico"`
+	PicoClient PicoClientConfig `json:"pico_client"`
 	IRC        IRCConfig        `json:"irc"`
 }
 
@@ -303,6 +329,12 @@ type PlaceholderConfig struct {
 	Text    string `json:"text,omitempty"`
 }
 
+type StreamingConfig struct {
+	Enabled         bool `json:"enabled,omitempty"          env:"PICOCLAW_CHANNELS_TELEGRAM_STREAMING_ENABLED"`
+	ThrottleSeconds int  `json:"throttle_seconds,omitempty" env:"PICOCLAW_CHANNELS_TELEGRAM_STREAMING_THROTTLE_SECONDS"`
+	MinGrowthChars  int  `json:"min_growth_chars,omitempty" env:"PICOCLAW_CHANNELS_TELEGRAM_STREAMING_MIN_GROWTH_CHARS"`
+}
+
 type WhatsAppConfig struct {
 	Enabled            bool                `json:"enabled"              env:"PICOCLAW_CHANNELS_WHATSAPP_ENABLED"`
 	BridgeURL          string              `json:"bridge_url"           env:"PICOCLAW_CHANNELS_WHATSAPP_BRIDGE_URL"`
@@ -321,6 +353,7 @@ type TelegramConfig struct {
 	GroupTrigger       GroupTriggerConfig  `json:"group_trigger,omitempty"`
 	Typing             TypingConfig        `json:"typing,omitempty"`
 	Placeholder        PlaceholderConfig   `json:"placeholder,omitempty"`
+	Streaming          StreamingConfig     `json:"streaming,omitempty"`
 	ReasoningChannelID string              `json:"reasoning_channel_id"    env:"PICOCLAW_CHANNELS_TELEGRAM_REASONING_CHANNEL_ID"`
 	UseMarkdownV2      bool                `json:"use_markdown_v2"         env:"PICOCLAW_CHANNELS_TELEGRAM_USE_MARKDOWN_V2"`
 	secDirty           bool
@@ -672,15 +705,18 @@ func (c *WeComAppConfig) SetEncodingAESKey(key string) {
 }
 
 type WeComAIBotConfig struct {
-	Enabled            bool `json:"enabled"              env:"PICOCLAW_CHANNELS_WECOM_AIBOT_ENABLED"`
+	Enabled            bool   `json:"enabled"                      env:"PICOCLAW_CHANNELS_WECOM_AIBOT_ENABLED"`
+	BotID              string `json:"bot_id,omitempty"             env:"PICOCLAW_CHANNELS_WECOM_AIBOT_BOT_ID"`
+	secret             string
 	token              string
 	encodingAESKey     string
-	WebhookPath        string              `json:"webhook_path"         env:"PICOCLAW_CHANNELS_WECOM_AIBOT_WEBHOOK_PATH"`
-	AllowFrom          FlexibleStringSlice `json:"allow_from"           env:"PICOCLAW_CHANNELS_WECOM_AIBOT_ALLOW_FROM"`
-	ReplyTimeout       int                 `json:"reply_timeout"        env:"PICOCLAW_CHANNELS_WECOM_AIBOT_REPLY_TIMEOUT"`
-	MaxSteps           int                 `json:"max_steps"            env:"PICOCLAW_CHANNELS_WECOM_AIBOT_MAX_STEPS"`       // Maximum streaming steps
-	WelcomeMessage     string              `json:"welcome_message"      env:"PICOCLAW_CHANNELS_WECOM_AIBOT_WELCOME_MESSAGE"` // Sent on enter_chat event; empty = no welcome
-	ReasoningChannelID string              `json:"reasoning_channel_id" env:"PICOCLAW_CHANNELS_WECOM_AIBOT_REASONING_CHANNEL_ID"`
+	WebhookPath        string              `json:"webhook_path,omitempty"       env:"PICOCLAW_CHANNELS_WECOM_AIBOT_WEBHOOK_PATH"`
+	AllowFrom          FlexibleStringSlice `json:"allow_from"                   env:"PICOCLAW_CHANNELS_WECOM_AIBOT_ALLOW_FROM"`
+	ReplyTimeout       int                 `json:"reply_timeout"                env:"PICOCLAW_CHANNELS_WECOM_AIBOT_REPLY_TIMEOUT"`
+	MaxSteps           int                 `json:"max_steps"                    env:"PICOCLAW_CHANNELS_WECOM_AIBOT_MAX_STEPS"`       // Maximum streaming steps
+	WelcomeMessage     string              `json:"welcome_message"              env:"PICOCLAW_CHANNELS_WECOM_AIBOT_WELCOME_MESSAGE"` // Sent on enter_chat event; empty = no welcome
+	ProcessingMessage  string              `json:"processing_message,omitempty" env:"PICOCLAW_CHANNELS_WECOM_AIBOT_PROCESSING_MESSAGE"`
+	ReasoningChannelID string              `json:"reasoning_channel_id"         env:"PICOCLAW_CHANNELS_WECOM_AIBOT_REASONING_CHANNEL_ID"`
 	secDirty           bool
 }
 
@@ -703,6 +739,15 @@ func (c *WeComAIBotConfig) SetToken(token string) {
 // SetEncodingAESKey sets the encoding AES key for WeCom AI bot
 func (c *WeComAIBotConfig) SetEncodingAESKey(key string) {
 	c.encodingAESKey = key
+	c.secDirty = true
+}
+
+func (c *WeComAIBotConfig) Secret() string {
+	return c.secret
+}
+
+func (c *WeComAIBotConfig) SetSecret(secret string) {
+	c.secret = secret
 	c.secDirty = true
 }
 
@@ -729,6 +774,16 @@ func (c *PicoConfig) Token() string {
 func (c *PicoConfig) SetToken(token string) {
 	c.token = token
 	c.secDirty = true
+}
+
+type PicoClientConfig struct {
+	Enabled      bool                `json:"enabled"                 env:"PICOCLAW_CHANNELS_PICO_CLIENT_ENABLED"`
+	URL          string              `json:"url"                     env:"PICOCLAW_CHANNELS_PICO_CLIENT_URL"`
+	Token        string              `json:"token"                   env:"PICOCLAW_CHANNELS_PICO_CLIENT_TOKEN"`
+	SessionID    string              `json:"session_id,omitempty"`
+	PingInterval int                 `json:"ping_interval,omitempty"`
+	ReadTimeout  int                 `json:"read_timeout,omitempty"`
+	AllowFrom    FlexibleStringSlice `json:"allow_from"              env:"PICOCLAW_CHANNELS_PICO_CLIENT_ALLOW_FROM"`
 }
 
 type IRCConfig struct {
@@ -1423,10 +1478,13 @@ func applySecurityConfig(cfg *Config, sec *SecurityConfig) error {
 	// Handle WeCom AI Bot credentials
 	if sec.Channels.WeComAIBot != nil {
 		if sec.Channels.WeComAIBot.Token != "" {
-			cfg.Channels.WeComAIBot.SetToken(sec.Channels.WeComAIBot.Token)
+			cfg.Channels.WeComAIBot.token = sec.Channels.WeComAIBot.Token
 		}
 		if sec.Channels.WeComAIBot.EncodingAESKey != "" {
-			cfg.Channels.WeComAIBot.SetEncodingAESKey(sec.Channels.WeComAIBot.EncodingAESKey)
+			cfg.Channels.WeComAIBot.encodingAESKey = sec.Channels.WeComAIBot.EncodingAESKey
+		}
+		if sec.Channels.WeComAIBot.Secret != "" {
+			cfg.Channels.WeComAIBot.secret = sec.Channels.WeComAIBot.Secret
 		}
 	}
 
@@ -1653,6 +1711,7 @@ func SaveConfig(path string, cfg *Config) error {
 		cfg.security.Channels.WeComAIBot = &WeComAIBotSecurity{
 			Token:          cfg.Channels.WeComAIBot.Token(),
 			EncodingAESKey: cfg.Channels.WeComAIBot.EncodingAESKey(),
+			Secret:         cfg.Channels.WeComAIBot.Secret(),
 		}
 		cfg.Channels.WeComAIBot.secDirty = false
 	}

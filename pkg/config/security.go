@@ -111,6 +111,7 @@ type WeComAppSecurity struct {
 }
 
 type WeComAIBotSecurity struct {
+	Secret         string `yaml:"secret,omitempty"           env:"PICOCLAW_CHANNELS_WECOM_AIBOT_SECRET"`
 	Token          string `yaml:"token,omitempty"            env:"PICOCLAW_CHANNELS_WECOM_AIBOT_TOKEN"`
 	EncodingAESKey string `yaml:"encoding_aes_key,omitempty" env:"PICOCLAW_CHANNELS_WECOM_AIBOT_ENCODING_AES_KEY"`
 }

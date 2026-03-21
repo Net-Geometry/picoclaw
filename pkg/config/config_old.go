@@ -504,6 +504,7 @@ func (v *wecomappConfigV0) ToWeComAppConfig() (WeComAppConfig, WeComAppSecurity)
 type wecomaibotConfigV0 struct {
 	Enabled            bool                `json:"enabled"              env:"PICOCLAW_CHANNELS_WECOM_AIBOT_ENABLED"`
 	Token              string              `json:"token"                env:"PICOCLAW_CHANNELS_WECOM_AIBOT_TOKEN"`
+	Secret             string              `json:"secret"               env:"PICOCLAW_CHANNELS_WECOM_AIBOT_SECRET"`
 	EncodingAESKey     string              `json:"encoding_aes_key"     env:"PICOCLAW_CHANNELS_WECOM_AIBOT_ENCODING_AES_KEY"`
 	WebhookPath        string              `json:"webhook_path"         env:"PICOCLAW_CHANNELS_WECOM_AIBOT_WEBHOOK_PATH"`
 	AllowFrom          FlexibleStringSlice `json:"allow_from"           env:"PICOCLAW_CHANNELS_WECOM_AIBOT_ALLOW_FROM"`
@@ -516,8 +517,6 @@ type wecomaibotConfigV0 struct {
 func (v *wecomaibotConfigV0) ToWeComAIBotConfig() (WeComAIBotConfig, WeComAIBotSecurity) {
 	return WeComAIBotConfig{
 			Enabled:            v.Enabled,
-			token:              v.Token,
-			encodingAESKey:     v.EncodingAESKey,
 			WebhookPath:        v.WebhookPath,
 			AllowFrom:          v.AllowFrom,
 			ReplyTimeout:       v.ReplyTimeout,
@@ -526,6 +525,7 @@ func (v *wecomaibotConfigV0) ToWeComAIBotConfig() (WeComAIBotConfig, WeComAIBotS
 			ReasoningChannelID: v.ReasoningChannelID,
 		}, WeComAIBotSecurity{
 			Token:          v.Token,
+			Secret:         v.Secret,
 			EncodingAESKey: v.EncodingAESKey,
 		}
 }

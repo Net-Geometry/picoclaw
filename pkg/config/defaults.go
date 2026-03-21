@@ -37,6 +37,10 @@ func DefaultConfig() *Config {
 				MaxToolIterations:         50,
 				SummarizeMessageThreshold: 20,
 				SummarizeTokenPercent:     75,
+				ToolFeedback: ToolFeedbackConfig{
+					Enabled:       true,
+					MaxArgsLength: 300,
+				},
 			},
 		},
 		Bindings: []AgentBinding{},
@@ -59,6 +63,7 @@ func DefaultConfig() *Config {
 					Enabled: true,
 					Text:    "Thinking... 💭",
 				},
+				Streaming:     StreamingConfig{Enabled: true, ThrottleSeconds: 3, MinGrowthChars: 200},
 				UseMarkdownV2: false,
 			},
 			Feishu: FeishuConfig{
@@ -142,12 +147,13 @@ func DefaultConfig() *Config {
 				ReplyTimeout: 5,
 			},
 			WeComAIBot: WeComAIBotConfig{
-				Enabled:        false,
-				WebhookPath:    "/webhook/wecom-aibot",
-				AllowFrom:      FlexibleStringSlice{},
-				ReplyTimeout:   5,
-				MaxSteps:       10,
-				WelcomeMessage: "Hello! I'm your AI assistant. How can I help you today?",
+				Enabled:           false,
+				WebhookPath:       "/webhook/wecom-aibot",
+				AllowFrom:         FlexibleStringSlice{},
+				ReplyTimeout:      5,
+				MaxSteps:          10,
+				WelcomeMessage:    "Hello! I'm your AI assistant. How can I help you today?",
+				ProcessingMessage: DefaultWeComAIBotProcessingMessage,
 			},
 			Pico: PicoConfig{
 				Enabled:        false,

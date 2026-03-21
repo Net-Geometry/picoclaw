@@ -57,6 +57,7 @@ func hiddenValues(key string, value map[string]any, ch config.ChannelsConfig) {
 	case "wecom_aibot":
 		value["token"] = ch.WeComAIBot.Token()
 		value["key"] = ch.WeComAIBot.EncodingAESKey()
+		value["secret"] = ch.WeComAIBot.Secret()
 	case "dingtalk":
 		value["secret"] = ch.QQ.AppSecret()
 	case "qq":
