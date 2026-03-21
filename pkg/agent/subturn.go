@@ -315,7 +315,7 @@ func spawnSubTurn(
 				}
 			}()
 		case <-timeoutCtx.Done():
-			// Check parent context first - if it was cancelled, propagate that error
+			// Check parent context first - if it was canceled, propagate that error
 			if ctx.Err() != nil {
 				return nil, ctx.Err()
 			}

@@ -129,7 +129,7 @@ func (ts *turnState) Info() *TurnInfo {
 // GetAllActiveTurns retrieves information about all currently active turns across all sessions.
 func (al *AgentLoop) GetAllActiveTurns() []*TurnInfo {
 	var turns []*TurnInfo
-	al.activeTurnStates.Range(func(key, value interface{}) bool {
+	al.activeTurnStates.Range(func(key, value any) bool {
 		if ts, ok := value.(*turnState); ok {
 			turns = append(turns, ts.Info())
 		}

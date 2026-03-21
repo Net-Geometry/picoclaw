@@ -2270,7 +2270,7 @@ func (al *AgentLoop) buildCommandsRuntime(agent *AgentInstance, opts *processOpt
 			}
 			return al.channelManager.GetEnabledChannels()
 		},
-		GetActiveTurn: func() interface{} {
+		GetActiveTurn: func() any {
 			turns := al.GetAllActiveTurns()
 			if len(turns) == 0 {
 				return nil
