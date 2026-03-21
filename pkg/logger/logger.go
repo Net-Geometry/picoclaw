@@ -107,7 +107,7 @@ func GetLevel() LogLevel {
 }
 
 // ParseLevel converts a case-insensitive level name to a LogLevel.
-// Returns the level and true if valid, or (INFO, false) if unrecognised.
+// Returns the level and true if valid, or (INFO, false) if unrecognized.
 func ParseLevel(s string) (LogLevel, bool) {
 	switch strings.ToLower(strings.TrimSpace(s)) {
 	case "debug":
@@ -126,7 +126,7 @@ func ParseLevel(s string) (LogLevel, bool) {
 }
 
 // SetLevelFromString sets the log level from a string value.
-// If the string is empty or not a recognised level name, the current level is kept.
+// If the string is empty or not a recognized level name, the current level is kept.
 func SetLevelFromString(s string) {
 	if s == "" {
 		return
