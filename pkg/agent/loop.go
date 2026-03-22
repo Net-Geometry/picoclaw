@@ -78,7 +78,7 @@ type processOptions struct {
 	SenderID                string              // Current sender ID for dynamic context
 	SenderDisplayName       string              // Current sender display name for dynamic context
 	UserMessage             string              // User message content (may include prefix)
-	ForcedSkills      []string // Skills explicitly requested for this message
+	ForcedSkills            []string            // Skills explicitly requested for this message
 	SystemPromptOverride    string              // Override the default system prompt (Used by SubTurns)
 	Media                   []string            // media:// refs from inbound message
 	InitialSteeringMessages []providers.Message // Steering messages from refactor/agent
@@ -1614,6 +1614,7 @@ func (al *AgentLoop) runTurn(ctx context.Context, ts *turnState) (turnResult, er
 		ts.chatID,
 		ts.opts.SenderID,
 		ts.opts.SenderDisplayName,
+		activeSkillNames(ts.agent, ts.opts)...,
 	)
 
 	cfg := al.GetConfig()
@@ -1643,6 +1644,7 @@ func (al *AgentLoop) runTurn(ctx context.Context, ts *turnState) (turnResult, er
 				newHistory, newSummary, ts.userMessage,
 				ts.media, ts.channel, ts.chatID,
 				ts.opts.SenderID, ts.opts.SenderDisplayName,
+				activeSkillNames(ts.agent, ts.opts)...,
 			)
 			messages = resolveMediaRefs(messages, al.mediaStore, maxMediaSize)
 		}
@@ -2007,8 +2009,8 @@ turnLoop:
 				newSummary := ts.agent.Sessions.GetSummary(ts.sessionKey)
 				messages = ts.agent.ContextBuilder.BuildMessages(
 					newHistory, newSummary, "",
-					nil, opts.Channel, opts.ChatID, opts.SenderID, opts.SenderDisplayName,
-					activeSkillNames(agent, opts)...,
+					nil, ts.channel, ts.chatID, ts.opts.SenderID, ts.opts.SenderDisplayName,
+					activeSkillNames(ts.agent, ts.opts)...,
 				)
 				callMessages = messages
 				if gracefulTerminal {
