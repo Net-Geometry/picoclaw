@@ -509,21 +509,39 @@ func (al *AgentLoop) Run(ctx context.Context) error {
 	return nil
 }
 
-// drainBusToSteering continuously consumes inbound messages and redirects
-// messages from the active scope into the steering queue. Messages from other
-// scopes are requeued so they can be processed normally after the active turn.
+// drainBusToSteering consumes inbound messages and redirects messages from the
+// active scope into the steering queue. Messages from other scopes are requeued
+// so they can be processed normally after the active turn. It drains all
+// immediately available messages, blocking for the first one until ctx is done.
 func (al *AgentLoop) drainBusToSteering(ctx context.Context, activeScope, activeAgentID string) {
+	blocking := true
 	for {
 		var msg bus.InboundMessage
-		select {
-		case <-ctx.Done():
-			return
-		case m, ok := <-al.bus.InboundChan():
-			if !ok {
+
+		if blocking {
+			// Block waiting for the first available message or ctx cancellation.
+			select {
+			case <-ctx.Done():
+				return
+			case m, ok := <-al.bus.InboundChan():
+				if !ok {
+					return
+				}
+				msg = m
+			}
+		} else {
+			// Non-blocking: drain any remaining queued messages, return when empty.
+			select {
+			case m, ok := <-al.bus.InboundChan():
+				if !ok {
+					return
+				}
+				msg = m
+			default:
 				return
 			}
-			msg = m
 		}
+		blocking = false
 
 		msgScope, _, scopeOK := al.resolveSteeringTarget(msg)
 		if !scopeOK || msgScope != activeScope {
