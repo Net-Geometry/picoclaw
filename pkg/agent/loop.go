@@ -42,9 +42,8 @@ type AgentLoop struct {
 	state    *state.Manager
 
 	// Event system (from Incoming)
-	eventBus    *EventBus
-	hooks       *HookManager
-	hookRuntime hookRuntime
+	eventBus *EventBus
+	hooks    *HookManager
 
 	// Runtime state
 	running        atomic.Bool
@@ -55,6 +54,7 @@ type AgentLoop struct {
 	transcriber    voice.Transcriber
 	cmdRegistry    *commands.Registry
 	mcp            mcpRuntime
+	hookRuntime    hookRuntime
 	steering       *steeringQueue
 	mu             sync.RWMutex
 
@@ -534,7 +534,7 @@ func (al *AgentLoop) drainBusToSteering(ctx context.Context, activeScope, active
 					"sender_id": msg.SenderID,
 				})
 			}
-			return
+			continue
 		}
 
 		// Transcribe audio if needed before steering, so the agent sees text.
@@ -717,11 +717,12 @@ func (al *AgentLoop) emitEvent(kind EventKind, meta EventMeta, payload any) {
 		Payload: payload,
 	}
 
-	al.logEvent(evt)
-
 	if al == nil || al.eventBus == nil {
 		return
 	}
+
+	al.logEvent(evt)
+
 	al.eventBus.Emit(evt)
 }
 
