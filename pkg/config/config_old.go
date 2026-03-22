@@ -88,6 +88,7 @@ type channelsConfigV0 struct {
 	Feishu     feishuConfigV0     `json:"feishu"`
 	Discord    discordConfigV0    `json:"discord"`
 	MaixCam    maixcamConfigV0    `json:"maixcam"`
+	Weixin     weixinConfigV0     `json:"weixin"`
 	QQ         qqConfigV0         `json:"qq"`
 	DingTalk   dingtalkConfigV0   `json:"dingtalk"`
 	Slack      slackConfigV0      `json:"slack"`
@@ -107,6 +108,7 @@ func (v *channelsConfigV0) ToChannelsConfig() (ChannelsConfig, ChannelsSecurity)
 	discord, discordSecurity := v.Discord.ToDiscordConfig()
 	maixcam := v.MaixCam.ToMaixCamConfig()
 	qq, qqSecurity := v.QQ.ToQQConfig()
+	weixin, weixinSecurity := v.Weixin.ToWeiXinConfig()
 	dingtalk, dingtalkSecurity := v.DingTalk.ToDingTalkConfig()
 	slack, slackSecurity := v.Slack.ToSlackConfig()
 	matrix, matrixSecurity := v.Matrix.ToMatrixConfig()
@@ -125,6 +127,7 @@ func (v *channelsConfigV0) ToChannelsConfig() (ChannelsConfig, ChannelsSecurity)
 			Discord:    discord,
 			MaixCam:    maixcam,
 			QQ:         qq,
+			Weixin:     weixin,
 			DingTalk:   dingtalk,
 			Slack:      slack,
 			Matrix:     matrix,
@@ -140,6 +143,7 @@ func (v *channelsConfigV0) ToChannelsConfig() (ChannelsConfig, ChannelsSecurity)
 			Feishu:     &feishuSecurity,
 			Discord:    &discordSecurity,
 			QQ:         &qqSecurity,
+			Weixin:     &weixinSecurity,
 			DingTalk:   &dingtalkSecurity,
 			Slack:      &slackSecurity,
 			Matrix:     &matrixSecurity,
@@ -460,6 +464,30 @@ func (v *wecomConfigV0) ToWeComConfig() (WeComConfig, WeComSecurity) {
 		}, WeComSecurity{
 			Token:          v.Token,
 			EncodingAESKey: v.EncodingAESKey,
+		}
+}
+
+type weixinConfigV0 struct {
+	Enabled            bool                `json:"enabled"              env:"PICOCLAW_CHANNELS_WEIXIN_ENABLED"`
+	Token              string              `json:"token"                env:"PICOCLAW_CHANNELS_WEIXIN_TOKEN"`
+	BaseURL            string              `json:"base_url"             env:"PICOCLAW_CHANNELS_WEIXIN_BASE_URL"`
+	CDNBaseURL         string              `json:"cdn_base_url"         env:"PICOCLAW_CHANNELS_WEIXIN_CDN_BASE_URL"`
+	Proxy              string              `json:"proxy"                env:"PICOCLAW_CHANNELS_WEIXIN_PROXY"`
+	AllowFrom          FlexibleStringSlice `json:"allow_from"           env:"PICOCLAW_CHANNELS_WEIXIN_ALLOW_FROM"`
+	ReasoningChannelID string              `json:"reasoning_channel_id" env:"PICOCLAW_CHANNELS_WEIXIN_REASONING_CHANNEL_ID"`
+}
+
+func (v *weixinConfigV0) ToWeiXinConfig() (WeixinConfig, WeixinSecurity) {
+	return WeixinConfig{
+			Enabled:            v.Enabled,
+			token:              v.Token,
+			BaseURL:            v.BaseURL,
+			CDNBaseURL:         v.CDNBaseURL,
+			Proxy:              v.Proxy,
+			AllowFrom:          v.AllowFrom,
+			ReasoningChannelID: v.ReasoningChannelID,
+		}, WeixinSecurity{
+			Token: v.Token,
 		}
 }
 

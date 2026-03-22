@@ -47,6 +47,7 @@ type ChannelsSecurity struct {
 	Telegram   *TelegramSecurity   `yaml:"telegram,omitempty"`
 	Feishu     *FeishuSecurity     `yaml:"feishu,omitempty"`
 	Discord    *DiscordSecurity    `yaml:"discord,omitempty"`
+	Weixin     *WeixinSecurity     `yaml:"weixin,omitempty"`
 	QQ         *QQSecurity         `yaml:"qq,omitempty"`
 	DingTalk   *DingTalkSecurity   `yaml:"dingtalk,omitempty"`
 	Slack      *SlackSecurity      `yaml:"slack,omitempty"`
@@ -72,6 +73,10 @@ type FeishuSecurity struct {
 
 type DiscordSecurity struct {
 	Token string `yaml:"token,omitempty" env:"PICOCLAW_CHANNELS_DISCORD_TOKEN"`
+}
+
+type WeixinSecurity struct {
+	Token string `yaml:"token,omitempty" env:"PICOCLAW_CHANNELS_WEIXIN_TOKEN"`
 }
 
 type QQSecurity struct {

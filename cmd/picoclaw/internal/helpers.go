@@ -6,6 +6,7 @@ import (
 
 	"github.com/sipeed/picoclaw/pkg"
 	"github.com/sipeed/picoclaw/pkg/config"
+	"github.com/sipeed/picoclaw/pkg/logger"
 )
 
 const Logo = pkg.Logo
@@ -28,7 +29,12 @@ func GetConfigPath() string {
 }
 
 func LoadConfig() (*config.Config, error) {
-	return config.LoadConfig(GetConfigPath())
+	cfg, err := config.LoadConfig(GetConfigPath())
+	if err != nil {
+		return nil, err
+	}
+	logger.SetLevelFromString(cfg.Agents.Defaults.LogLevel)
+	return cfg, nil
 }
 
 // FormatVersion returns the version string with optional git commit

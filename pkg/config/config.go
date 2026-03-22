@@ -259,6 +259,7 @@ type AgentDefaults struct {
 	MaxMediaSize              int                `json:"max_media_size,omitempty"        env:"PICOCLAW_AGENTS_DEFAULTS_MAX_MEDIA_SIZE"`
 	Routing                   *RoutingConfig     `json:"routing,omitempty"`
 	ToolFeedback              ToolFeedbackConfig `json:"tool_feedback,omitempty"`
+	LogLevel                  string             `json:"log_level,omitempty"             env:"PICOCLAW_LOG_LEVEL"`
 }
 
 const (
@@ -307,6 +308,7 @@ type ChannelsConfig struct {
 	WeCom      WeComConfig      `json:"wecom"`
 	WeComApp   WeComAppConfig   `json:"wecom_app"`
 	WeComAIBot WeComAIBotConfig `json:"wecom_aibot"`
+	Weixin     WeixinConfig     `json:"weixin"`
 	Pico       PicoConfig       `json:"pico"`
 	PicoClient PicoClientConfig `json:"pico_client"`
 	IRC        IRCConfig        `json:"irc"`
@@ -749,6 +751,27 @@ func (c *WeComAIBotConfig) Secret() string {
 func (c *WeComAIBotConfig) SetSecret(secret string) {
 	c.secret = secret
 	c.secDirty = true
+}
+
+type WeixinConfig struct {
+	Enabled            bool `json:"enabled"              env:"PICOCLAW_CHANNELS_WEIXIN_ENABLED"`
+	token              string
+	BaseURL            string              `json:"base_url"             env:"PICOCLAW_CHANNELS_WEIXIN_BASE_URL"`
+	CDNBaseURL         string              `json:"cdn_base_url"         env:"PICOCLAW_CHANNELS_WEIXIN_CDN_BASE_URL"`
+	Proxy              string              `json:"proxy"                env:"PICOCLAW_CHANNELS_WEIXIN_PROXY"`
+	AllowFrom          FlexibleStringSlice `json:"allow_from"           env:"PICOCLAW_CHANNELS_WEIXIN_ALLOW_FROM"`
+	ReasoningChannelID string              `json:"reasoning_channel_id" env:"PICOCLAW_CHANNELS_WEIXIN_REASONING_CHANNEL_ID"`
+	secDirty           bool
+}
+
+func (c *WeixinConfig) Token() string {
+	return c.token
+}
+
+func (c *WeixinConfig) SetToken(token string) *WeixinConfig {
+	c.token = token
+	c.secDirty = true
+	return c
 }
 
 type PicoConfig struct {
@@ -1391,82 +1414,87 @@ func applySecurityConfig(cfg *Config, sec *SecurityConfig) error {
 
 	// Handle Telegram token
 	if sec.Channels.Telegram != nil && sec.Channels.Telegram.Token != "" {
-		cfg.Channels.Telegram.SetToken(sec.Channels.Telegram.Token)
+		cfg.Channels.Telegram.token = sec.Channels.Telegram.Token
 	}
 
 	// Handle Feishu credentials
 	if sec.Channels.Feishu != nil {
 		if sec.Channels.Feishu.AppSecret != "" {
-			cfg.Channels.Feishu.SetAppSecret(sec.Channels.Feishu.AppSecret)
+			cfg.Channels.Feishu.appSecret = sec.Channels.Feishu.AppSecret
 		}
 		if sec.Channels.Feishu.EncryptKey != "" {
-			cfg.Channels.Feishu.SetEncryptKey(sec.Channels.Feishu.EncryptKey)
+			cfg.Channels.Feishu.encryptKey = sec.Channels.Feishu.EncryptKey
 		}
 		if sec.Channels.Feishu.VerificationToken != "" {
-			cfg.Channels.Feishu.SetVerificationToken(sec.Channels.Feishu.VerificationToken)
+			cfg.Channels.Feishu.verificationToken = sec.Channels.Feishu.VerificationToken
 		}
 	}
 
 	// Handle Discord token
 	if sec.Channels.Discord != nil && sec.Channels.Discord.Token != "" {
-		cfg.Channels.Discord.SetToken(sec.Channels.Discord.Token)
+		cfg.Channels.Discord.token = sec.Channels.Discord.Token
+	}
+
+	// Handle Weixin token
+	if sec.Channels.Weixin != nil && sec.Channels.Weixin.Token != "" {
+		cfg.Channels.Discord.token = sec.Channels.Discord.Token
 	}
 
 	// Handle DingTalk client secret
 	if sec.Channels.DingTalk != nil && sec.Channels.DingTalk.ClientSecret != "" {
-		cfg.Channels.DingTalk.SetClientSecret(sec.Channels.DingTalk.ClientSecret)
+		cfg.Channels.DingTalk.clientSecret = sec.Channels.DingTalk.ClientSecret
 	}
 
 	// Handle Slack tokens
 	if sec.Channels.Slack != nil {
 		if sec.Channels.Slack.BotToken != "" {
-			cfg.Channels.Slack.SetBotToken(sec.Channels.Slack.BotToken)
+			cfg.Channels.Slack.botToken = sec.Channels.Slack.BotToken
 		}
 		if sec.Channels.Slack.AppToken != "" {
-			cfg.Channels.Slack.SetAppToken(sec.Channels.Slack.AppToken)
+			cfg.Channels.Slack.appToken = sec.Channels.Slack.AppToken
 		}
 	}
 
 	// Handle Matrix access token
 	if sec.Channels.Matrix != nil && sec.Channels.Matrix.AccessToken != "" {
-		cfg.Channels.Matrix.SetAccessToken(sec.Channels.Matrix.AccessToken)
+		cfg.Channels.Matrix.accessToken = sec.Channels.Matrix.AccessToken
 	}
 
 	// Handle LINE credentials
 	if sec.Channels.LINE != nil {
 		if sec.Channels.LINE.ChannelSecret != "" {
-			cfg.Channels.LINE.SetChannelSecret(sec.Channels.LINE.ChannelSecret)
+			cfg.Channels.LINE.channelSecret = sec.Channels.LINE.ChannelSecret
 		}
 		if sec.Channels.LINE.ChannelAccessToken != "" {
-			cfg.Channels.LINE.SetChannelAccessToken(sec.Channels.LINE.ChannelAccessToken)
+			cfg.Channels.LINE.channelAccessToken = sec.Channels.LINE.ChannelAccessToken
 		}
 	}
 
 	// Handle OneBot access token
 	if sec.Channels.OneBot != nil && sec.Channels.OneBot.AccessToken != "" {
-		cfg.Channels.OneBot.SetAccessToken(sec.Channels.OneBot.AccessToken)
+		cfg.Channels.OneBot.accessToken = sec.Channels.OneBot.AccessToken
 	}
 
 	// Handle WeCom token and encoding key
 	if sec.Channels.WeCom != nil {
 		if sec.Channels.WeCom.Token != "" {
-			cfg.Channels.WeCom.SetToken(sec.Channels.WeCom.Token)
+			cfg.Channels.WeCom.token = sec.Channels.WeCom.Token
 		}
 		if sec.Channels.WeCom.EncodingAESKey != "" {
-			cfg.Channels.WeCom.SetEncodingAESKey(sec.Channels.WeCom.EncodingAESKey)
+			cfg.Channels.WeCom.encodingAESKey = sec.Channels.WeCom.EncodingAESKey
 		}
 	}
 
 	// Handle WeCom App credentials
 	if sec.Channels.WeComApp != nil {
 		if sec.Channels.WeComApp.CorpSecret != "" {
-			cfg.Channels.WeComApp.SetCorpSecret(sec.Channels.WeComApp.CorpSecret)
+			cfg.Channels.WeComApp.corpSecret = sec.Channels.WeComApp.CorpSecret
 		}
 		if sec.Channels.WeComApp.Token != "" {
-			cfg.Channels.WeComApp.SetToken(sec.Channels.WeComApp.Token)
+			cfg.Channels.WeComApp.token = sec.Channels.WeComApp.Token
 		}
 		if sec.Channels.WeComApp.EncodingAESKey != "" {
-			cfg.Channels.WeComApp.SetEncodingAESKey(sec.Channels.WeComApp.EncodingAESKey)
+			cfg.Channels.WeComApp.encodingAESKey = sec.Channels.WeComApp.EncodingAESKey
 		}
 	}
 
@@ -1485,7 +1513,7 @@ func applySecurityConfig(cfg *Config, sec *SecurityConfig) error {
 
 	// Handle Pico channel token
 	if sec.Channels.Pico != nil && sec.Channels.Pico.Token != "" {
-		cfg.Channels.Pico.SetToken(sec.Channels.Pico.Token)
+		cfg.Channels.Pico.token = sec.Channels.Pico.Token
 	}
 
 	// Handle IRC passwords
@@ -1503,7 +1531,7 @@ func applySecurityConfig(cfg *Config, sec *SecurityConfig) error {
 
 	// Handle QQ app secret
 	if sec.Channels.QQ != nil && sec.Channels.QQ.AppSecret != "" {
-		cfg.Channels.QQ.SetAppSecret(sec.Channels.QQ.AppSecret)
+		cfg.Channels.QQ.appSecret = sec.Channels.QQ.AppSecret
 	}
 
 	cfg.security = sec
@@ -1646,6 +1674,12 @@ func SaveConfig(path string, cfg *Config) error {
 	if cfg.Channels.Discord.secDirty {
 		cfg.security.Channels.Discord = &DiscordSecurity{
 			Token: cfg.Channels.Discord.Token(),
+		}
+		cfg.Channels.Discord.secDirty = false
+	}
+	if cfg.Channels.Weixin.secDirty {
+		cfg.security.Channels.Weixin = &WeixinSecurity{
+			Token: cfg.Channels.Weixin.Token(),
 		}
 		cfg.Channels.Discord.secDirty = false
 	}
