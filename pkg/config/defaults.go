@@ -567,6 +567,7 @@ func DefaultConfig() *Config {
 			MonitorUSB: true,
 		},
 		Voice: VoiceConfig{
+			ModelName:         "",
 			EchoTranscription: false,
 		},
 		BuildInfo: BuildInfo{
