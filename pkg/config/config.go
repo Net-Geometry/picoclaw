@@ -800,14 +800,14 @@ type BaiduSearchConfig struct {
 }
 
 type WebToolsConfig struct {
-	ToolConfig  `                 envPrefix:"PICOCLAW_TOOLS_WEB_"`
-	Brave       BraveConfig       `                                json:"brave"`
-	Tavily      TavilyConfig      `                                json:"tavily"`
-	DuckDuckGo  DuckDuckGoConfig  `                                json:"duckduckgo"`
-	Perplexity  PerplexityConfig  `                                json:"perplexity"`
-	SearXNG     SearXNGConfig     `                                json:"searxng"`
-	GLMSearch   GLMSearchConfig   `                                json:"glm_search"`
-	BaiduSearch BaiduSearchConfig `                                json:"baidu_search"`
+	ToolConfig `                 envPrefix:"PICOCLAW_TOOLS_WEB_"`
+	Brave      BraveConfig       `                                json:"brave"`
+	Tavily     TavilyConfig      `                                json:"tavily"`
+	DuckDuckGo DuckDuckGoConfig  `                                json:"duckduckgo"`
+	Perplexity PerplexityConfig  `                                json:"perplexity"`
+	SearXNG    SearXNGConfig     `                                json:"searxng"`
+	GLMSearch  GLMSearchConfig   `                                json:"glm_search"`
+	BaiduSearch BaiduSearchConfig `                               json:"baidu_search"`
 	// PreferNative controls whether to use provider-native web search when
 	// the active LLM supports it (e.g. OpenAI web_search_preview). When true,
 	// the client-side web_search tool is hidden to avoid duplicate search surfaces,
