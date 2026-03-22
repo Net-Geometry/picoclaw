@@ -2528,7 +2528,7 @@ turnLoop:
 				Role:    "assistant",
 				Content: handledToolResponseSummary,
 			}
-			messages = append(messages, summaryMsg)
+
 			if !ts.opts.NoHistory {
 				ts.agent.Sessions.AddMessage(ts.sessionKey, summaryMsg.Role, summaryMsg.Content)
 				ts.recordPersistedMessage(summaryMsg)
