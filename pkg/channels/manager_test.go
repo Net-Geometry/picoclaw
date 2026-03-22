@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -54,6 +55,26 @@ func (m *mockMediaChannel) SendMedia(ctx context.Context, msg bus.OutboundMediaM
 	if m.sendMediaFn != nil {
 		return m.sendMediaFn(ctx, msg)
 	}
+	return nil
+}
+
+type mockDeletingMediaChannel struct {
+	mockMediaChannel
+	deleteCalls int
+	lastDeleted struct {
+		chatID    string
+		messageID string
+	}
+}
+
+func (m *mockDeletingMediaChannel) DeleteMessage(
+	_ context.Context,
+	chatID string,
+	messageID string,
+) error {
+	m.deleteCalls++
+	m.lastDeleted.chatID = chatID
+	m.lastDeleted.messageID = messageID
 	return nil
 }
 
@@ -275,6 +296,69 @@ func TestSendMedia_PropagatesFailure(t *testing.T) {
 	}
 	if !errors.Is(err, ErrSendFailed) {
 		t.Fatalf("expected ErrSendFailed, got %v", err)
+	}
+}
+
+func TestSendMedia_UnsupportedChannelReturnsError(t *testing.T) {
+	m := newTestManager()
+	ch := &mockChannel{
+		sendFn: func(_ context.Context, _ bus.OutboundMessage) error {
+			return nil
+		},
+	}
+	w := &channelWorker{
+		ch:      ch,
+		limiter: rate.NewLimiter(rate.Inf, 1),
+	}
+	m.channels["test"] = ch
+	m.workers["test"] = w
+
+	err := m.SendMedia(context.Background(), bus.OutboundMediaMessage{
+		Channel: "test",
+		ChatID:  "chat1",
+		Parts:   []bus.MediaPart{{Ref: "media://abc"}},
+	})
+	if err == nil {
+		t.Fatal("expected SendMedia to return error for unsupported channel")
+	}
+	if !strings.Contains(err.Error(), "does not support media sending") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestSendMedia_DeletesPlaceholderBeforeSending(t *testing.T) {
+	m := newTestManager()
+	ch := &mockDeletingMediaChannel{
+		mockMediaChannel: mockMediaChannel{
+			sendMediaFn: func(_ context.Context, _ bus.OutboundMediaMessage) error {
+				return nil
+			},
+		},
+	}
+	w := &channelWorker{
+		ch:      ch,
+		limiter: rate.NewLimiter(rate.Inf, 1),
+	}
+	m.channels["test"] = ch
+	m.workers["test"] = w
+	m.RecordPlaceholder("test", "chat1", "placeholder-1")
+
+	err := m.SendMedia(context.Background(), bus.OutboundMediaMessage{
+		Channel: "test",
+		ChatID:  "chat1",
+		Parts:   []bus.MediaPart{{Ref: "media://abc"}},
+	})
+	if err != nil {
+		t.Fatalf("SendMedia() error = %v", err)
+	}
+	if ch.deleteCalls != 1 {
+		t.Fatalf("expected placeholder delete to be called once, got %d", ch.deleteCalls)
+	}
+	if ch.lastDeleted.chatID != "chat1" || ch.lastDeleted.messageID != "placeholder-1" {
+		t.Fatalf("unexpected placeholder deletion target: %+v", ch.lastDeleted)
+	}
+	if len(ch.sentMediaMessages) != 1 {
+		t.Fatalf("expected media to be sent once, got %d", len(ch.sentMediaMessages))
 	}
 }
 

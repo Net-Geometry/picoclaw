@@ -206,6 +206,40 @@ func (m *Manager) preSend(ctx context.Context, name string, msg bus.OutboundMess
 	return false
 }
 
+// preSendMedia handles typing stop, reaction undo, and placeholder cleanup
+// before sending media attachments. Unlike preSend for text messages, media
+// delivery never edits the placeholder because there is no text payload to
+// replace it with; it only attempts to delete the placeholder when possible.
+func (m *Manager) preSendMedia(ctx context.Context, name string, msg bus.OutboundMediaMessage, ch Channel) {
+	key := name + ":" + msg.ChatID
+
+	// 1. Stop typing
+	if v, loaded := m.typingStops.LoadAndDelete(key); loaded {
+		if entry, ok := v.(typingEntry); ok {
+			entry.stop() // idempotent, safe
+		}
+	}
+
+	// 2. Undo reaction
+	if v, loaded := m.reactionUndos.LoadAndDelete(key); loaded {
+		if entry, ok := v.(reactionEntry); ok {
+			entry.undo() // idempotent, safe
+		}
+	}
+
+	// 3. Clear any finalized stream marker for this chat before media delivery.
+	m.streamActive.LoadAndDelete(key)
+
+	// 4. Delete placeholder if present.
+	if v, loaded := m.placeholders.LoadAndDelete(key); loaded {
+		if entry, ok := v.(placeholderEntry); ok && entry.id != "" {
+			if deleter, ok := ch.(MessageDeleter); ok {
+				deleter.DeleteMessage(ctx, msg.ChatID, entry.id) // best effort
+			}
+		}
+	}
+}
+
 func NewManager(cfg *config.Config, messageBus *bus.MessageBus, store media.MediaStore) (*Manager, error) {
 	m := &Manager{
 		channels:      make(map[string]Channel),
@@ -779,7 +813,8 @@ func (m *Manager) runMediaWorker(ctx context.Context, name string, w *channelWor
 }
 
 // sendMediaWithRetry sends a media message through the channel with rate limiting and
-// retry logic. It returns nil on success, or the last error after retries.
+// retry logic. It returns nil on success, or the last error after retries,
+// including when the channel does not support MediaSender.
 func (m *Manager) sendMediaWithRetry(
 	ctx context.Context,
 	name string,
@@ -788,16 +823,21 @@ func (m *Manager) sendMediaWithRetry(
 ) error {
 	ms, ok := w.ch.(MediaSender)
 	if !ok {
-		logger.DebugCF("channels", "Channel does not support MediaSender, skipping media", map[string]any{
+		err := fmt.Errorf("channel %q does not support media sending", name)
+		logger.WarnCF("channels", "Channel does not support MediaSender", map[string]any{
 			"channel": name,
+			"error":   err.Error(),
 		})
-		return nil
+		return err
 	}
 
 	// Rate limit: wait for token
 	if err := w.limiter.Wait(ctx); err != nil {
 		return err
 	}
+
+	// Pre-send: stop typing and clean up any placeholder before sending media.
+	m.preSendMedia(ctx, name, msg, w.ch)
 
 	var lastErr error
 	for attempt := 0; attempt <= maxRetries; attempt++ {
