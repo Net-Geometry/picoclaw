@@ -60,9 +60,6 @@ cmd/telegram/
 web/backend/dist/*
 !web/backend/dist/.gitkeep
 
-<<<<<<< HEAD
 .claude/
-=======
 
 docker/data
->>>>>>> upstream-main
