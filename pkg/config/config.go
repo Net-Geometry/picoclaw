@@ -1276,7 +1276,6 @@ func LoadConfig(path string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to load security config: %w", err)
 	}
-	logger.Infof("sec: %#v", sec.ModelList)
 
 	// Apply security references from security.yml BEFORE resolveAPIKeys
 	// This resolves ref: references to actual values
@@ -1297,12 +1296,10 @@ func LoadConfig(path string) (*Config, error) {
 		}
 	}
 
-	// logger.Infof("cfg: %#v", cfg.ModelList[0])
 	if err := env.Parse(cfg); err != nil {
 		return nil, err
 	}
 
-	// logger.Infof("cfg: %#v", cfg.ModelList[0])
 	if err := resolveAPIKeys(cfg.ModelList, filepath.Dir(path)); err != nil {
 		return nil, err
 	}
@@ -1312,11 +1309,9 @@ func LoadConfig(path string) (*Config, error) {
 		return nil, err
 	}
 
-	// logger.Infof("cfg: %#v", cfg.ModelList[0])
 	// Expand multi-key configs into separate entries for key-level failover
 	cfg.ModelList = expandMultiKeyModels(cfg.ModelList)
 
-	// logger.Infof("cfg: %#v", cfg.ModelList[0])
 	// Migrate legacy channel config fields to new unified structures
 	cfg.migrateChannelConfigs()
 
@@ -1944,7 +1939,6 @@ func expandMultiKeyModels(models []*ModelConfig) []*ModelConfig {
 		// Single key or no keys: keep as-is
 		if len(keys) <= 1 {
 			m.apiKeys = keys
-			logger.Infof("keys:%v", keys)
 			expanded = append(expanded, m)
 			continue
 		}
