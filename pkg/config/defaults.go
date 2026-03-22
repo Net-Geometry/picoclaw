@@ -376,7 +376,6 @@ func DefaultConfig() *Config {
 				Model:     "minimax/MiniMax-M2.5",
 				APIBase:   "https://api.minimaxi.com/v1",
 				APIKey:    "",
-				ExtraBody: map[string]any{"reasoning_split": true},
 			},
 
 			// LongCat - https://longcat.chat/platform
