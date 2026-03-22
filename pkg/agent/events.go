@@ -43,6 +43,8 @@ const (
 	EventKindSubTurnEnd
 	// EventKindSubTurnResultDelivered is emitted when a sub-turn result is delivered.
 	EventKindSubTurnResultDelivered
+	// EventKindSubTurnOrphan is emitted when a sub-turn result cannot be delivered.
+	EventKindSubTurnOrphan
 	// EventKindError is emitted when a turn encounters an execution error.
 	EventKindError
 
@@ -67,6 +69,7 @@ var eventKindNames = [...]string{
 	"subturn_spawn",
 	"subturn_end",
 	"subturn_result_delivered",
+	"subturn_orphan",
 	"error",
 }
 
@@ -236,8 +239,9 @@ type InterruptReceivedPayload struct {
 
 // SubTurnSpawnPayload describes the creation of a child turn.
 type SubTurnSpawnPayload struct {
-	AgentID string
-	Label   string
+	AgentID      string
+	Label        string
+	ParentTurnID string
 }
 
 // SubTurnEndPayload describes the completion of a child turn.
@@ -251,6 +255,13 @@ type SubTurnResultDeliveredPayload struct {
 	TargetChannel string
 	TargetChatID  string
 	ContentLen    int
+}
+
+// SubTurnOrphanPayload describes a sub-turn result that could not be delivered.
+type SubTurnOrphanPayload struct {
+	ParentTurnID string
+	ChildTurnID  string
+	Reason       string
 }
 
 // ErrorPayload describes an execution error inside the agent loop.

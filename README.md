@@ -3,10 +3,10 @@
 
   <h1>PicoClaw: Ultra-Efficient AI Assistant in Go</h1>
 
-  <h3>$10 Hardware · 10MB RAM · 1s Boot · 皮皮虾，我们走！</h3>
+  <h3>$10 Hardware · <10MB RAM · <1s Boot · 皮皮虾，我们走！</h3>
   <p>
-    <img src="https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go&logoColor=white" alt="Go">
-    <img src="https://img.shields.io/badge/Arch-x86__64%2C%20ARM64%2C%20MIPS%2C%20RISC--V-blue" alt="Hardware">
+    <img src="https://img.shields.io/badge/Go-1.25+-00ADD8?style=flat&logo=go&logoColor=white" alt="Go">
+    <img src="https://img.shields.io/badge/Arch-x86__64%2C%20ARM64%2C%20MIPS%2C%20RISC--V%2C%20LoongArch-blue" alt="Hardware">
     <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
     <br>
     <a href="https://picoclaw.io"><img src="https://img.shields.io/badge/Website-picoclaw.io-blue?style=flat&logo=google-chrome&logoColor=white" alt="Website"></a>
@@ -18,13 +18,15 @@
     <a href="https://discord.gg/V4sAZ9XWpN"><img src="https://img.shields.io/badge/Discord-Community-4c60eb?style=flat&logo=discord&logoColor=white" alt="Discord"></a>
   </p>
 
-[中文](README.zh.md) | [日本語](README.ja.md) | [Português](README.pt-br.md) | [Tiếng Việt](README.vi.md) | [Français](README.fr.md) | **English**
+[中文](README.zh.md) | [日本語](README.ja.md) | [Português](README.pt-br.md) | [Tiếng Việt](README.vi.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Bahasa Indonesia](README.id.md) | **English**
 
 </div>
 
 ---
 
-🦐 PicoClaw is an ultra-lightweight personal AI Assistant inspired by [nanobot](https://github.com/HKUDS/nanobot), refactored from the ground up in Go through a self-bootstrapping process, where the AI agent itself drove the entire architectural migration and code optimization.
+> **PicoClaw** is an independent open-source project initiated by [Sipeed](https://sipeed.com). It is written entirely in **Go** — not a fork of OpenClaw, NanoBot, or any other project.
+
+🦐 PicoClaw is an ultra-lightweight personal AI Assistant inspired by [NanoBot](https://github.com/HKUDS/nanobot), refactored from the ground up in Go through a self-bootstrapping process, where the AI agent itself drove the entire architectural migration and code optimization.
 
 ⚡️ Runs on $10 hardware with <10MB RAM: That's 99% less memory than OpenClaw and 98% cheaper than a Mac mini!
 
@@ -55,33 +57,55 @@
 
 ## 📢 News
 
-2026-02-16 🎉 PicoClaw hit 12K stars in one week! Thank you all for your support! PicoClaw is growing faster than we ever imagined. Given the high volume of PRs, we urgently need community maintainers. Our volunteer roles and roadmap are officially posted [here](ROADMAP.md) —we can’t wait to have you on board!
+2026-03-17 🚀 **v0.2.3 Released!** System tray UI (Windows & Linux), sub-agent status tracking (`spawn_status`), experimental gateway hot-reload, cron security gates, and 2 security fixes. PicoClaw now at **25K ⭐**!
 
-2026-02-13 🎉 PicoClaw hit 5000 stars in 4days! Thank you for the community! There are so many PRs & issues coming in (during Chinese New Year holidays), we are finalizing the Project Roadmap and setting up the Developer Group to accelerate PicoClaw's development.
-🚀 Call to Action: Please submit your feature requests in GitHub Discussions. We will review and prioritize them during our upcoming weekly meeting.
+2026-03-09 🎉 **v0.2.1 — Biggest update yet!** MCP protocol support, 4 new channels (Matrix/IRC/WeCom/Discord Proxy), 3 new providers (Kimi/Minimax/Avian), vision pipeline, JSONL memory store, and model routing.
 
-2026-02-09 🎉 PicoClaw Launched! Built in 1 day to bring AI Agents to $10 hardware with <10MB RAM. 🦐 PicoClaw，Let's Go！
+2026-02-28 📦 **v0.2.0** released with Docker Compose support and Web UI launcher.
+
+2026-02-26 🎉 PicoClaw hit **20K stars** in just 17 days! Channel auto-orchestration and capability interfaces landed.
+
+<details>
+<summary>Older news...</summary>
+
+2026-02-16 🎉 PicoClaw hit 12K stars in one week! Community maintainer roles and [roadmap](ROADMAP.md) officially posted.
+
+2026-02-13 🎉 PicoClaw hit 5000 stars in 4 days! Project Roadmap and Developer Group setup underway.
+
+2026-02-09 🎉 **PicoClaw Launched!** Built in 1 day to bring AI Agents to $10 hardware with <10MB RAM. 🦐 PicoClaw，Let's Go！
+
+</details>
 
 ## ✨ Features
 
-🪶 **Ultra-Lightweight**: <10MB Memory footprint — 99% smaller than Clawdbot - core functionality.
+🪶 **Ultra-Lightweight**: <10MB Memory footprint — 99% smaller than OpenClaw core functionality.*
 
 💰 **Minimal Cost**: Efficient enough to run on $10 Hardware — 98% cheaper than a Mac mini.
 
-⚡️ **Lightning Fast**: 400X Faster startup time, boot in 1 second even in 0.6GHz single core.
+⚡️ **Lightning Fast**: 400X Faster startup time, boot in <1 second even on 0.6GHz single core.
 
 🌍 **True Portability**: Single self-contained binary across RISC-V, ARM, MIPS, and x86, One-click to Go!
 
 🤖 **AI-Bootstrapped**: Autonomous Go-native implementation — 95% Agent-generated core with human-in-the-loop refinement.
 
+🔌 **MCP Support**: Native [Model Context Protocol](https://modelcontextprotocol.io/) integration — connect any MCP server to extend agent capabilities.
+
+👁️ **Vision Pipeline**: Send images and files directly to the agent — automatic base64 encoding for multimodal LLMs.
+
+🧠 **Smart Routing**: Rule-based model routing — simple queries go to lightweight models, saving API costs.
+
+_*Recent versions may use 10–20MB due to rapid feature merges. Resource optimization is planned. Startup comparison based on 0.8GHz single-core benchmarks (see table below)._
+
 |                               | OpenClaw      | NanoBot                  | **PicoClaw**                              |
 | ----------------------------- | ------------- | ------------------------ | ----------------------------------------- |
 | **Language**                  | TypeScript    | Python                   | **Go**                                    |
-| **RAM**                       | >1GB          | >100MB                   | **< 10MB**                                |
+| **RAM**                       | >1GB          | >100MB                   | **< 10MB***                               |
 | **Startup**</br>(0.8GHz core) | >500s         | >30s                     | **<1s**                                   |
-| **Cost**                      | Mac Mini 599$ | Most Linux SBC </br>~50$ | **Any Linux Board**</br>**As low as 10$** |
+| **Cost**                      | Mac Mini $599 | Most Linux SBC </br>~$50 | **Any Linux Board**</br>**As low as $10** |
 
 <img src="assets/compare.jpg" alt="PicoClaw" width="512">
+
+> 📋 **[Hardware Compatibility List](docs/hardware-compatibility.md)** — See all tested boards, from $5 RISC-V to Raspberry Pi to Android phones. Your board not listed? Submit a PR!
 
 ## 🦾 Demonstration
 
@@ -109,18 +133,19 @@
 
 Give your decade-old phone a second life! Turn it into a smart AI Assistant with PicoClaw. Quick Start:
 
-1. **Install Termux** (Available on F-Droid or Google Play).
+1. **Install [Termux](https://github.com/termux/termux-app)** (Download from [GitHub Releases](https://github.com/termux/termux-app/releases), or search in F-Droid / Google Play).
 2. **Execute cmds**
 
 ```bash
-# Note: Replace v0.1.1 with the latest version from the Releases page
-wget https://github.com/sipeed/picoclaw/releases/download/v0.1.1/picoclaw-linux-arm64
-chmod +x picoclaw-linux-arm64
+# Download the latest release from https://github.com/sipeed/picoclaw/releases
+wget https://github.com/sipeed/picoclaw/releases/latest/download/picoclaw_Linux_arm64.tar.gz
+tar xzf picoclaw_Linux_arm64.tar.gz
 pkg install proot
-termux-chroot ./picoclaw-linux-arm64 onboard
+termux-chroot ./picoclaw onboard   # chroot provides a standard Linux filesystem layout
 ```
 
 And then follow the instructions in the "Quick Start" section to complete the configuration!
+
 <img src="assets/termux.jpg" alt="PicoClaw" width="512">
 
 ### 🐜 Innovative Low-Footprint Deploy
@@ -137,11 +162,15 @@ PicoClaw can be deployed on almost any Linux device!
 
 ## 📦 Install
 
-### Install with precompiled binary
+### Download from picoclaw.io (Recommended)
 
-Download the firmware for your platform from the [release](https://github.com/sipeed/picoclaw/releases) page.
+Visit **[picoclaw.io](https://picoclaw.io)** — the official website auto-detects your platform and provides one-click download. No need to manually pick an architecture.
 
-### Install from source (latest features, recommended for development)
+### Download precompiled binary
+
+Alternatively, download the binary for your platform from the [GitHub Releases](https://github.com/sipeed/picoclaw/releases) page.
+
+### Build from source (for development)
 
 ```bash
 git clone https://github.com/sipeed/picoclaw.git
@@ -162,11 +191,11 @@ make build-pi-zero
 make install
 ```
 
-**Raspberry Pi Zero 2 W:** Use the binary that matches your OS: 32-bit Raspberry Pi OS → `make build-linux-arm` (output: `build/picoclaw-linux-arm`); 64-bit → `make build-linux-arm64` (output: `build/picoclaw-linux-arm64`). Or run `make build-pi-zero` to build both.
+**Raspberry Pi Zero 2 W:** Use the binary that matches your OS: 32-bit Raspberry Pi OS → `make build-linux-arm`; 64-bit → `make build-linux-arm64`. Or run `make build-pi-zero` to build both.
 
-## 🐳 Docker Compose
+## 📚 Documentation
 
-You can also run PicoClaw using Docker Compose without installing anything locally.
+For detailed guides, see the docs below. The README covers quick start only.
 
 ```bash
 # 1. Clone this repo
@@ -228,7 +257,7 @@ docker compose -f docker/docker-compose.yml --profile gateway up -d
 ### 🚀 Quick Start
 
 > [!TIP]
-> Set your API Key in `~/.picoclaw/config.json`. Get API Keys: [Volcengine (CodingPlan)](https://www.volcengine.com/activity/codingplan?utm_campaign=PicoClaw&utm_content=PicoClaw&utm_medium=devrel&utm_source=OWO&utm_term=PicoClaw) (LLM) · [OpenRouter](https://openrouter.ai/keys) (LLM) · [Zhipu](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) (LLM). Web search is optional — get a free [Tavily API](https://tavily.com) (1000 free queries/month) or [Brave Search API](https://brave.com/search/api) (2000 free queries/month).
+> Set your API Key in `~/.picoclaw/config.json`. Get API Keys: [Volcengine (CodingPlan)](https://console.volcengine.com) (LLM) · [OpenRouter](https://openrouter.ai/keys) (LLM) · [Zhipu](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) (LLM). Web search is optional — get a free [Tavily API](https://tavily.com) (1000 free queries/month) or [Brave Search API](https://brave.com/search/api) (2000 free queries/month).
 
 **1. Initialize**
 
@@ -253,8 +282,7 @@ picoclaw onboard
     {
       "model_name": "ark-code-latest",
       "model": "volcengine/ark-code-latest",
-      "api_key": "sk-your-api-key",
-      "api_base":"https://ark.cn-beijing.volces.com/api/coding/v3"
+      "api_key": "sk-your-api-key"
     },
     {
       "model_name": "gpt-5.4",
@@ -640,80 +668,13 @@ PicoClaw supports three types of WeCom integration:
 
 See [WeCom AI Bot Configuration Guide](docs/channels/wecom/wecom_aibot/README.zh.md) for detailed setup instructions.
 
-**Quick Setup - WeCom Bot:**
-
-**1. Create a bot**
-
-* Go to WeCom Admin Console → Group Chat → Add Group Bot
-* Copy the webhook URL (format: `https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx`)
-
-**2. Configure**
-
-```json
-{
-  "channels": {
-    "wecom": {
-      "enabled": true,
-      "token": "YOUR_TOKEN",
-      "encoding_aes_key": "YOUR_ENCODING_AES_KEY",
-      "webhook_url": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY",
-      "webhook_path": "/webhook/wecom",
-      "allow_from": []
-    }
-  }
-}
-```
-
-> WeCom webhook is served on the shared Gateway server (`gateway.host`:`gateway.port`, default `127.0.0.1:18790`).
-
-**Quick Setup - WeCom App:**
-
-**1. Create an app**
-
-* Go to WeCom Admin Console → App Management → Create App
-* Copy **AgentId** and **Secret**
-* Go to "My Company" page, copy **CorpID**
-
-**2. Configure receive message**
-
-* In App details, click "Receive Message" → "Set API"
-* Set URL to `http://your-server:18790/webhook/wecom-app`
-* Generate **Token** and **EncodingAESKey**
-
-**3. Configure**
-
-```json
-{
-  "channels": {
-    "wecom_app": {
-      "enabled": true,
-      "corp_id": "wwxxxxxxxxxxxxxxxx",
-      "corp_secret": "YOUR_CORP_SECRET",
-      "agent_id": 1000002,
-      "token": "YOUR_TOKEN",
-      "encoding_aes_key": "YOUR_ENCODING_AES_KEY",
-      "webhook_path": "/webhook/wecom-app",
-      "allow_from": []
-    }
-  }
-}
-```
-
-**4. Run**
-
-```bash
-picoclaw gateway
-```
-
-> **Note**: WeCom webhook callbacks are served on the Gateway port (default 18790). Use a reverse proxy for HTTPS.
-
 **Quick Setup - WeCom AI Bot:**
 
 **1. Create an AI Bot**
 
-* Go to WeCom Admin Console → App Management → AI Bot
-* In the AI Bot settings, configure callback URL: `http://your-server:18791/webhook/wecom-aibot`
-* Copy **Token** and click "Random Generate" for **EncodingAESKey**
+* Go to WeCom Admin Console → AI Bot
+* Create a new AI Bot → Set name, avatar, etc.
+* Copy **Bot ID** and **Secret**
 
 **2. Configure**
 
@@ -722,9 +683,8 @@ picoclaw gateway
   "channels": {
     "wecom_aibot": {
       "enabled": true,
-      "token": "YOUR_TOKEN",
-      "encoding_aes_key": "YOUR_43_CHAR_ENCODING_AES_KEY",
-      "webhook_path": "/webhook/wecom-aibot",
+      "bot_id": "YOUR_BOT_ID",
+      "secret": "YOUR_SECRET",
       "allow_from": [],
       "welcome_message": "Hello! How can I help you?"
     }
@@ -1391,7 +1351,7 @@ picoclaw agent -m "Hello"
 
 </details>
 
-## CLI Reference
+## 🖥️ CLI Reference
 
 | Command                   | Description                   |
 | ------------------------- | ----------------------------- |
@@ -1400,8 +1360,15 @@ picoclaw agent -m "Hello"
 | `picoclaw agent`          | Interactive chat mode         |
 | `picoclaw gateway`        | Start the gateway             |
 | `picoclaw status`         | Show status                   |
+| `picoclaw version`        | Show version info             |
 | `picoclaw cron list`      | List all scheduled jobs       |
 | `picoclaw cron add ...`   | Add a scheduled job           |
+| `picoclaw cron disable`   | Disable a scheduled job       |
+| `picoclaw cron remove`    | Remove a scheduled job        |
+| `picoclaw skills list`    | List installed skills         |
+| `picoclaw skills install` | Install a skill               |
+| `picoclaw migrate`        | Migrate data from older versions |
+| `picoclaw auth login`     | Authenticate with providers   |
 
 ### Scheduled Tasks / Reminders
 
@@ -1410,8 +1377,6 @@ PicoClaw supports scheduled reminders and recurring tasks through the `cron` too
 * **One-time reminders**: "Remind me in 10 minutes" → triggers once after 10min
 * **Recurring tasks**: "Remind me every 2 hours" → triggers every 2 hours
 * **Cron expressions**: "Remind me at 9am daily" → uses cron expression
-
-Jobs are stored in `~/.picoclaw/workspace/cron/` and processed automatically.
 
 ## 🤝 Contribute & Roadmap
 
@@ -1425,134 +1390,5 @@ User Groups:
 
 discord: <https://discord.gg/V4sAZ9XWpN>
 
-<img src="assets/wechat.png" alt="PicoClaw" width="512">
-
-## 🐛 Troubleshooting
-
-### Web search says "API key configuration issue"
-
-This is normal if you haven't configured a search API key yet. PicoClaw will provide helpful links for manual searching.
-
-#### Search Provider Priority
-
-PicoClaw automatically selects the best available search provider in this order:
-1. **Perplexity** (if enabled and API key configured) - AI-powered search with citations
-2. **Brave Search** (if enabled and API key configured) - Privacy-focused paid API ($5/1000 queries)
-3. **SearXNG** (if enabled and base_url configured) - Self-hosted metasearch aggregating 70+ engines (free)
-4. **DuckDuckGo** (if enabled, default fallback) - No API key required (free)
-
-#### Web Search Configuration Options
-
-**Option 1 (Best Results)**: Perplexity AI Search
-```json
-{
-  "tools": {
-    "web": {
-      "perplexity": {
-        "enabled": true,
-        "api_key": "YOUR_PERPLEXITY_API_KEY",
-        "max_results": 5
-      }
-    }
-  }
-}
-```
-
-**Option 2 (Paid API)**: Get an API key at [https://brave.com/search/api](https://brave.com/search/api) ($5/1000 queries, ~$5-6/month)
-```json
-{
-  "tools": {
-    "web": {
-      "brave": {
-        "enabled": true,
-        "api_key": "YOUR_BRAVE_API_KEY",
-        "max_results": 5
-      }
-    }
-  }
-}
-```
-
-**Option 3 (Self-Hosted)**: Deploy your own [SearXNG](https://github.com/searxng/searxng) instance
-```json
-{
-  "tools": {
-    "web": {
-      "searxng": {
-        "enabled": true,
-        "base_url": "http://your-server:8888",
-        "max_results": 5
-      }
-    }
-  }
-}
-```
-
-Benefits of SearXNG:
-- **Zero cost**: No API fees or rate limits
-- **Privacy-focused**: Self-hosted, no tracking
-- **Aggregate results**: Queries 70+ search engines simultaneously
-- **Perfect for cloud VMs**: Solves datacenter IP blocking issues (Oracle Cloud, GCP, AWS, Azure)
-- **No API key needed**: Just deploy and configure the base URL
-
-**Option 4 (No Setup Required)**: DuckDuckGo is enabled by default as fallback (no API key needed)
-
-Add the key to `~/.picoclaw/config.json` if using Brave:
-
-```json
-{
-  "tools": {
-    "web": {
-      "brave": {
-        "enabled": false,
-        "api_key": "YOUR_BRAVE_API_KEY",
-        "max_results": 5
-      },
-      "duckduckgo": {
-        "enabled": true,
-        "max_results": 5
-      },
-      "perplexity": {
-        "enabled": false,
-        "api_key": "YOUR_PERPLEXITY_API_KEY",
-        "max_results": 5
-      },
-      "searxng": {
-        "enabled": false,
-        "base_url": "http://your-searxng-instance:8888",
-        "max_results": 5
-      }
-    }
-  }
-}
-```
-
-### Getting content filtering errors
-
-Some providers (like Zhipu) have content filtering. Try rephrasing your query or use a different model.
-
-### Telegram bot says "Conflict: terminated by other getUpdates"
-
-This happens when another instance of the bot is running. Make sure only one `picoclaw gateway` is running at a time.
-
----
-
-## 📝 API Key Comparison
-
-| Service          | Free Tier                | Use Case                              |
-| ---------------- | ------------------------ | ------------------------------------- |
-| **OpenRouter**   | 200K tokens/month        | Multiple models (Claude, GPT-4, etc.) |
-| **Volcengine CodingPlan** | ¥9.9/first month | Best for Chinese users, multiple SOTA models (Doubao, DeepSeek, etc.) |
-| **Zhipu**        | 200K tokens/month        | Suitable for Chinese users                |
-| **Brave Search** | Paid ($5/1000 queries)   | Web search functionality              |
-| **SearXNG**      | Unlimited (self-hosted)  | Privacy-focused metasearch (70+ engines) |
-| **Groq**         | Free tier available      | Fast inference (Llama, Mixtral)       |
-| **Cerebras**     | Free tier available      | Fast inference (Llama, Qwen, etc.)    |
-| **LongCat**      | Up to 5M tokens/day      | Fast inference (free tier)            |
-| **ModelScope**   | 2000 requests/day        | Free inference (Qwen, GLM, DeepSeek, etc.) |
-
----
-
-<div align="center">
-  <img src="assets/logo.jpg" alt="PicoClaw Meme" width="512">
-</div>
+WeChat:
+<img src="assets/wechat.png" alt="WeChat group QR code" width="512">

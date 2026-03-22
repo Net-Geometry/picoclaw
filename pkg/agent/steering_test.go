@@ -420,13 +420,14 @@ func TestDrainBusToSteering_RequeuesDifferentScopeMessage(t *testing.T) {
 		t.Fatalf("expected no steering messages for active scope, got %v", msgs)
 	}
 
-	requeued, ok := msgBus.ConsumeInbound(context.Background())
-	if !ok {
-		t.Fatal("expected message to be requeued on the inbound bus")
-	}
-	if requeued.Channel != otherMsg.Channel || requeued.ChatID != otherMsg.ChatID ||
-		requeued.SenderID != otherMsg.SenderID || requeued.Content != otherMsg.Content {
-		t.Fatalf("requeued message mismatch: got %+v want %+v", requeued, otherMsg)
+	select {
+	case <-ctx.Done():
+		t.Fatalf("timeout waiting for requeued message on outbound bus")
+	case requeued := <-msgBus.OutboundChan():
+		if requeued.Channel != otherMsg.Channel || requeued.ChatID != otherMsg.ChatID ||
+			requeued.Content != otherMsg.Content {
+			t.Fatalf("requeued message mismatch: got %+v want %+v", requeued, otherMsg)
+		}
 	}
 }
 
@@ -881,8 +882,10 @@ func TestAgentLoop_Run_AutoContinuesLateSteeringMessage(t *testing.T) {
 	subCtx, subCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer subCancel()
 
-	out1, ok := msgBus.SubscribeOutbound(subCtx)
-	if !ok {
+	var out1 bus.OutboundMessage
+	select {
+	case out1 = <-msgBus.OutboundChan():
+	case <-subCtx.Done():
 		t.Fatal("expected outbound response")
 	}
 	if out1.Content != "continued response" {
@@ -891,8 +894,10 @@ func TestAgentLoop_Run_AutoContinuesLateSteeringMessage(t *testing.T) {
 
 	noExtraCtx, cancelNoExtra := context.WithTimeout(context.Background(), 200*time.Millisecond)
 	defer cancelNoExtra()
-	if out2, ok := msgBus.SubscribeOutbound(noExtraCtx); ok {
+	select {
+	case out2 := <-msgBus.OutboundChan():
 		t.Fatalf("expected stale direct response to be suppressed, got extra outbound %q", out2.Content)
+	case <-noExtraCtx.Done():
 	}
 
 	cancelRun()

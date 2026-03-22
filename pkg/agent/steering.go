@@ -9,6 +9,7 @@ import (
 	"github.com/sipeed/picoclaw/pkg/logger"
 	"github.com/sipeed/picoclaw/pkg/providers"
 	"github.com/sipeed/picoclaw/pkg/routing"
+	"github.com/sipeed/picoclaw/pkg/tools"
 )
 
 // SteeringMode controls how queued steering messages are dequeued.
@@ -172,7 +173,7 @@ func (sq *steeringQueue) getMode() SteeringMode {
 func (al *AgentLoop) Steer(msg providers.Message) error {
 	scope := ""
 	agentID := ""
-	if ts := al.getActiveTurnState(); ts != nil {
+	if ts := al.getAnyActiveTurnState(); ts != nil {
 		scope = ts.sessionKey
 		agentID = ts.agentID
 	}
@@ -206,7 +207,7 @@ func (al *AgentLoop) enqueueSteeringMessage(scope, agentID string, msg providers
 		Source:    "Steer",
 		TracePath: "turn.interrupt.received",
 	}
-	if ts := al.getActiveTurnState(); ts != nil {
+	if ts := al.getAnyActiveTurnState(); ts != nil {
 		meta = ts.eventMeta("Steer", "turn.interrupt.received")
 	} else {
 		if strings.TrimSpace(agentID) != "" {
@@ -355,7 +356,7 @@ func (al *AgentLoop) Continue(ctx context.Context, sessionKey, channel, chatID s
 }
 
 func (al *AgentLoop) InterruptGraceful(hint string) error {
-	ts := al.getActiveTurnState()
+	ts := al.getAnyActiveTurnState()
 	if ts == nil {
 		return fmt.Errorf("no active turn")
 	}
@@ -376,7 +377,7 @@ func (al *AgentLoop) InterruptGraceful(hint string) error {
 }
 
 func (al *AgentLoop) InterruptHard() error {
-	ts := al.getActiveTurnState()
+	ts := al.getAnyActiveTurnState()
 	if ts == nil {
 		return fmt.Errorf("no active turn")
 	}
@@ -393,4 +394,110 @@ func (al *AgentLoop) InterruptHard() error {
 	)
 
 	return nil
+}
+
+// ====================== SubTurn Result Polling ======================
+
+// dequeuePendingSubTurnResults polls the SubTurn result channel for the given
+// session and returns all available results without blocking.
+// Returns nil if no active turn state exists for this session.
+func (al *AgentLoop) dequeuePendingSubTurnResults(sessionKey string) []*tools.ToolResult {
+	tsInterface, ok := al.activeTurnStates.Load(sessionKey)
+	if !ok {
+		return nil
+	}
+	ts, ok := tsInterface.(*turnState)
+	if !ok {
+		return nil
+	}
+
+	var results []*tools.ToolResult
+	for {
+		select {
+		case result, ok := <-ts.pendingResults:
+			if !ok {
+				return results
+			}
+			if result != nil {
+				results = append(results, result)
+			}
+		default:
+			return results
+		}
+	}
+}
+
+// ====================== Hard Abort ======================
+
+// HardAbort immediately cancels the running agent loop for the given session,
+// cascading the cancellation to all child SubTurns. This is a destructive operation
+// that terminates execution without waiting for graceful cleanup.
+//
+// Use this when the user explicitly requests immediate termination (e.g., "stop now", "abort").
+// For graceful interruption that allows the agent to finish the current tool and summarize,
+// use Steer() instead.
+func (al *AgentLoop) HardAbort(sessionKey string) error {
+	tsInterface, ok := al.activeTurnStates.Load(sessionKey)
+	if !ok {
+		return fmt.Errorf("no active turn state found for session %s", sessionKey)
+	}
+
+	ts, ok := tsInterface.(*turnState)
+	if !ok {
+		return fmt.Errorf("invalid turn state type for session %s", sessionKey)
+	}
+
+	logger.InfoCF("agent", "Hard abort triggered", map[string]any{
+		"session_key":            sessionKey,
+		"turn_id":                ts.turnID,
+		"depth":                  ts.depth,
+		"initial_history_length": ts.initialHistoryLength,
+	})
+
+	// IMPORTANT: Trigger cascading cancellation FIRST to stop all child SubTurns
+	// from adding more messages to the session. This prevents race conditions
+	// where rollback happens while children are still writing.
+	// Use isHardAbort=true for hard abort to immediately cancel all children.
+	ts.Finish(true)
+
+	// Roll back session history to the state before the turn started.
+	if ts.session != nil {
+		history := ts.session.GetHistory(sessionKey)
+		if ts.initialHistoryLength < len(history) {
+			ts.session.SetHistory(sessionKey, history[:ts.initialHistoryLength])
+		}
+	}
+
+	return nil
+}
+
+// ====================== Follow-Up Injection ======================
+
+// InjectFollowUp enqueues a message to be automatically processed after the current
+// turn completes. Unlike Steer(), which interrupts the current execution, InjectFollowUp
+// waits for the current turn to finish naturally before processing the message.
+//
+// This is useful for:
+// - Automated workflows that need to chain multiple turns
+// - Background tasks that should run after the main task completes
+// - Scheduled follow-up actions
+//
+// The message will be processed via Continue() when the agent becomes idle.
+func (al *AgentLoop) InjectFollowUp(msg providers.Message) error {
+	// InjectFollowUp uses the same steering queue mechanism as Steer(),
+	// but the semantic difference is in when it's called:
+	// - Steer() is called during active execution to interrupt
+	// - InjectFollowUp() is called when planning future work
+	//
+	// Both end up in the same queue and are processed by Continue()
+	// when the agent is idle.
+	return al.Steer(msg)
+}
+
+// ====================== API Aliases for Design Document Compatibility ======================
+
+// InjectSteering is an alias for Steer() to match the design document naming.
+// It injects a steering message into the currently running agent loop.
+func (al *AgentLoop) InjectSteering(msg providers.Message) error {
+	return al.Steer(msg)
 }
