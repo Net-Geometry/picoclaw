@@ -1396,6 +1396,7 @@ picoclaw agent -m "Hello"
 | `picoclaw gateway`        | Start the gateway             |
 | `picoclaw status`         | Show status                   |
 | `picoclaw version`        | Show version info             |
+| `picoclaw model`          | Show or change default model  |
 | `picoclaw cron list`      | List all scheduled jobs       |
 | `picoclaw cron add ...`   | Add a scheduled job           |
 | `picoclaw cron disable`   | Disable a scheduled job       |
