@@ -193,7 +193,11 @@ type MatrixChannel struct {
 	cryptoDbPath string
 }
 
-func NewMatrixChannel(cfg config.MatrixConfig, messageBus *bus.MessageBus, cryptoDatabasePath string) (*MatrixChannel, error) {
+func NewMatrixChannel(
+	cfg config.MatrixConfig,
+	messageBus *bus.MessageBus,
+	cryptoDatabasePath string,
+) (*MatrixChannel, error) {
 	homeserver := strings.TrimSpace(cfg.Homeserver)
 	userID := strings.TrimSpace(cfg.UserID)
 	accessToken := strings.TrimSpace(cfg.AccessToken())
@@ -253,9 +257,13 @@ func (c *MatrixChannel) Start(ctx context.Context) error {
 	// Initialize crypto helper if database and passphrase are configured
 	if c.cryptoDbPath != "" && c.config.CryptoPassphrase != "" {
 		if err := c.initCrypto(ctx); err != nil {
-			logger.WarnCF("matrix", "Failed to initialize crypto, continuing without encryption support", map[string]any{
-				"error": err.Error(),
-			})
+			logger.WarnCF(
+				"matrix",
+				"Failed to initialize crypto, continuing without encryption support",
+				map[string]any{
+					"error": err.Error(),
+				},
+			)
 		}
 	}
 
@@ -345,10 +353,10 @@ func (c *MatrixChannel) initCrypto(ctx context.Context) error {
 	}
 
 	if c.client.DeviceID == "" {
-		resp, err := c.client.Whoami(ctx)
-		if err != nil {
+		resp, whoamiErr := c.client.Whoami(ctx)
+		if whoamiErr != nil {
 			_ = db.Close()
-			return fmt.Errorf("get device ID via whoami: %w", err)
+			return fmt.Errorf("get device ID via whoami: %w", whoamiErr)
 		}
 		c.client.DeviceID = resp.DeviceID
 	}
