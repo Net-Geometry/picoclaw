@@ -622,9 +622,9 @@ func TestCreateProviderFromConfig_MinimaxInjectsReasoningSplit(t *testing.T) {
 	cfg := &config.ModelConfig{
 		ModelName: "test-minimax",
 		Model:     "minimax/MiniMax-M2.5",
-		APIKey:    "test-key",
 		APIBase:   server.URL,
 	}
+	cfg.SetAPIKey("test-key")
 
 	provider, modelID, err := CreateProviderFromConfig(cfg)
 	if err != nil {
@@ -670,10 +670,10 @@ func TestCreateProviderFromConfig_MinimaxPreservesUserExtraBody(t *testing.T) {
 	cfg := &config.ModelConfig{
 		ModelName: "test-minimax-custom",
 		Model:     "minimax/MiniMax-M2.5",
-		APIKey:    "test-key",
 		APIBase:   server.URL,
 		ExtraBody: map[string]any{"custom_field": "test"},
 	}
+	cfg.SetAPIKey("test-key")
 
 	provider, modelID, err := CreateProviderFromConfig(cfg)
 	if err != nil {
