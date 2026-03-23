@@ -85,7 +85,7 @@ func Run(debug bool, configPath string, allowEmptyStartup bool) error {
 		return fmt.Errorf("error loading config: %w", err)
 	}
 
-	logger.SetLevelFromString(cfg.Agents.Defaults.LogLevel)
+	logger.SetLevelFromString(cfg.Gateway.LogLevel)
 
 	if debug {
 		logger.SetLevel(logger.DEBUG)
@@ -381,9 +381,6 @@ func handleConfigReload(
 	logger.Info("🔄 Config file changed, reloading...")
 
 	newModel := newCfg.Agents.Defaults.ModelName
-	if newModel == "" {
-		newModel = newCfg.Agents.Defaults.Model
-	}
 
 	logger.Infof(" New model is '%s', recreating provider...", newModel)
 

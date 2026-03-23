@@ -80,7 +80,7 @@ func CreateProviderFromConfig(cfg *config.ModelConfig) (LLMProvider, string, err
 			return provider, modelID, nil
 		}
 		// OpenAI with API key
-		if cfg.APIKey == "" && cfg.APIBase == "" {
+		if cfg.APIKey() == "" && cfg.APIBase == "" {
 			return nil, "", fmt.Errorf("api_key or api_base is required for HTTP-based protocol %q", protocol)
 		}
 		apiBase := cfg.APIBase
@@ -88,7 +88,7 @@ func CreateProviderFromConfig(cfg *config.ModelConfig) (LLMProvider, string, err
 			apiBase = getDefaultAPIBase(protocol)
 		}
 		return NewHTTPProviderWithMaxTokensFieldAndRequestTimeout(
-			cfg.APIKey,
+			cfg.APIKey(),
 			apiBase,
 			cfg.Proxy,
 			cfg.MaxTokensField,
@@ -99,7 +99,7 @@ func CreateProviderFromConfig(cfg *config.ModelConfig) (LLMProvider, string, err
 	case "azure", "azure-openai":
 		// Azure OpenAI uses deployment-based URLs, api-key header auth,
 		// and always sends max_completion_tokens.
-		if cfg.APIKey == "" {
+		if cfg.APIKey() == "" {
 			return nil, "", fmt.Errorf("api_key is required for azure protocol")
 		}
 		if cfg.APIBase == "" {
@@ -108,7 +108,7 @@ func CreateProviderFromConfig(cfg *config.ModelConfig) (LLMProvider, string, err
 			)
 		}
 		return azure.NewProviderWithTimeout(
-			cfg.APIKey,
+			cfg.APIKey(),
 			cfg.APIBase,
 			cfg.Proxy,
 			cfg.RequestTimeout,
@@ -120,7 +120,7 @@ func CreateProviderFromConfig(cfg *config.ModelConfig) (LLMProvider, string, err
 		"qwen-us", "dashscope-us", "mistral", "avian", "longcat", "modelscope", "novita",
 		"coding-plan", "alibaba-coding", "qwen-coding":
 		// All other OpenAI-compatible HTTP providers
-		if cfg.APIKey == "" && cfg.APIBase == "" {
+		if cfg.APIKey() == "" && cfg.APIBase == "" {
 			return nil, "", fmt.Errorf("api_key or api_base is required for HTTP-based protocol %q", protocol)
 		}
 		apiBase := cfg.APIBase
@@ -128,7 +128,7 @@ func CreateProviderFromConfig(cfg *config.ModelConfig) (LLMProvider, string, err
 			apiBase = getDefaultAPIBase(protocol)
 		}
 		return NewHTTPProviderWithMaxTokensFieldAndRequestTimeout(
-			cfg.APIKey,
+			cfg.APIKey(),
 			apiBase,
 			cfg.Proxy,
 			cfg.MaxTokensField,
@@ -175,11 +175,11 @@ func CreateProviderFromConfig(cfg *config.ModelConfig) (LLMProvider, string, err
 		if apiBase == "" {
 			apiBase = "https://api.anthropic.com/v1"
 		}
-		if cfg.APIKey == "" {
+		if cfg.APIKey() == "" {
 			return nil, "", fmt.Errorf("api_key is required for anthropic protocol (model: %s)", cfg.Model)
 		}
 		return NewHTTPProviderWithMaxTokensFieldAndRequestTimeout(
-			cfg.APIKey,
+			cfg.APIKey(),
 			apiBase,
 			cfg.Proxy,
 			cfg.MaxTokensField,
@@ -193,11 +193,11 @@ func CreateProviderFromConfig(cfg *config.ModelConfig) (LLMProvider, string, err
 		if apiBase == "" {
 			apiBase = "https://api.anthropic.com/v1"
 		}
-		if cfg.APIKey == "" {
+		if cfg.APIKey() == "" {
 			return nil, "", fmt.Errorf("api_key is required for anthropic-messages protocol (model: %s)", cfg.Model)
 		}
 		return anthropicmessages.NewProviderWithTimeout(
-			cfg.APIKey,
+			cfg.APIKey(),
 			apiBase,
 			cfg.RequestTimeout,
 		), modelID, nil
@@ -208,11 +208,11 @@ func CreateProviderFromConfig(cfg *config.ModelConfig) (LLMProvider, string, err
 		if apiBase == "" {
 			apiBase = getDefaultAPIBase(protocol)
 		}
-		if cfg.APIKey == "" {
+		if cfg.APIKey() == "" {
 			return nil, "", fmt.Errorf("api_key is required for %q protocol (model: %s)", protocol, cfg.Model)
 		}
 		return anthropicmessages.NewProviderWithTimeout(
-			cfg.APIKey,
+			cfg.APIKey(),
 			apiBase,
 			cfg.RequestTimeout,
 		), modelID, nil
