@@ -138,7 +138,7 @@ func CreateProviderFromConfig(cfg *config.ModelConfig) (LLMProvider, string, err
 
 	case "minimax":
 		// Minimax requires reasoning_split: true in the request body
-		if cfg.APIKey == "" && cfg.APIBase == "" {
+		if cfg.APIKey() == "" && cfg.APIBase == "" {
 			return nil, "", fmt.Errorf("api_key or api_base is required for HTTP-based protocol %q", protocol)
 		}
 		apiBase := cfg.APIBase
@@ -153,7 +153,7 @@ func CreateProviderFromConfig(cfg *config.ModelConfig) (LLMProvider, string, err
 			extraBody["reasoning_split"] = true
 		}
 		return NewHTTPProviderWithMaxTokensFieldAndRequestTimeout(
-			cfg.APIKey,
+			cfg.APIKey(),
 			apiBase,
 			cfg.Proxy,
 			cfg.MaxTokensField,

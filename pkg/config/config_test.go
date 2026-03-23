@@ -1199,11 +1199,11 @@ func TestModelConfig_ExtraBodyRoundTrip(t *testing.T) {
 	cfgPath := filepath.Join(dir, "config.json")
 
 	cfg := &Config{
-		ModelList: []ModelConfig{
+		ModelList: []*ModelConfig{
 			{
 				ModelName: "test-model",
 				Model:     "openai/test",
-				APIKey:    "sk-test",
+				apiKeys:   []string{"sk-test"},
 				ExtraBody: map[string]any{"custom_field": "value", "num_field": 42},
 			},
 		},
