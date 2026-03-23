@@ -75,17 +75,19 @@ Web ツールはウェブ検索とフェッチに使用されます。
 
 | 設定項目      | 型     | デフォルト | 説明                      |
 |---------------|--------|------------|---------------------------|
-| `enabled`     | bool   | false      | Perplexity 検索を有効にする |
-| `api_key`     | string | -          | Perplexity API キー        |
-| `max_results` | int    | 5          | 最大結果数                |
+| `enabled`     | bool     | false      | Perplexity 検索を有効にする                          |
+| `api_key`     | string   | -          | Perplexity API キー                                  |
+| `api_keys`    | string[] | -          | 複数の Perplexity API キー（ローテーション用、`api_key` より優先） |
+| `max_results` | int      | 5          | 最大結果数                                           |
 
 ### Brave
 
 | 設定項目      | 型     | デフォルト | 説明                  |
 |---------------|--------|------------|-----------------------|
-| `enabled`     | bool   | false      | Brave 検索を有効にする |
-| `api_key`     | string | -          | Brave Search API キー  |
-| `max_results` | int    | 5          | 最大結果数            |
+| `enabled`     | bool     | false      | Brave 検索を有効にする                               |
+| `api_key`     | string   | -          | Brave Search API キー                                |
+| `api_keys`    | string[] | -          | 複数の Brave Search API キー（ローテーション用、`api_key` より優先） |
+| `max_results` | int      | 5          | 最大結果数                                           |
 
 ### Tavily
 

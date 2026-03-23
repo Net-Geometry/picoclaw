@@ -75,17 +75,19 @@ Configurações gerais para busca e processamento de conteúdo de páginas web.
 
 | Config        | Tipo   | Padrão | Descrição                      |
 |---------------|--------|--------|--------------------------------|
-| `enabled`     | bool   | false  | Habilitar pesquisa Perplexity  |
-| `api_key`     | string | -      | Chave API do Perplexity        |
-| `max_results` | int    | 5      | Número máximo de resultados    |
+| `enabled`     | bool     | false  | Habilitar pesquisa Perplexity                                    |
+| `api_key`     | string   | -      | Chave API do Perplexity                                          |
+| `api_keys`    | string[] | -      | Várias chaves API do Perplexity para rotação (prioridade sobre `api_key`) |
+| `max_results` | int      | 5      | Número máximo de resultados                                      |
 
 ### Brave
 
 | Config        | Tipo   | Padrão | Descrição                  |
 |---------------|--------|--------|----------------------------|
-| `enabled`     | bool   | false  | Habilitar pesquisa Brave   |
-| `api_key`     | string | -      | Chave API do Brave Search  |
-| `max_results` | int    | 5      | Número máximo de resultados |
+| `enabled`     | bool     | false  | Habilitar pesquisa Brave                                         |
+| `api_key`     | string   | -      | Chave API única do Brave Search                                  |
+| `api_keys`    | string[] | -      | Várias chaves API do Brave para rotação (prioridade sobre `api_key`) |
+| `max_results` | int      | 5      | Número máximo de resultados                                      |
 
 ### Tavily
 

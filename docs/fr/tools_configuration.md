@@ -75,17 +75,19 @@ Paramètres généraux pour la récupération et le traitement du contenu des pa
 
 | Config        | Type   | Par défaut | Description                    |
 |---------------|--------|------------|--------------------------------|
-| `enabled`     | bool   | false      | Activer la recherche Perplexity |
-| `api_key`     | string | -          | Clé API Perplexity             |
-| `max_results` | int    | 5          | Nombre maximum de résultats    |
+| `enabled`     | bool     | false      | Activer la recherche Perplexity                              |
+| `api_key`     | string   | -          | Clé API Perplexity                                           |
+| `api_keys`    | string[] | -          | Plusieurs clés API Perplexity pour la rotation (`api_key` prioritaire) |
+| `max_results` | int      | 5          | Nombre maximum de résultats                                  |
 
 ### Brave
 
 | Config        | Type   | Par défaut | Description               |
 |---------------|--------|------------|---------------------------|
-| `enabled`     | bool   | false      | Activer la recherche Brave |
-| `api_key`     | string | -          | Clé API Brave Search      |
-| `max_results` | int    | 5          | Nombre maximum de résultats |
+| `enabled`     | bool     | false      | Activer la recherche Brave                                   |
+| `api_key`     | string   | -          | Clé API Brave Search                                         |
+| `api_keys`    | string[] | -          | Plusieurs clés API Brave Search pour la rotation (`api_key` prioritaire) |
+| `max_results` | int      | 5          | Nombre maximum de résultats                                  |
 
 ### Tavily
 

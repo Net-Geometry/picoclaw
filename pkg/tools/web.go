@@ -656,7 +656,7 @@ func (p *BaiduSearchProvider) Search(ctx context.Context, query string, count in
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
 		return "", fmt.Errorf("failed to read response: %w", err)
 	}
@@ -676,7 +676,11 @@ func (p *BaiduSearchProvider) Search(ctx context.Context, query string, count in
 		return "", fmt.Errorf("failed to parse response: %w", err)
 	}
 
-	var lines []string
+	if len(result.References) == 0 {
+		return fmt.Sprintf("No results for: %s", query), nil
+	}
+
+	lines := []string{fmt.Sprintf("Results for: %s (via Baidu Search)", query)}
 	for i, item := range result.References {
 		if i >= count {
 			break

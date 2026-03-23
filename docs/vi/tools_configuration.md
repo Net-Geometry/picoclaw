@@ -75,17 +75,19 @@ Cài đặt chung để tải và xử lý nội dung trang web.
 
 | Cấu hình      | Kiểu   | Mặc định | Mô tả                        |
 |----------------|--------|----------|-------------------------------|
-| `enabled`      | bool   | false    | Bật tìm kiếm Perplexity      |
-| `api_key`      | string | -        | Khóa API Perplexity           |
-| `max_results`  | int    | 5        | Số kết quả tối đa            |
+| `enabled`      | bool     | false    | Bật tìm kiếm Perplexity                                          |
+| `api_key`      | string   | -        | Khóa API Perplexity                                              |
+| `api_keys`     | string[] | -        | Nhiều khóa API Perplexity để xoay vòng (ưu tiên hơn `api_key`)  |
+| `max_results`  | int      | 5        | Số kết quả tối đa                                                |
 
 ### Brave
 
 | Cấu hình      | Kiểu   | Mặc định | Mô tả                     |
 |----------------|--------|----------|----------------------------|
-| `enabled`      | bool   | false    | Bật tìm kiếm Brave        |
-| `api_key`      | string | -        | Khóa API Brave Search      |
-| `max_results`  | int    | 5        | Số kết quả tối đa         |
+| `enabled`      | bool     | false    | Bật tìm kiếm Brave                                               |
+| `api_key`      | string   | -        | Khóa API Brave Search                                            |
+| `api_keys`     | string[] | -        | Nhiều khóa API Brave Search để xoay vòng (ưu tiên hơn `api_key`) |
+| `max_results`  | int      | 5        | Số kết quả tối đa                                                |
 
 ### Tavily
 
