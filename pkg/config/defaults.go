@@ -419,6 +419,11 @@ func DefaultConfig() *Config {
 					SearchEngine: "search_std",
 					MaxResults:   5,
 				},
+				BaiduSearch: BaiduSearchConfig{
+					Enabled:    false,
+					BaseURL:    "https://qianfan.baidubce.com/v2/ai_search/web_search",
+					MaxResults: 10,
+				},
 			},
 			Cron: CronToolsConfig{
 				ToolConfig: ToolConfig{

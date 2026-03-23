@@ -133,10 +133,11 @@ type IRCSecurity struct {
 }
 
 type WebToolsSecurity struct {
-	Brave      *BraveSecurity      `yaml:"brave,omitempty"`
-	Tavily     *TavilySecurity     `yaml:"tavily,omitempty"`
-	Perplexity *PerplexitySecurity `yaml:"perplexity,omitempty"`
-	GLMSearch  *GLMSearchSecurity  `yaml:"glm_search,omitempty"`
+	Brave       *BraveSecurity       `yaml:"brave,omitempty"`
+	Tavily      *TavilySecurity      `yaml:"tavily,omitempty"`
+	Perplexity  *PerplexitySecurity  `yaml:"perplexity,omitempty"`
+	GLMSearch   *GLMSearchSecurity   `yaml:"glm_search,omitempty"`
+	BaiduSearch *BaiduSearchSecurity `yaml:"baidu_search,omitempty"`
 }
 
 type BraveSecurity struct {
@@ -153,6 +154,10 @@ type PerplexitySecurity struct {
 
 type GLMSearchSecurity struct {
 	APIKey string `yaml:"api_key,omitempty"`
+}
+
+type BaiduSearchSecurity struct {
+	APIKey string `yaml:"api_key,omitempty" env:"PICOCLAW_TOOLS_WEB_BAIDU_API_KEY"`
 }
 
 type SkillsSecurity struct {

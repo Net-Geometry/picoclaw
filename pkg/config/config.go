@@ -1124,14 +1124,33 @@ func (c *GLMSearchConfig) SetAPIKey(key string) {
 	c.secDirty = true
 }
 
+type BaiduSearchConfig struct {
+	Enabled    bool   `json:"enabled"     env:"PICOCLAW_TOOLS_WEB_BAIDU_ENABLED"`
+	BaseURL    string `json:"base_url"    env:"PICOCLAW_TOOLS_WEB_BAIDU_BASE_URL"`
+	MaxResults int    `json:"max_results" env:"PICOCLAW_TOOLS_WEB_BAIDU_MAX_RESULTS"`
+	apiKey     string
+	secDirty   bool
+}
+
+// APIKey returns the Baidu search API key
+func (c *BaiduSearchConfig) APIKey() string {
+	return c.apiKey
+}
+
+func (c *BaiduSearchConfig) SetAPIKey(key string) {
+	c.apiKey = key
+	c.secDirty = true
+}
+
 type WebToolsConfig struct {
-	ToolConfig `                 envPrefix:"PICOCLAW_TOOLS_WEB_"`
-	Brave      BraveConfig      `                                json:"brave"`
-	Tavily     TavilyConfig     `                                json:"tavily"`
-	DuckDuckGo DuckDuckGoConfig `                                json:"duckduckgo"`
-	Perplexity PerplexityConfig `                                json:"perplexity"`
-	SearXNG    SearXNGConfig    `                                json:"searxng"`
-	GLMSearch  GLMSearchConfig  `                                json:"glm_search"`
+	ToolConfig  `                  envPrefix:"PICOCLAW_TOOLS_WEB_"`
+	Brave       BraveConfig       `                                json:"brave"`
+	Tavily      TavilyConfig      `                                json:"tavily"`
+	DuckDuckGo  DuckDuckGoConfig  `                                json:"duckduckgo"`
+	Perplexity  PerplexityConfig  `                                json:"perplexity"`
+	SearXNG     SearXNGConfig     `                                json:"searxng"`
+	GLMSearch   GLMSearchConfig   `                                json:"glm_search"`
+	BaiduSearch BaiduSearchConfig `                                json:"baidu_search"`
 	// PreferNative controls whether to use provider-native web search when
 	// the active LLM supports it (e.g. OpenAI web_search_preview). When true,
 	// the client-side web_search tool is hidden to avoid duplicate search surfaces,
@@ -1424,6 +1443,10 @@ func applySecurityConfig(cfg *Config, sec *SecurityConfig) error {
 
 	if sec.Web.GLMSearch != nil && sec.Web.GLMSearch.APIKey != "" {
 		cfg.Tools.Web.GLMSearch.apiKey = sec.Web.GLMSearch.APIKey
+	}
+
+	if sec.Web.BaiduSearch != nil && sec.Web.BaiduSearch.APIKey != "" {
+		cfg.Tools.Web.BaiduSearch.apiKey = sec.Web.BaiduSearch.APIKey
 	}
 
 	if sec.Skills.Github != nil && sec.Skills.Github.Token != "" {
@@ -1814,6 +1837,12 @@ func SaveConfig(path string, cfg *Config) error {
 			APIKey: cfg.Tools.Web.GLMSearch.APIKey(),
 		}
 		cfg.Tools.Web.GLMSearch.secDirty = false
+	}
+	if cfg.Tools.Web.BaiduSearch.secDirty {
+		cfg.security.Web.BaiduSearch = &BaiduSearchSecurity{
+			APIKey: cfg.Tools.Web.BaiduSearch.APIKey(),
+		}
+		cfg.Tools.Web.BaiduSearch.secDirty = false
 	}
 	if cfg.Tools.Skills.Github.secDirty {
 		cfg.security.Skills.Github = &GithubSecurity{
