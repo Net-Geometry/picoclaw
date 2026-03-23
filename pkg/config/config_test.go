@@ -1207,6 +1207,9 @@ func TestModelConfig_ExtraBodyRoundTrip(t *testing.T) {
 				ExtraBody: map[string]any{"custom_field": "value", "num_field": 42},
 			},
 		},
+		security: &SecurityConfig{
+			ModelList: map[string]ModelSecurityEntry{"test-model:0": {APIKeys: []string{"sk-test"}}},
+		},
 	}
 
 	if err := SaveConfig(cfgPath, cfg); err != nil {
