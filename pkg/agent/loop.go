@@ -163,30 +163,37 @@ func registerSharedTools(
 
 		if cfg.Tools.IsToolEnabled("web") {
 			searchTool, err := tools.NewWebSearchTool(tools.WebSearchToolOptions{
-				BraveAPIKeys:         config.MergeAPIKeys(cfg.Tools.Web.Brave.APIKey, cfg.Tools.Web.Brave.APIKeys),
-				BraveMaxResults:      cfg.Tools.Web.Brave.MaxResults,
-				BraveEnabled:         cfg.Tools.Web.Brave.Enabled,
-				TavilyAPIKeys:        config.MergeAPIKeys(cfg.Tools.Web.Tavily.APIKey, cfg.Tools.Web.Tavily.APIKeys),
+				BraveAPIKeys:    config.MergeAPIKeys(cfg.Tools.Web.Brave.APIKey(), cfg.Tools.Web.Brave.APIKeys()),
+				BraveMaxResults: cfg.Tools.Web.Brave.MaxResults,
+				BraveEnabled:    cfg.Tools.Web.Brave.Enabled,
+				TavilyAPIKeys: config.MergeAPIKeys(
+					cfg.Tools.Web.Tavily.APIKey(),
+					cfg.Tools.Web.Tavily.APIKeys(),
+				),
 				TavilyBaseURL:        cfg.Tools.Web.Tavily.BaseURL,
 				TavilyMaxResults:     cfg.Tools.Web.Tavily.MaxResults,
 				TavilyEnabled:        cfg.Tools.Web.Tavily.Enabled,
 				DuckDuckGoMaxResults: cfg.Tools.Web.DuckDuckGo.MaxResults,
 				DuckDuckGoEnabled:    cfg.Tools.Web.DuckDuckGo.Enabled,
 				PerplexityAPIKeys: config.MergeAPIKeys(
-					cfg.Tools.Web.Perplexity.APIKey,
-					cfg.Tools.Web.Perplexity.APIKeys,
+					cfg.Tools.Web.Perplexity.APIKey(),
+					cfg.Tools.Web.Perplexity.APIKeys(),
 				),
-				PerplexityMaxResults: cfg.Tools.Web.Perplexity.MaxResults,
-				PerplexityEnabled:    cfg.Tools.Web.Perplexity.Enabled,
-				SearXNGBaseURL:       cfg.Tools.Web.SearXNG.BaseURL,
-				SearXNGMaxResults:    cfg.Tools.Web.SearXNG.MaxResults,
-				SearXNGEnabled:       cfg.Tools.Web.SearXNG.Enabled,
-				GLMSearchAPIKey:      cfg.Tools.Web.GLMSearch.APIKey,
-				GLMSearchBaseURL:     cfg.Tools.Web.GLMSearch.BaseURL,
-				GLMSearchEngine:      cfg.Tools.Web.GLMSearch.SearchEngine,
-				GLMSearchMaxResults:  cfg.Tools.Web.GLMSearch.MaxResults,
-				GLMSearchEnabled:     cfg.Tools.Web.GLMSearch.Enabled,
-				Proxy:                cfg.Tools.Web.Proxy,
+				PerplexityMaxResults:  cfg.Tools.Web.Perplexity.MaxResults,
+				PerplexityEnabled:     cfg.Tools.Web.Perplexity.Enabled,
+				SearXNGBaseURL:        cfg.Tools.Web.SearXNG.BaseURL,
+				SearXNGMaxResults:     cfg.Tools.Web.SearXNG.MaxResults,
+				SearXNGEnabled:        cfg.Tools.Web.SearXNG.Enabled,
+				GLMSearchAPIKey:       cfg.Tools.Web.GLMSearch.APIKey(),
+				GLMSearchBaseURL:      cfg.Tools.Web.GLMSearch.BaseURL,
+				GLMSearchEngine:       cfg.Tools.Web.GLMSearch.SearchEngine,
+				GLMSearchMaxResults:   cfg.Tools.Web.GLMSearch.MaxResults,
+				GLMSearchEnabled:      cfg.Tools.Web.GLMSearch.Enabled,
+				BaiduSearchAPIKey:     cfg.Tools.Web.BaiduSearch.APIKey(),
+				BaiduSearchBaseURL:    cfg.Tools.Web.BaiduSearch.BaseURL,
+				BaiduSearchMaxResults: cfg.Tools.Web.BaiduSearch.MaxResults,
+				BaiduSearchEnabled:    cfg.Tools.Web.BaiduSearch.Enabled,
+				Proxy:                 cfg.Tools.Web.Proxy,
 			})
 			if err != nil {
 				logger.ErrorCF("agent", "Failed to create web search tool", map[string]any{"error": err.Error()})
@@ -248,9 +255,20 @@ func registerSharedTools(
 		find_skills_enable := cfg.Tools.IsToolEnabled("find_skills")
 		install_skills_enable := cfg.Tools.IsToolEnabled("install_skill")
 		if skills_enabled && (find_skills_enable || install_skills_enable) {
+			clawHubConfig := cfg.Tools.Skills.Registries.ClawHub
 			registryMgr := skills.NewRegistryManagerFromConfig(skills.RegistryConfig{
 				MaxConcurrentSearches: cfg.Tools.Skills.MaxConcurrentSearches,
-				ClawHub:               skills.ClawHubConfig(cfg.Tools.Skills.Registries.ClawHub),
+				ClawHub: skills.ClawHubConfig{
+					Enabled:         clawHubConfig.Enabled,
+					BaseURL:         clawHubConfig.BaseURL,
+					AuthToken:       clawHubConfig.AuthToken(),
+					SearchPath:      clawHubConfig.SearchPath,
+					SkillsPath:      clawHubConfig.SkillsPath,
+					DownloadPath:    clawHubConfig.DownloadPath,
+					Timeout:         clawHubConfig.Timeout,
+					MaxZipSize:      clawHubConfig.MaxZipSize,
+					MaxResponseSize: clawHubConfig.MaxResponseSize,
+				},
 			})
 
 			if find_skills_enable {
@@ -1668,7 +1686,6 @@ func (al *AgentLoop) runTurn(ctx context.Context, ts *turnState) (turnResult, er
 	activeCandidates, activeModel := al.selectCandidates(ts.agent, ts.userMessage, messages)
 	pendingMessages := append([]providers.Message(nil), ts.opts.InitialSteeringMessages...)
 	var finalContent string
-	const handledToolResponseSummary = "Requested output delivered via tool attachment."
 
 turnLoop:
 	for ts.currentIteration() < ts.agent.MaxIterations || len(pendingMessages) > 0 || func() bool {
@@ -2010,8 +2027,7 @@ turnLoop:
 				newSummary := ts.agent.Sessions.GetSummary(ts.sessionKey)
 				messages = ts.agent.ContextBuilder.BuildMessages(
 					newHistory, newSummary, "",
-					nil, ts.channel, ts.chatID,
-					"", "", // Empty SenderID and SenderDisplayName for retry
+					nil, ts.channel, ts.chatID, ts.opts.SenderID, ts.opts.SenderDisplayName,
 					activeSkillNames(ts.agent, ts.opts)...,
 				)
 				callMessages = messages
@@ -3294,6 +3310,9 @@ func (al *AgentLoop) buildCommandsRuntime(agent *AgentInstance, opts *processOpt
 			return nil
 		},
 	}
+	if agent != nil && agent.ContextBuilder != nil {
+		rt.ListSkillNames = agent.ContextBuilder.ListSkillNames
+	}
 	rt.ReloadConfig = func() error {
 		if al.reloadFunc == nil {
 			return fmt.Errorf("reload not configured")
@@ -3352,6 +3371,146 @@ func (al *AgentLoop) buildCommandsRuntime(agent *AgentInstance, opts *processOpt
 		}
 	}
 	return rt
+}
+
+func activeSkillNames(agent *AgentInstance, opts processOptions) []string {
+	var out []string
+	seen := make(map[string]struct{})
+
+	appendNames := func(names []string) {
+		for _, name := range names {
+			name = strings.TrimSpace(name)
+			if name == "" {
+				continue
+			}
+			if _, exists := seen[name]; exists {
+				continue
+			}
+			seen[name] = struct{}{}
+			out = append(out, name)
+		}
+	}
+
+	if agent != nil {
+		appendNames(agent.SkillsFilter)
+	}
+	appendNames(opts.ForcedSkills)
+
+	return out
+}
+
+func (al *AgentLoop) applyExplicitSkillCommand(
+	raw string,
+	agent *AgentInstance,
+	opts *processOptions,
+) (matched bool, handled bool, reply string) {
+	commandName, ok := commands.CommandName(raw)
+	if !ok || commandName != "use" {
+		return false, false, ""
+	}
+
+	if agent == nil || agent.ContextBuilder == nil {
+		return true, true, commandsUnavailableSkillMessage()
+	}
+
+	fields := strings.Fields(strings.TrimSpace(raw))
+	if len(fields) < 2 {
+		return true, true, buildUseCommandHelp(agent)
+	}
+
+	if strings.EqualFold(fields[1], "clear") || strings.EqualFold(fields[1], "off") {
+		al.clearPendingSkills(opts.SessionKey)
+		return true, true, "Cleared pending skill override."
+	}
+
+	canonicalSkill, ok := agent.ContextBuilder.ResolveSkillName(fields[1])
+	if !ok {
+		return true, true, fmt.Sprintf("Unknown skill: %s\nUse /list skills to see installed skills.", fields[1])
+	}
+
+	if len(fields) == 2 {
+		al.setPendingSkills(opts.SessionKey, []string{canonicalSkill})
+		return true, true, fmt.Sprintf(
+			"Skill %q is armed for your next message.\nSend your next request normally, or use /use clear to cancel.",
+			canonicalSkill,
+		)
+	}
+
+	message := strings.TrimSpace(strings.Join(fields[2:], " "))
+	if message == "" {
+		return true, true, buildUseCommandHelp(agent)
+	}
+
+	opts.UserMessage = message
+	opts.ForcedSkills = append(opts.ForcedSkills, canonicalSkill)
+	return true, false, ""
+}
+
+func commandsUnavailableSkillMessage() string {
+	return "Skill selection is unavailable in the current context."
+}
+
+func buildUseCommandHelp(agent *AgentInstance) string {
+	if agent == nil || agent.ContextBuilder == nil {
+		return "Usage: /use <skill> [message]"
+	}
+
+	names := agent.ContextBuilder.ListSkillNames()
+	if len(names) == 0 {
+		return "Usage: /use <skill> [message]\nNo installed skills found."
+	}
+
+	return fmt.Sprintf(
+		"Usage: /use <skill> [message]\n\nInstalled Skills:\n- %s\n\nUse /use <skill> to apply a skill to your next message, or /use <skill> <message> to force it immediately.",
+		strings.Join(names, "\n- "),
+	)
+}
+
+func (al *AgentLoop) setPendingSkills(sessionKey string, skillNames []string) {
+	sessionKey = strings.TrimSpace(sessionKey)
+	if sessionKey == "" || len(skillNames) == 0 {
+		return
+	}
+
+	filtered := make([]string, 0, len(skillNames))
+	for _, name := range skillNames {
+		name = strings.TrimSpace(name)
+		if name != "" {
+			filtered = append(filtered, name)
+		}
+	}
+	if len(filtered) == 0 {
+		return
+	}
+
+	al.pendingSkills.Store(sessionKey, filtered)
+}
+
+func (al *AgentLoop) takePendingSkills(sessionKey string) []string {
+	sessionKey = strings.TrimSpace(sessionKey)
+	if sessionKey == "" {
+		return nil
+	}
+
+	value, ok := al.pendingSkills.LoadAndDelete(sessionKey)
+	if !ok {
+		return nil
+	}
+
+	skills, ok := value.([]string)
+	if !ok {
+		return nil
+	}
+
+	return append([]string(nil), skills...)
+}
+
+func (al *AgentLoop) clearPendingSkills(sessionKey string) {
+	sessionKey = strings.TrimSpace(sessionKey)
+	if sessionKey == "" {
+		return
+	}
+	al.pendingSkills.Delete(sessionKey)
 }
 
 func commandsUnavailableSkillMessage() string {
