@@ -285,8 +285,9 @@ func TestSendMedia_UsesTurnImageAndFinishesStream(t *testing.T) {
 		StreamID:  "stream-1",
 		CreatedAt: time.Now(),
 	})
-	if err := ch.routes.Put("chat-1", "req-1", 1, time.Hour); err != nil {
-		t.Fatalf("Put() error = %v", err)
+	putErr := ch.routes.Put("chat-1", "req-1", 1, time.Hour)
+	if putErr != nil {
+		t.Fatalf("Put() error = %v", putErr)
 	}
 
 	var commands []wecomCommand

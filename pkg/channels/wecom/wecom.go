@@ -734,11 +734,6 @@ func (c *WeComChannel) sendCommandAck(cmd wecomCommand, timeout time.Duration) (
 	return c.writeCurrentAck(cmd, timeout)
 }
 
-func (c *WeComChannel) writeCurrent(cmd wecomCommand, timeout time.Duration) error {
-	_, err := c.writeCurrentAck(cmd, timeout)
-	return err
-}
-
 func (c *WeComChannel) writeCurrentAck(cmd wecomCommand, timeout time.Duration) (wecomEnvelope, error) {
 	c.connMu.Lock()
 	conn := c.conn
@@ -788,7 +783,12 @@ func (c *WeComChannel) writeAndWaitAck(
 	select {
 	case env := <-waitCh:
 		if env.ErrCode != 0 {
-			return wecomEnvelope{}, fmt.Errorf("%w: wecom errcode=%d errmsg=%s", channels.ErrTemporary, env.ErrCode, env.ErrMsg)
+			return wecomEnvelope{}, fmt.Errorf(
+				"%w: wecom errcode=%d errmsg=%s",
+				channels.ErrTemporary,
+				env.ErrCode,
+				env.ErrMsg,
+			)
 		}
 		return env, nil
 	case <-timer.C:

@@ -216,7 +216,10 @@ func detectWeComFiletype(data []byte) (string, string) {
 	return normalizeWeComContentType(kind.MIME.Value), ext
 }
 
-func detectWeComMediaMetadata(data []byte, fallbackName, fallbackContentType, resourceURL, contentDisposition string) (string, string) {
+func detectWeComMediaMetadata(
+	data []byte,
+	fallbackName, fallbackContentType, resourceURL, contentDisposition string,
+) (string, string) {
 	filename := candidateWeComFilename(resourceURL, contentDisposition, fallbackName)
 	if filename == "" {
 		filename = "media"
@@ -717,7 +720,7 @@ func (c *WeComChannel) uploadOutboundMedia(
 		if end > len(data) {
 			end = len(data)
 		}
-		if err := c.sendCommand(wecomCommand{
+		sendErr := c.sendCommand(wecomCommand{
 			Cmd:     wecomCmdUploadMediaChunk,
 			Headers: wecomHeaders{ReqID: randomID(10)},
 			Body: wecomUploadMediaChunkBody{
@@ -725,8 +728,9 @@ func (c *WeComChannel) uploadOutboundMedia(
 				ChunkIndex: idx,
 				Base64Data: base64.StdEncoding.EncodeToString(data[offset:end]),
 			},
-		}, wecomUploadTimeout); err != nil {
-			return nil, err
+		}, wecomUploadTimeout)
+		if sendErr != nil {
+			return nil, sendErr
 		}
 	}
 
