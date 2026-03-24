@@ -319,16 +319,8 @@ func mergeChannelsSecurity(dst, src *ChannelsSecurity) {
 	if src.OneBot != nil && src.OneBot.AccessToken != "" {
 		dst.OneBot = src.OneBot
 	}
-	if src.WeCom != nil && (src.WeCom.Token != "" || src.WeCom.EncodingAESKey != "") {
+	if src.WeCom != nil && src.WeCom.Secret != "" {
 		dst.WeCom = src.WeCom
-	}
-	if src.WeComApp != nil &&
-		(src.WeComApp.CorpSecret != "" || src.WeComApp.Token != "" || src.WeComApp.EncodingAESKey != "") {
-		dst.WeComApp = src.WeComApp
-	}
-	if src.WeComAIBot != nil &&
-		(src.WeComAIBot.Secret != "" || src.WeComAIBot.Token != "" || src.WeComAIBot.EncodingAESKey != "") {
-		dst.WeComAIBot = src.WeComAIBot
 	}
 	if src.Pico != nil && src.Pico.Token != "" {
 		dst.Pico = src.Pico
