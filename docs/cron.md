@@ -56,7 +56,7 @@ The current CLI `picoclaw cron add` command does not expose a `command` flag.
 
 `tools.cron.enabled` controls whether the agent-facing `cron` tool is registered. Default: `true`.
 
-If you disable `tools.cron`, users can no longer create or manage jobs through the agent tool. The gateway still starts the cron service and the CLI still uses the same job store, so keep `tools.cron.enabled` on if you expect scheduled agent-turn or command jobs to execute through the gateway.
+If you disable `tools.cron`, users can no longer create or manage jobs through the agent tool. The gateway still starts `CronService`, but it does not install the job execution callback. As a result, due jobs do not actually run; one-time jobs may be deleted and recurring jobs may be rescheduled without executing their payload. The CLI still uses the same job store.
 
 `tools.cron.exec_timeout_minutes` sets the timeout used for scheduled command execution. Default: `5`. Set `0` for no timeout.
 
