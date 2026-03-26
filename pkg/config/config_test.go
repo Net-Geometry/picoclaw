@@ -306,14 +306,14 @@ func TestDefaultConfig_WebTools(t *testing.T) {
 	cfg := DefaultConfig()
 
 	// Verify web tools defaults
-	if cfg.Tools.Web.Brave.MaxResults != 10 {
-		t.Error("Expected Brave MaxResults 10, got ", cfg.Tools.Web.Brave.MaxResults)
+	if cfg.Tools.Web.Brave.MaxResults != 5 {
+		t.Error("Expected Brave MaxResults 5, got ", cfg.Tools.Web.Brave.MaxResults)
 	}
 	if len(cfg.Tools.Web.Brave.APIKeys()) != 0 {
 		t.Error("Brave API key should be empty by default")
 	}
-	if cfg.Tools.Web.DuckDuckGo.MaxResults != 10 {
-		t.Error("Expected DuckDuckGo MaxResults 10, got ", cfg.Tools.Web.DuckDuckGo.MaxResults)
+	if cfg.Tools.Web.DuckDuckGo.MaxResults != 5 {
+		t.Error("Expected DuckDuckGo MaxResults 5, got ", cfg.Tools.Web.DuckDuckGo.MaxResults)
 	}
 }
 

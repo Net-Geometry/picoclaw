@@ -70,12 +70,12 @@ General settings for fetching and processing webpage content.
 
 Baidu Search uses the [Qianfan AI Search API](https://cloud.baidu.com/doc/qianfan-api/s/Wmbq4z7e5), which is AI-powered and optimized for Chinese-language queries.
 
-| Config        | Type   | Default                                                          | Description               |
-|---------------|--------|------------------------------------------------------------------|---------------------------|
-| `enabled`     | bool   | false                                                            | Enable Baidu Search       |
-| `api_key`     | string | -                                                                | Qianfan API key           |
-| `base_url`    | string | `https://qianfan.baidubce.com/v2/ai_search/web_search`          | Baidu Search API URL      |
-| `max_results` | int    | 10                                                               | Maximum number of results |
+| Config        | Type   | Default                                                | Description               |
+|---------------|--------|--------------------------------------------------------|---------------------------|
+| `enabled`     | bool   | false                                                  | Enable Baidu Search       |
+| `api_key`     | string | -                                                      | Qianfan API key           |
+| `base_url`    | string | `https://qianfan.baidubce.com/v2/ai_search/web_search` | Baidu Search API URL      |
+| `max_results` | int    | 5                                                      | Maximum number of results |
 
 ```json
 {
@@ -98,7 +98,7 @@ Baidu Search uses the [Qianfan AI Search API](https://cloud.baidu.com/doc/qianfa
 | `enabled`     | bool     | false   | Enable Perplexity search                       |
 | `api_key`     | string   | -       | Perplexity API key                             |
 | `api_keys`    | string[] | -       | Multiple API keys for rotation (takes priority over `api_key`) |
-| `max_results` | int      | 10      | Maximum number of results                      |
+| `max_results` | int      | 5       | Maximum number of results                      |
 
 ### Tavily
 
@@ -107,25 +107,25 @@ Baidu Search uses the [Qianfan AI Search API](https://cloud.baidu.com/doc/qianfa
 | `enabled`     | bool   | false   | Enable Tavily search      |
 | `api_key`     | string | -       | Tavily API key            |
 | `base_url`    | string | -       | Custom Tavily API base URL |
-| `max_results` | int    | 10      | Maximum number of results |
+| `max_results` | int    | 5       | Maximum number of results |
 
 ### SearXNG
 
-| Config        | Type   | Default                  | Description               |
-|---------------|--------|--------------------------|---------------------------|
-| `enabled`     | bool   | false                    | Enable SearXNG search     |
-| `base_url`    | string | `http://localhost:8888`  | SearXNG instance URL      |
-| `max_results` | int    | 10                       | Maximum number of results |
+| Config        | Type   | Default                 | Description               |
+|---------------|--------|-------------------------|---------------------------|
+| `enabled`     | bool   | false                   | Enable SearXNG search     |
+| `base_url`    | string | `http://localhost:8888` | SearXNG instance URL      |
+| `max_results` | int    | 5                       | Maximum number of results |
 
 ### GLM Search
 
-| Config          | Type   | Default                                              | Description               |
-|-----------------|--------|------------------------------------------------------|---------------------------|
-| `enabled`       | bool   | false                                                | Enable GLM Search         |
-| `api_key`       | string | -                                                    | GLM API key               |
-| `base_url`      | string | `https://open.bigmodel.cn/api/paas/v4/web_search`   | GLM Search API URL        |
-| `search_engine` | string | `search_std`                                         | Search engine type        |
-| `max_results`   | int    | 10                                                   | Maximum number of results |
+| Config          | Type   | Default                                           | Description               |
+|-----------------|--------|---------------------------------------------------|---------------------------|
+| `enabled`       | bool   | false                                             | Enable GLM Search         |
+| `api_key`       | string | -                                                 | GLM API key               |
+| `base_url`      | string | `https://open.bigmodel.cn/api/paas/v4/web_search` | GLM Search API URL        |
+| `search_engine` | string | `search_std`                                      | Search engine type        |
+| `max_results`   | int    | 5                                                 | Maximum number of results |
 
 ### Additional Web Settings
 
