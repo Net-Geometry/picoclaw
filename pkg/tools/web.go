@@ -86,7 +86,122 @@ func (it *APIKeyIterator) Next() (string, bool) {
 }
 
 type SearchProvider interface {
-	Search(ctx context.Context, query string, count int) (string, error)
+	Search(ctx context.Context, query string, count int, rangeCode string) (string, error)
+}
+
+func normalizeSearchRange(raw string) (string, error) {
+	rangeCode := strings.ToLower(strings.TrimSpace(raw))
+	switch rangeCode {
+	case "", "d", "w", "m", "y":
+		return rangeCode, nil
+	default:
+		return "", fmt.Errorf("range must be one of: d, w, m, y")
+	}
+}
+
+func mapBraveFreshness(rangeCode string) string {
+	switch rangeCode {
+	case "d":
+		return "pd"
+	case "w":
+		return "pw"
+	case "m":
+		return "pm"
+	case "y":
+		return "py"
+	default:
+		return ""
+	}
+}
+
+func mapTavilyTimeRange(rangeCode string) string {
+	switch rangeCode {
+	case "d":
+		return "day"
+	case "w":
+		return "week"
+	case "m":
+		return "month"
+	case "y":
+		return "year"
+	default:
+		return ""
+	}
+}
+
+func mapPerplexityRecencyFilter(rangeCode string) string {
+	switch rangeCode {
+	case "d":
+		return "day"
+	case "w":
+		return "week"
+	case "m":
+		return "month"
+	case "y":
+		return "year"
+	default:
+		return ""
+	}
+}
+
+func mapDuckDuckGoDateFilter(rangeCode string) string {
+	switch rangeCode {
+	case "d":
+		return "d"
+	case "w":
+		return "w"
+	case "m":
+		return "m"
+	case "y":
+		return "t"
+	default:
+		return ""
+	}
+}
+
+func mapSearXNGTimeRange(rangeCode string) string {
+	switch rangeCode {
+	case "d":
+		return "day"
+	case "w":
+		return "week"
+	case "m":
+		return "month"
+	case "y":
+		return "year"
+	default:
+		return ""
+	}
+}
+
+func mapGLMRecencyFilter(rangeCode string) string {
+	switch rangeCode {
+	case "d":
+		return "oneDay"
+	case "w":
+		return "oneWeek"
+	case "m":
+		return "oneMonth"
+	case "y":
+		return "oneYear"
+	default:
+		return "noLimit"
+	}
+}
+
+func mapBaiduRecencyFilter(rangeCode string) string {
+	switch rangeCode {
+	case "d", "w":
+		// Baidu does not expose a day-level filter. Use the closest supported
+		// window to keep recency bias instead of silently dropping the filter.
+		return "week"
+	case "m":
+		return "month"
+	case "y":
+		return "year"
+	default:
+		return ""
+	}
 }
 
 type BraveSearchProvider struct {
@@ -95,9 +210,12 @@ type BraveSearchProvider struct {
 	client  *http.Client
 }
 
-func (p *BraveSearchProvider) Search(ctx context.Context, query string, count int) (string, error) {
+func (p *BraveSearchProvider) Search(ctx context.Context, query string, count int, rangeCode string) (string, error) {
 	searchURL := fmt.Sprintf("https://api.search.brave.com/res/v1/web/search?q=%s&count=%d",
 		url.QueryEscape(query), count)
+	if freshness := mapBraveFreshness(rangeCode); freshness != "" {
+		searchURL += "&freshness=" + url.QueryEscape(freshness)
+	}
 
 	var lastErr error
 	iter := p.keyPool.NewIterator()
@@ -186,7 +304,7 @@ type TavilySearchProvider struct {
 	client  *http.Client
 }
 
-func (p *TavilySearchProvider) Search(ctx context.Context, query string, count int) (string, error) {
+func (p *TavilySearchProvider) Search(ctx context.Context, query string, count int, rangeCode string) (string, error) {
 	searchURL := p.baseURL
 	if searchURL == "" {
 		searchURL = "https://api.tavily.com/search"
@@ -209,6 +327,9 @@ func (p *TavilySearchProvider) Search(ctx context.Context, query string, count i
 			"include_images":      false,
 			"include_raw_content": false,
 			"max_results":         count,
+		}
+		if timeRange := mapTavilyTimeRange(rangeCode); timeRange != "" {
+			payload["time_range"] = timeRange
 		}
 
 		bodyBytes, err := json.Marshal(payload)
@@ -289,8 +410,11 @@ type DuckDuckGoSearchProvider struct {
 	client *http.Client
 }
 
-func (p *DuckDuckGoSearchProvider) Search(ctx context.Context, query string, count int) (string, error) {
+func (p *DuckDuckGoSearchProvider) Search(ctx context.Context, query string, count int, rangeCode string) (string, error) {
 	searchURL := fmt.Sprintf("https://html.duckduckgo.com/html/?q=%s", url.QueryEscape(query))
+	if dateFilter := mapDuckDuckGoDateFilter(rangeCode); dateFilter != "" {
+		searchURL += "&df=" + url.QueryEscape(dateFilter)
+	}
 
 	req, err := http.NewRequestWithContext(ctx, "GET", searchURL, nil)
 	if err != nil {
@@ -381,7 +505,7 @@ type PerplexitySearchProvider struct {
 	client  *http.Client
 }
 
-func (p *PerplexitySearchProvider) Search(ctx context.Context, query string, count int) (string, error) {
+func (p *PerplexitySearchProvider) Search(ctx context.Context, query string, count int, rangeCode string) (string, error) {
 	searchURL := "https://api.perplexity.ai/chat/completions"
 
 	var lastErr error
@@ -406,6 +530,9 @@ func (p *PerplexitySearchProvider) Search(ctx context.Context, query string, cou
 				},
 			},
 			"max_tokens": 1000,
+		}
+		if recencyFilter := mapPerplexityRecencyFilter(rangeCode); recencyFilter != "" {
+			payload["search_recency_filter"] = recencyFilter
 		}
 
 		payloadBytes, err := json.Marshal(payload)
@@ -473,10 +600,13 @@ type SearXNGSearchProvider struct {
 	baseURL string
 }
 
-func (p *SearXNGSearchProvider) Search(ctx context.Context, query string, count int) (string, error) {
+func (p *SearXNGSearchProvider) Search(ctx context.Context, query string, count int, rangeCode string) (string, error) {
 	searchURL := fmt.Sprintf("%s/search?q=%s&format=json&categories=general",
 		strings.TrimSuffix(p.baseURL, "/"),
 		url.QueryEscape(query))
+	if timeRange := mapSearXNGTimeRange(rangeCode); timeRange != "" {
+		searchURL += "&time_range=" + url.QueryEscape(timeRange)
+	}
 
 	req, err := http.NewRequestWithContext(ctx, "GET", searchURL, nil)
 	if err != nil {
@@ -539,7 +669,7 @@ type GLMSearchProvider struct {
 	client       *http.Client
 }
 
-func (p *GLMSearchProvider) Search(ctx context.Context, query string, count int) (string, error) {
+func (p *GLMSearchProvider) Search(ctx context.Context, query string, count int, rangeCode string) (string, error) {
 	searchURL := p.baseURL
 	if searchURL == "" {
 		searchURL = "https://open.bigmodel.cn/api/paas/v4/web_search"
@@ -551,6 +681,9 @@ func (p *GLMSearchProvider) Search(ctx context.Context, query string, count int)
 		"search_intent": false,
 		"count":         count,
 		"content_size":  "medium",
+	}
+	if recencyFilter := mapGLMRecencyFilter(rangeCode); recencyFilter != "" {
+		payload["search_recency_filter"] = recencyFilter
 	}
 
 	bodyBytes, err := json.Marshal(payload)
@@ -620,7 +753,7 @@ type BaiduSearchProvider struct {
 	client  *http.Client
 }
 
-func (p *BaiduSearchProvider) Search(ctx context.Context, query string, count int) (string, error) {
+func (p *BaiduSearchProvider) Search(ctx context.Context, query string, count int, rangeCode string) (string, error) {
 	searchURL := p.baseURL
 	if searchURL == "" {
 		searchURL = "https://qianfan.baidubce.com/v2/ai_search/web_search"
@@ -635,6 +768,9 @@ func (p *BaiduSearchProvider) Search(ctx context.Context, query string, count in
 		},
 		"search_source":        "baidu_search_v2",
 		"resource_type_filter": []map[string]any{{"type": "web", "top_k": count}},
+	}
+	if recencyFilter := mapBaiduRecencyFilter(rangeCode); recencyFilter != "" {
+		payload["search_recency_filter"] = recencyFilter
 	}
 
 	bodyBytes, err := json.Marshal(payload)
@@ -729,7 +865,7 @@ type WebSearchToolOptions struct {
 
 func NewWebSearchTool(opts WebSearchToolOptions) (*WebSearchTool, error) {
 	var provider SearchProvider
-	maxResults := 5
+	maxResults := 10
 	// Priority: Perplexity > Brave > SearXNG > Tavily > DuckDuckGo > Baidu Search > GLM Search
 	if opts.PerplexityEnabled && len(opts.PerplexityAPIKeys) > 0 {
 		client, err := utils.CreateHTTPClient(opts.Proxy, perplexityTimeout)
@@ -742,7 +878,7 @@ func NewWebSearchTool(opts WebSearchToolOptions) (*WebSearchTool, error) {
 			client:  client,
 		}
 		if opts.PerplexityMaxResults > 0 {
-			maxResults = opts.PerplexityMaxResults
+			maxResults = min(opts.PerplexityMaxResults, 10)
 		}
 	} else if opts.BraveEnabled && len(opts.BraveAPIKeys) > 0 {
 		client, err := utils.CreateHTTPClient(opts.Proxy, searchTimeout)
@@ -751,12 +887,12 @@ func NewWebSearchTool(opts WebSearchToolOptions) (*WebSearchTool, error) {
 		}
 		provider = &BraveSearchProvider{keyPool: NewAPIKeyPool(opts.BraveAPIKeys), proxy: opts.Proxy, client: client}
 		if opts.BraveMaxResults > 0 {
-			maxResults = opts.BraveMaxResults
+			maxResults = min(opts.BraveMaxResults, 10)
 		}
 	} else if opts.SearXNGEnabled && opts.SearXNGBaseURL != "" {
 		provider = &SearXNGSearchProvider{baseURL: opts.SearXNGBaseURL}
 		if opts.SearXNGMaxResults > 0 {
-			maxResults = opts.SearXNGMaxResults
+			maxResults = min(opts.SearXNGMaxResults, 10)
 		}
 	} else if opts.TavilyEnabled && len(opts.TavilyAPIKeys) > 0 {
 		client, err := utils.CreateHTTPClient(opts.Proxy, searchTimeout)
@@ -770,7 +906,7 @@ func NewWebSearchTool(opts WebSearchToolOptions) (*WebSearchTool, error) {
 			client:  client,
 		}
 		if opts.TavilyMaxResults > 0 {
-			maxResults = opts.TavilyMaxResults
+			maxResults = min(opts.TavilyMaxResults, 10)
 		}
 	} else if opts.DuckDuckGoEnabled {
 		client, err := utils.CreateHTTPClient(opts.Proxy, searchTimeout)
@@ -779,7 +915,7 @@ func NewWebSearchTool(opts WebSearchToolOptions) (*WebSearchTool, error) {
 		}
 		provider = &DuckDuckGoSearchProvider{proxy: opts.Proxy, client: client}
 		if opts.DuckDuckGoMaxResults > 0 {
-			maxResults = opts.DuckDuckGoMaxResults
+			maxResults = min(opts.DuckDuckGoMaxResults, 10)
 		}
 	} else if opts.BaiduSearchEnabled && opts.BaiduSearchAPIKey != "" {
 		client, err := utils.CreateHTTPClient(opts.Proxy, perplexityTimeout)
@@ -793,7 +929,7 @@ func NewWebSearchTool(opts WebSearchToolOptions) (*WebSearchTool, error) {
 			client:  client,
 		}
 		if opts.BaiduSearchMaxResults > 0 {
-			maxResults = opts.BaiduSearchMaxResults
+			maxResults = min(opts.BaiduSearchMaxResults, 10)
 		}
 	} else if opts.GLMSearchEnabled && opts.GLMSearchAPIKey != "" {
 		client, err := utils.CreateHTTPClient(opts.Proxy, searchTimeout)
@@ -812,7 +948,7 @@ func NewWebSearchTool(opts WebSearchToolOptions) (*WebSearchTool, error) {
 			client:       client,
 		}
 		if opts.GLMSearchMaxResults > 0 {
-			maxResults = opts.GLMSearchMaxResults
+			maxResults = min(opts.GLMSearchMaxResults, 10)
 		}
 	} else {
 		return nil, nil
@@ -829,7 +965,7 @@ func (t *WebSearchTool) Name() string {
 }
 
 func (t *WebSearchTool) Description() string {
-	return "Search the web for current information. Returns titles, URLs, and snippets from search results."
+	return "Search the web for current information. Supports query, count, and an optional temporal range filter. Returns titles, URLs, and snippets from search results."
 }
 
 func (t *WebSearchTool) Parameters() map[string]any {
@@ -842,9 +978,14 @@ func (t *WebSearchTool) Parameters() map[string]any {
 			},
 			"count": map[string]any{
 				"type":        "integer",
-				"description": "Number of results (1-10)",
+				"description": "Number of results (default: 10, max: 10)",
 				"minimum":     1.0,
 				"maximum":     10.0,
+			},
+			"range": map[string]any{
+				"type":        "string",
+				"description": "Optional time filter: d (day), w (week), m (month), y (year)",
+				"enum":        []string{"d", "w", "m", "y"},
 			},
 		},
 		"required": []string{"query"},
@@ -853,18 +994,36 @@ func (t *WebSearchTool) Parameters() map[string]any {
 
 func (t *WebSearchTool) Execute(ctx context.Context, args map[string]any) *ToolResult {
 	query, ok := args["query"].(string)
-	if !ok {
+	if !ok || strings.TrimSpace(query) == "" {
 		return ErrorResult("query is required")
 	}
+	query = strings.TrimSpace(query)
 
+	count64, err := getInt64Arg(args, "count", int64(t.maxResults))
+	if err != nil {
+		return ErrorResult(err.Error())
+	}
 	count := t.maxResults
-	if c, ok := args["count"].(float64); ok {
-		if int(c) > 0 && int(c) <= 10 {
-			count = int(c)
+	if count64 > 0 && count64 <= 10 {
+		count = int(count64)
+	}
+
+	rangeCode, err := normalizeSearchRange("")
+	if err != nil {
+		return ErrorResult(err.Error())
+	}
+	if rawRange, exists := args["range"]; exists {
+		rangeStr, ok := rawRange.(string)
+		if !ok {
+			return ErrorResult("range must be a string")
+		}
+		rangeCode, err = normalizeSearchRange(rangeStr)
+		if err != nil {
+			return ErrorResult(err.Error())
 		}
 	}
 
-	result, err := t.provider.Search(ctx, query, count)
+	result, err := t.provider.Search(ctx, query, count, rangeCode)
 	if err != nil {
 		return ErrorResult(fmt.Sprintf("search failed: %v", err))
 	}

@@ -98,7 +98,7 @@ Baidu Search uses the [Qianfan AI Search API](https://cloud.baidu.com/doc/qianfa
 | `enabled`     | bool     | false   | Enable Perplexity search                       |
 | `api_key`     | string   | -       | Perplexity API key                             |
 | `api_keys`    | string[] | -       | Multiple API keys for rotation (takes priority over `api_key`) |
-| `max_results` | int      | 5       | Maximum number of results                      |
+| `max_results` | int      | 10      | Maximum number of results                      |
 
 ### Tavily
 
@@ -107,7 +107,7 @@ Baidu Search uses the [Qianfan AI Search API](https://cloud.baidu.com/doc/qianfa
 | `enabled`     | bool   | false   | Enable Tavily search      |
 | `api_key`     | string | -       | Tavily API key            |
 | `base_url`    | string | -       | Custom Tavily API base URL |
-| `max_results` | int    | 0       | Maximum number of results (0 = default) |
+| `max_results` | int    | 10      | Maximum number of results |
 
 ### SearXNG
 
@@ -115,7 +115,7 @@ Baidu Search uses the [Qianfan AI Search API](https://cloud.baidu.com/doc/qianfa
 |---------------|--------|--------------------------|---------------------------|
 | `enabled`     | bool   | false                    | Enable SearXNG search     |
 | `base_url`    | string | `http://localhost:8888`  | SearXNG instance URL      |
-| `max_results` | int    | 5                        | Maximum number of results |
+| `max_results` | int    | 10                       | Maximum number of results |
 
 ### GLM Search
 
@@ -125,7 +125,7 @@ Baidu Search uses the [Qianfan AI Search API](https://cloud.baidu.com/doc/qianfa
 | `api_key`       | string | -                                                    | GLM API key               |
 | `base_url`      | string | `https://open.bigmodel.cn/api/paas/v4/web_search`   | GLM Search API URL        |
 | `search_engine` | string | `search_std`                                         | Search engine type        |
-| `max_results`   | int    | 5                                                    | Maximum number of results |
+| `max_results`   | int    | 10                                                   | Maximum number of results |
 
 ### Additional Web Settings
 
@@ -133,6 +133,28 @@ Baidu Search uses the [Qianfan AI Search API](https://cloud.baidu.com/doc/qianfa
 |--------------------------|----------|---------|----------------------------------------------------------------|
 | `prefer_native`          | bool     | true    | Prefer provider's native search over configured search engines |
 | `private_host_whitelist` | string[] | `[]`    | Private/internal hosts allowed for web fetching                |
+
+### `web_search` Tool Parameters
+
+At runtime, the `web_search` tool accepts the following parameters:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `query` | string | yes | Search query string |
+| `count` | integer | no | Number of results to return. Default: `10`, max: `10` |
+| `range` | string | no | Optional time filter: `d` (day), `w` (week), `m` (month), `y` (year) |
+
+If `range` is omitted, PicoClaw performs an unrestricted search.
+
+### Example `web_search` Call
+
+```json
+{
+  "query": "ai agent news",
+  "count": 10,
+  "range": "w"
+}
+```
 
 ## Exec Tool
 
