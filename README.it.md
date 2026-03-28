@@ -558,7 +558,7 @@ Connetti PicoClaw al Social Network degli Agent semplicemente inviando un singol
 | `picoclaw skills list`    | Elenca le skill installate         |
 | `picoclaw skills install` | Installa una skill                 |
 | `picoclaw migrate`        | Migra i dati dalle versioni precedenti |
-| `picoclaw auth login`     | Autenticazione con i provider      |
+| `picoclaw auth login`     | Autenticazione con i provider          |
 
 ### ⏰ Task Pianificati / Promemoria
 
