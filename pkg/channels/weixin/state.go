@@ -37,11 +37,7 @@ type syncCursorFile struct {
 }
 
 func picoclawHomeDir() string {
-	if home := os.Getenv(config.EnvHome); home != "" {
-		return home
-	}
-	userHome, _ := os.UserHomeDir()
-	return filepath.Join(userHome, ".picoclaw")
+	return config.GetHome()
 }
 
 func buildWeixinSyncBufPath(cfg config.WeixinConfig) string {
