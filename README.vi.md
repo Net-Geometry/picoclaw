@@ -254,6 +254,29 @@ docker compose -f docker/docker-compose.yml --profile launcher up -d
 
 </details>
 
+<details>
+<summary><b>macOS — Cảnh báo bảo mật khi khởi chạy lần đầu</b></summary>
+
+macOS có thể chặn `picoclaw-launcher` khi khởi chạy lần đầu vì nó được tải từ internet và chưa được công chứng qua Mac App Store.
+
+**Bước 1:** Nhấp đúp vào `picoclaw-launcher`. Bạn sẽ thấy cảnh báo bảo mật:
+
+<p align="center">
+<img src="assets/macos-gatekeeper-warning.jpg" alt="Cảnh báo macOS Gatekeeper" width="400">
+</p>
+
+> *"picoclaw-launcher" Không Mở Được — Apple không thể xác minh "picoclaw-launcher" không chứa phần mềm độc hại có thể gây hại cho Mac hoặc xâm phạm quyền riêng tư của bạn.*
+
+**Bước 2:** Mở **Cài đặt Hệ thống** → **Quyền riêng tư & Bảo mật** → cuộn xuống phần **Bảo mật** → nhấp **Vẫn Mở** → xác nhận bằng cách nhấp **Vẫn Mở** trong hộp thoại.
+
+<p align="center">
+<img src="assets/macos-gatekeeper-allow.jpg" alt="macOS Quyền riêng tư & Bảo mật — Vẫn Mở" width="600">
+</p>
+
+Sau bước này, `picoclaw-launcher` sẽ mở bình thường trong các lần khởi chạy tiếp theo.
+
+</details>
+
 ### 💻 TUI Launcher (Khuyến nghị cho Headless / SSH)
 
 TUI (Terminal UI) Launcher cung cấp giao diện terminal đầy đủ tính năng để cấu hình và quản lý. Lý tưởng cho máy chủ, Raspberry Pi và các môi trường headless khác.

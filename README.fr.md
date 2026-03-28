@@ -257,6 +257,29 @@ docker compose -f docker/docker-compose.yml --profile launcher up -d
 
 </details>
 
+<details>
+<summary><b>macOS — Avertissement de sécurité au premier lancement</b></summary>
+
+macOS peut bloquer `picoclaw-launcher` au premier lancement car il est téléchargé depuis Internet et n'est pas notarisé via le Mac App Store.
+
+**Étape 1 :** Double-cliquez sur `picoclaw-launcher`. Un avertissement de sécurité s'affiche :
+
+<p align="center">
+<img src="assets/macos-gatekeeper-warning.jpg" alt="Avertissement macOS Gatekeeper" width="400">
+</p>
+
+> *"picoclaw-launcher" n'a pas pu être ouvert — Apple n'a pas pu vérifier que "picoclaw-launcher" ne contient pas de logiciel malveillant susceptible de nuire à votre Mac ou de compromettre votre confidentialité.*
+
+**Étape 2 :** Ouvrez **Réglages Système** → **Confidentialité et sécurité** → faites défiler jusqu'à la section **Sécurité** → cliquez sur **Ouvrir quand même** → confirmez en cliquant sur **Ouvrir quand même** dans la boîte de dialogue.
+
+<p align="center">
+<img src="assets/macos-gatekeeper-allow.jpg" alt="macOS Confidentialité et sécurité — Ouvrir quand même" width="600">
+</p>
+
+Après cette étape unique, `picoclaw-launcher` s'ouvrira normalement lors des lancements suivants.
+
+</details>
+
 ### 💻 TUI Launcher (Recommandé pour les environnements sans interface / SSH)
 
 Le TUI (Terminal UI) Launcher fournit une interface terminal complète pour la configuration et la gestion. Idéal pour les serveurs, Raspberry Pi et autres environnements sans interface graphique.
