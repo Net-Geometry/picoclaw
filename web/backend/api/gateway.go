@@ -147,7 +147,6 @@ func (h *Handler) registerGatewayRoutes(mux *http.ServeMux) {
 func (h *Handler) TryAutoStartGateway() {
 	// Check PID file first to detect an already-running gateway.
 	pidData := ppid.ReadPidFileWithCheck(globalConfigDir())
-	logger.Infof("pidData: %v", pidData)
 	if pidData != nil {
 		gateway.mu.Lock()
 		ready, reason, err := h.gatewayStartReady()

@@ -89,7 +89,7 @@ func (h *Handler) handleGetPicoToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wsURL := h.buildWsURL(r, cfg)
+	wsURL := h.buildWsURL(r)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{
@@ -122,7 +122,7 @@ func (h *Handler) handleRegenPicoToken(w http.ResponseWriter, r *http.Request) {
 	gateway.picoToken = token
 	gateway.mu.Unlock()
 
-	wsURL := h.buildWsURL(r, cfg)
+	wsURL := h.buildWsURL(r)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{
@@ -191,7 +191,7 @@ func (h *Handler) handlePicoSetup(w http.ResponseWriter, r *http.Request) {
 		refreshPicoToken(cfg)
 	}
 
-	wsURL := h.buildWsURL(r, cfg)
+	wsURL := h.buildWsURL(r)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{
