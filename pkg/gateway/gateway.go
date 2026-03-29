@@ -22,7 +22,7 @@ import (
 	_ "github.com/sipeed/picoclaw/pkg/channels/line"
 	_ "github.com/sipeed/picoclaw/pkg/channels/maixcam"
 	_ "github.com/sipeed/picoclaw/pkg/channels/onebot"
-	_ "github.com/sipeed/picoclaw/pkg/channels/pico"
+	"github.com/sipeed/picoclaw/pkg/channels/pico"
 	_ "github.com/sipeed/picoclaw/pkg/channels/qq"
 	_ "github.com/sipeed/picoclaw/pkg/channels/slack"
 	_ "github.com/sipeed/picoclaw/pkg/channels/telegram"
@@ -662,8 +662,6 @@ func setupCronTool(
 	return cronService, nil
 }
 
-const picoTokenPrefix = "pico-"
-
 // overridePicoToken replaces the pico channel token with the one from the PID file.
 // The PID file is the single source of truth for the pico auth token;
 // it is generated once at gateway startup and remains unchanged across reloads.
@@ -672,10 +670,10 @@ func overridePicoToken(cfg *config.Config, token string) {
 		return
 	}
 	picoToken := cfg.Channels.Pico.Token.String()
-	if picoToken == "" || strings.HasPrefix(picoToken, picoTokenPrefix) {
+	if picoToken == "" || strings.HasPrefix(picoToken, pico.PicoTokenPrefix) {
 		return
 	}
-	cfg.Channels.Pico.SetToken(picoTokenPrefix + token + picoToken)
+	cfg.Channels.Pico.SetToken(pico.PicoTokenPrefix + token + picoToken)
 }
 
 func createHeartbeatHandler(agentLoop *agent.AgentLoop) func(prompt, channel, chatID string) *tools.ToolResult {

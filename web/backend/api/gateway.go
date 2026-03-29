@@ -17,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/sipeed/picoclaw/pkg/channels/pico"
 	"github.com/sipeed/picoclaw/pkg/config"
 	"github.com/sipeed/picoclaw/pkg/health"
 	"github.com/sipeed/picoclaw/pkg/logger"
@@ -59,9 +60,8 @@ func refreshPicoTokensLocked(configPath string) {
 }
 
 const (
-	protocolKey     = "Sec-Websocket-Protocol"
-	picoTokenPrefix = "pico-"
-	tokenPrefix     = "token."
+	protocolKey = "Sec-Websocket-Protocol"
+	tokenPrefix = "token."
 )
 
 // picoComposedToken returns "pico-"+pidToken+picoToken for gateway auth.
@@ -75,7 +75,7 @@ func picoComposedToken(token string) string {
 	if tokenPrefix+gateway.picoToken != token {
 		return ""
 	}
-	return picoTokenPrefix + gateway.pidData.Token + gateway.picoToken
+	return pico.PicoTokenPrefix + gateway.pidData.Token + gateway.picoToken
 }
 
 var (
