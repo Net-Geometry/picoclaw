@@ -60,8 +60,8 @@ func retryDelayForAttempt(resp *http.Response, attempt int) time.Duration {
 		return clampRetryDelay(fallback)
 	}
 
-	if seconds, err := strconv.Atoi(retryAfter); err == nil && seconds >= 0 {
-		return clampRetryDelay(time.Duration(seconds) * time.Second)
+	if delay, ok := numericRetryAfterDelay(retryAfter); ok {
+		return delay
 	}
 
 	if when, err := http.ParseTime(retryAfter); err == nil {
@@ -76,6 +76,18 @@ func retryDelayForAttempt(resp *http.Response, attempt int) time.Duration {
 	}
 
 	return clampRetryDelay(fallback)
+}
+
+func numericRetryAfterDelay(retryAfter string) (time.Duration, bool) {
+	seconds, err := strconv.ParseInt(retryAfter, 10, 64)
+	if err != nil || seconds < 0 {
+		return 0, false
+	}
+	maxSeconds := int64(maxRetrySleepDuration / time.Second)
+	if seconds > maxSeconds {
+		return maxRetrySleepDuration, true
+	}
+	return clampRetryDelay(time.Duration(seconds) * time.Second), true
 }
 
 func clampRetryDelay(delay time.Duration) time.Duration {
