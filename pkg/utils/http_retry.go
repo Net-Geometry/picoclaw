@@ -11,6 +11,7 @@ import (
 const maxRetries = 3
 
 var retryDelayUnit = time.Second
+var maxRetrySleepDuration = 1 * time.Minute
 
 func shouldRetry(statusCode int) bool {
 	return statusCode == http.StatusTooManyRequests ||
@@ -51,27 +52,40 @@ func DoRequestWithRetry(client *http.Client, req *http.Request) (*http.Response,
 func retryDelayForAttempt(resp *http.Response, attempt int) time.Duration {
 	fallback := retryDelayUnit * time.Duration(attempt+1)
 	if resp == nil || resp.StatusCode != http.StatusTooManyRequests {
-		return fallback
+		return clampRetryDelay(fallback)
 	}
 
 	retryAfter := resp.Header.Get("Retry-After")
 	if retryAfter == "" {
-		return fallback
+		return clampRetryDelay(fallback)
 	}
 
 	if seconds, err := strconv.Atoi(retryAfter); err == nil && seconds >= 0 {
-		return time.Duration(seconds) * time.Second
+		return clampRetryDelay(time.Duration(seconds) * time.Second)
 	}
 
 	if when, err := http.ParseTime(retryAfter); err == nil {
 		delay := time.Until(when)
+		if serverDate, err := http.ParseTime(resp.Header.Get("Date")); err == nil {
+			delay = when.Sub(serverDate)
+		}
 		if delay < 0 {
 			return 0
 		}
-		return delay
+		return clampRetryDelay(delay)
 	}
 
-	return fallback
+	return clampRetryDelay(fallback)
+}
+
+func clampRetryDelay(delay time.Duration) time.Duration {
+	if delay <= 0 {
+		return 0
+	}
+	if delay > maxRetrySleepDuration {
+		return maxRetrySleepDuration
+	}
+	return delay
 }
 
 func sleepWithCtx(ctx context.Context, d time.Duration) error {

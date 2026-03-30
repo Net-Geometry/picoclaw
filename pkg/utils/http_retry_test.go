@@ -279,3 +279,49 @@ func TestDoRequestWithRetry_Delay(t *testing.T) {
 
 	assert.GreaterOrEqual(t, delays[2], time.Millisecond)
 }
+
+func TestRetryDelayForAttempt_DateRetryAfterUsesResponseDateHeader(t *testing.T) {
+	maxRetrySleepDuration = time.Minute
+	t.Cleanup(func() { maxRetrySleepDuration = time.Minute })
+
+	serverDate := time.Date(2000, 1, 2, 15, 4, 5, 0, time.UTC)
+	retryAfterAt := serverDate.Add(10 * time.Second)
+	resp := &http.Response{
+		StatusCode: http.StatusTooManyRequests,
+		Header: http.Header{
+			"Retry-After": []string{retryAfterAt.Format(http.TimeFormat)},
+			"Date":        []string{serverDate.Format(http.TimeFormat)},
+		},
+	}
+
+	assert.Equal(t, 10*time.Second, retryDelayForAttempt(resp, 0))
+}
+
+func TestRetryDelayForAttempt_DateRetryAfterInvalidDateFallsBackSafely(t *testing.T) {
+	maxRetrySleepDuration = time.Minute
+	t.Cleanup(func() { maxRetrySleepDuration = time.Minute })
+
+	resp := &http.Response{
+		StatusCode: http.StatusTooManyRequests,
+		Header: http.Header{
+			"Retry-After": []string{time.Date(2000, 1, 2, 15, 4, 5, 0, time.UTC).Format(http.TimeFormat)},
+			"Date":        []string{"invalid-date"},
+		},
+	}
+
+	assert.Equal(t, time.Duration(0), retryDelayForAttempt(resp, 0))
+}
+
+func TestRetryDelayForAttempt_RetryAfterIsCapped(t *testing.T) {
+	maxRetrySleepDuration = 2 * time.Second
+	t.Cleanup(func() { maxRetrySleepDuration = time.Minute })
+
+	resp := &http.Response{
+		StatusCode: http.StatusTooManyRequests,
+		Header: http.Header{
+			"Retry-After": []string{"999999"},
+		},
+	}
+
+	assert.Equal(t, 2*time.Second, retryDelayForAttempt(resp, 0))
+}
