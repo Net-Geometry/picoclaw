@@ -10,8 +10,10 @@ import (
 
 const maxRetries = 3
 
-var retryDelayUnit = time.Second
-var maxRetrySleepDuration = 1 * time.Minute
+var (
+	retryDelayUnit        = time.Second
+	maxRetrySleepDuration = 1 * time.Minute
+)
 
 func shouldRetry(statusCode int) bool {
 	return statusCode == http.StatusTooManyRequests ||
