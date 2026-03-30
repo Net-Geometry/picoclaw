@@ -164,7 +164,7 @@ When public access is enabled:
 ### Prerequisites
 
 - Go `1.25+`
-- Node.js `20+`
+- Node.js 20.19+ or 22.13+
 - `pnpm`
 
 On macOS, the `web` Makefile enables `CGO_ENABLED=1` so tray-enabled launcher builds work as expected.
