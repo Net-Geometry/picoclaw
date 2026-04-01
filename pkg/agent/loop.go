@@ -1372,13 +1372,18 @@ func (al *AgentLoop) processMessage(ctx context.Context, msg bus.InboundMessage)
 
 func (al *AgentLoop) resolveMessageRoute(msg bus.InboundMessage) (routing.ResolvedRoute, *AgentInstance, error) {
 	registry := al.GetRegistry()
+	inboundCtx := normalizedInboundContext(msg)
+	channel := strings.TrimSpace(inboundCtx.Channel)
+	if channel == "" {
+		channel = msg.Channel
+	}
 	route := registry.ResolveRoute(routing.RouteInput{
-		Channel:    msg.Channel,
-		AccountID:  inboundMetadata(msg, metadataKeyAccountID),
+		Channel:    channel,
+		AccountID:  routeAccountID(msg),
 		Peer:       extractPeer(msg),
 		ParentPeer: extractParentPeer(msg),
-		GuildID:    inboundMetadata(msg, metadataKeyGuildID),
-		TeamID:     inboundMetadata(msg, metadataKeyTeamID),
+		GuildID:    routeGuildID(msg),
+		TeamID:     routeTeamID(msg),
 	})
 
 	agent, ok := registry.GetAgent(route.AgentID)
@@ -1390,6 +1395,10 @@ func (al *AgentLoop) resolveMessageRoute(msg bus.InboundMessage) (routing.Resolv
 	}
 
 	return route, agent, nil
+}
+
+func normalizedInboundContext(msg bus.InboundMessage) bus.InboundContext {
+	return bus.NormalizeInboundMessage(msg).Context
 }
 
 func resolveScopeKey(route routing.ResolvedRoute, msgSessionKey string) string {
@@ -3553,18 +3562,32 @@ func mapCommandError(result commands.ExecuteResult) string {
 
 // extractPeer extracts the routing peer from the inbound message's structured Peer field.
 func extractPeer(msg bus.InboundMessage) *routing.RoutePeer {
-	if msg.Peer.Kind == "" {
+	if msg.Peer.Kind != "" {
+		peerID := msg.Peer.ID
+		if peerID == "" {
+			if msg.Peer.Kind == "direct" {
+				peerID = msg.SenderID
+			} else {
+				peerID = msg.ChatID
+			}
+		}
+		return &routing.RoutePeer{Kind: msg.Peer.Kind, ID: peerID}
+	}
+
+	inboundCtx := normalizedInboundContext(msg)
+	peerKind := strings.TrimSpace(inboundCtx.ChatType)
+	if peerKind == "" {
 		return nil
 	}
-	peerID := msg.Peer.ID
-	if peerID == "" {
-		if msg.Peer.Kind == "direct" {
-			peerID = msg.SenderID
-		} else {
-			peerID = msg.ChatID
-		}
+
+	peerID := strings.TrimSpace(inboundCtx.ChatID)
+	if peerKind == "direct" && peerID == "" {
+		peerID = strings.TrimSpace(inboundCtx.SenderID)
 	}
-	return &routing.RoutePeer{Kind: msg.Peer.Kind, ID: peerID}
+	if peerID == "" {
+		return nil
+	}
+	return &routing.RoutePeer{Kind: peerKind, ID: peerID}
 }
 
 func inboundMetadata(msg bus.InboundMessage, key string) string {
@@ -3576,12 +3599,43 @@ func inboundMetadata(msg bus.InboundMessage, key string) string {
 
 // extractParentPeer extracts the parent peer (reply-to) from inbound message metadata.
 func extractParentPeer(msg bus.InboundMessage) *routing.RoutePeer {
+	inboundCtx := normalizedInboundContext(msg)
+	if topicID := strings.TrimSpace(inboundCtx.TopicID); topicID != "" {
+		return &routing.RoutePeer{Kind: "topic", ID: topicID}
+	}
+
 	parentKind := inboundMetadata(msg, metadataKeyParentPeerKind)
 	parentID := inboundMetadata(msg, metadataKeyParentPeerID)
 	if parentKind == "" || parentID == "" {
 		return nil
 	}
 	return &routing.RoutePeer{Kind: parentKind, ID: parentID}
+}
+
+func routeAccountID(msg bus.InboundMessage) string {
+	if accountID := strings.TrimSpace(normalizedInboundContext(msg).Account); accountID != "" {
+		return accountID
+	}
+	return inboundMetadata(msg, metadataKeyAccountID)
+}
+
+func routeGuildID(msg bus.InboundMessage) string {
+	inboundCtx := normalizedInboundContext(msg)
+	if strings.EqualFold(strings.TrimSpace(inboundCtx.SpaceType), "guild") {
+		return strings.TrimSpace(inboundCtx.SpaceID)
+	}
+	return inboundMetadata(msg, metadataKeyGuildID)
+}
+
+func routeTeamID(msg bus.InboundMessage) string {
+	inboundCtx := normalizedInboundContext(msg)
+	switch strings.ToLower(strings.TrimSpace(inboundCtx.SpaceType)) {
+	case "team", "workspace":
+		if spaceID := strings.TrimSpace(inboundCtx.SpaceID); spaceID != "" {
+			return spaceID
+		}
+	}
+	return inboundMetadata(msg, metadataKeyTeamID)
 }
 
 // isNativeSearchProvider reports whether the given LLM provider implements

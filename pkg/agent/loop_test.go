@@ -734,6 +734,95 @@ func TestProcessMessage_HandledToolProcessesQueuedSteeringBeforeReturning(t *tes
 	}
 }
 
+func TestExtractPeer_UsesInboundContextWhenLegacyPeerMissing(t *testing.T) {
+	msg := bus.InboundMessage{
+		Context: bus.InboundContext{
+			Channel:  "slack",
+			ChatID:   "C001",
+			ChatType: "channel",
+			SenderID: "U001",
+		},
+	}
+
+	peer := extractPeer(msg)
+	if peer == nil {
+		t.Fatal("expected peer from inbound context")
+	}
+	if peer.Kind != "channel" || peer.ID != "C001" {
+		t.Fatalf("peer = %+v, want channel/C001", peer)
+	}
+}
+
+func TestExtractParentPeer_UsesInboundContextTopicID(t *testing.T) {
+	msg := bus.InboundMessage{
+		Context: bus.InboundContext{
+			TopicID: "thread-42",
+		},
+	}
+
+	parentPeer := extractParentPeer(msg)
+	if parentPeer == nil {
+		t.Fatal("expected parent peer from topic context")
+	}
+	if parentPeer.Kind != "topic" || parentPeer.ID != "thread-42" {
+		t.Fatalf("parent peer = %+v, want topic/thread-42", parentPeer)
+	}
+}
+
+func TestResolveMessageRoute_UsesInboundContextAccountAndSpace(t *testing.T) {
+	tmpDir := t.TempDir()
+	cfg := &config.Config{
+		Agents: config.AgentsConfig{
+			Defaults: config.AgentDefaults{
+				Workspace: tmpDir,
+				ModelName: "test-model",
+			},
+			List: []config.AgentConfig{
+				{ID: "main", Default: true},
+				{ID: "work"},
+			},
+		},
+		Bindings: []config.AgentBinding{
+			{
+				AgentID: "work",
+				Match: config.BindingMatch{
+					Channel:   "slack",
+					AccountID: "*",
+					TeamID:    "T001",
+				},
+			},
+		},
+		Session: config.SessionConfig{
+			DMScope: "per-peer",
+		},
+	}
+
+	msgBus := bus.NewMessageBus()
+	al := NewAgentLoop(cfg, msgBus, &simpleMockProvider{response: "ok"})
+
+	route, _, err := al.resolveMessageRoute(bus.InboundMessage{
+		Context: bus.InboundContext{
+			Channel:   "slack",
+			Account:   "workspace-a",
+			ChatID:    "C123",
+			ChatType:  "channel",
+			SenderID:  "U123",
+			SpaceID:   "T001",
+			SpaceType: "workspace",
+		},
+		Content: "hello",
+	})
+	if err != nil {
+		t.Fatalf("resolveMessageRoute() error = %v", err)
+	}
+	if route.AgentID != "work" {
+		t.Fatalf("AgentID = %q, want work", route.AgentID)
+	}
+	if route.MatchedBy != "binding.team" {
+		t.Fatalf("MatchedBy = %q, want binding.team", route.MatchedBy)
+	}
+}
+
 func TestProcessMessage_MediaArtifactCanBeForwardedBySendFile(t *testing.T) {
 	tmpDir := t.TempDir()
 	cfg := config.DefaultConfig()
