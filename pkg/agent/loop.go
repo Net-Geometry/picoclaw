@@ -281,6 +281,17 @@ func registerSharedTools(
 			agent.Tools.Register(tools.NewSendTTSTool(ttsProvider, nil))
 		}
 
+		if cfg.Tools.IsToolEnabled("load_image") {
+			loadImageTool := tools.NewLoadImageTool(
+				agent.Workspace,
+				cfg.Agents.Defaults.RestrictToWorkspace,
+				cfg.Agents.Defaults.GetMaxMediaSize(),
+				nil,
+				allowReadPaths,
+			)
+			agent.Tools.Register(loadImageTool)
+		}
+
 		// Skill discovery and installation tools
 		skills_enabled := cfg.Tools.IsToolEnabled("skills")
 		find_skills_enable := cfg.Tools.IsToolEnabled("find_skills")
@@ -322,6 +333,14 @@ func registerSharedTools(
 		if (spawnEnabled || spawnStatusEnabled) && cfg.Tools.IsToolEnabled("subagent") {
 			subagentManager := tools.NewSubagentManager(provider, agent.Model, agent.Workspace)
 			subagentManager.SetLLMOptions(agent.MaxTokens, agent.Temperature)
+
+			// Inject a media resolver so the legacy RunToolLoop fallback path can
+			// resolve media:// refs in the same way the main AgentLoop does.
+			// This keeps subagent vision support working even when the optimized
+			// sub-turn spawner path is unavailable.
+			subagentManager.SetMediaResolver(func(msgs []providers.Message) []providers.Message {
+				return resolveMediaRefs(msgs, al.mediaStore, cfg.Agents.Defaults.GetMaxMediaSize())
+			})
 
 			// Set the spawner that links into AgentLoop's turnState
 			subagentManager.SetSpawner(func(
@@ -1861,6 +1880,14 @@ turnLoop:
 			providerToolDefs = filtered
 		}
 
+		// Resolve media:// refs produced by tool results (e.g. load_image).
+		// Skipped on iteration 1 because inbound user media is already resolved
+		// before entering the loop; only subsequent iterations can contain new
+		// tool-generated media refs that need base64 encoding.
+		if iteration > 1 {
+			messages = resolveMediaRefs(messages, al.mediaStore, maxMediaSize)
+		}
+
 		callMessages := messages
 		if gracefulTerminal {
 			callMessages = append(append([]providers.Message(nil), messages...), ts.interruptHintMessage())
@@ -2551,6 +2578,13 @@ turnLoop:
 			}
 
 			if len(toolResult.Media) > 0 && !toolResult.ResponseHandled {
+				// For tools like load_image that produce media refs without sending them
+				// to the user channel (ResponseHandled == false), both Media and ArtifactTags
+				// coexist on the result:
+				//   - Media: carries media:// refs that resolveMediaRefs will base64-encode
+				//     into image_url parts in the next LLM iteration (enabling vision).
+				//   - ArtifactTags: exposes the local file path as a structured [file:…] tag
+				//     in the tool result text, so the LLM knows an artifact was produced.
 				toolResult.ArtifactTags = buildArtifactTags(al.mediaStore, toolResult.Media)
 			}
 
@@ -2569,6 +2603,9 @@ turnLoop:
 				Role:       "tool",
 				Content:    contentForLLM,
 				ToolCallID: toolCallID,
+			}
+			if len(toolResult.Media) > 0 && !toolResult.ResponseHandled {
+				toolResultMsg.Media = append(toolResultMsg.Media, toolResult.Media...)
 			}
 			al.emitEvent(
 				EventKindToolExecEnd,
