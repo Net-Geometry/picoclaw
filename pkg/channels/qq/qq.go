@@ -647,15 +647,23 @@ func (c *QQChannel) handleC2CMessage() event.C2CMessageEventHandler {
 		metadata := map[string]string{
 			"account_id": senderID,
 		}
+		inboundCtx := bus.InboundContext{
+			Channel:   c.Name(),
+			Account:   c.config.AppID,
+			ChatID:    senderID,
+			ChatType:  "direct",
+			SenderID:  senderID,
+			MessageID: data.ID,
+			Raw:       metadata,
+		}
 
-		c.HandleMessage(c.ctx,
+		c.HandleMessageWithContext(
+			c.ctx,
 			bus.Peer{Kind: "direct", ID: senderID},
-			data.ID,
-			senderID,
 			senderID,
 			content,
 			mediaPaths,
-			metadata,
+			inboundCtx,
 			sender,
 		)
 
@@ -725,15 +733,24 @@ func (c *QQChannel) handleGroupATMessage() event.GroupATMessageEventHandler {
 			"account_id": senderID,
 			"group_id":   data.GroupID,
 		}
+		inboundCtx := bus.InboundContext{
+			Channel:   c.Name(),
+			Account:   c.config.AppID,
+			ChatID:    data.GroupID,
+			ChatType:  "group",
+			SenderID:  senderID,
+			MessageID: data.ID,
+			Mentioned: true,
+			Raw:       metadata,
+		}
 
-		c.HandleMessage(c.ctx,
+		c.HandleMessageWithContext(
+			c.ctx,
 			bus.Peer{Kind: "group", ID: data.GroupID},
-			data.ID,
-			senderID,
 			data.GroupID,
 			content,
 			mediaPaths,
-			metadata,
+			inboundCtx,
 			sender,
 		)
 
