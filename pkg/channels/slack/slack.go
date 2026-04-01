@@ -379,7 +379,22 @@ func (c *SlackChannel) handleMessageEvent(ev *slackevents.MessageEvent) {
 		"has_thread": threadTS != "",
 	})
 
-	c.HandleMessage(c.ctx, peer, messageTS, senderID, chatID, content, mediaPaths, metadata, sender)
+	inboundCtx := bus.InboundContext{
+		Channel:   c.Name(),
+		Account:   c.teamID,
+		ChatID:    channelID,
+		ChatType:  peerKind,
+		SenderID:  senderID,
+		MessageID: messageTS,
+		SpaceID:   c.teamID,
+		SpaceType: "workspace",
+		Raw:       metadata,
+	}
+	if threadTS != "" {
+		inboundCtx.TopicID = threadTS
+	}
+
+	c.HandleMessageWithContext(c.ctx, peer, chatID, content, mediaPaths, inboundCtx, sender)
 }
 
 func (c *SlackChannel) handleAppMention(ev *slackevents.AppMentionEvent) {
@@ -443,8 +458,21 @@ func (c *SlackChannel) handleAppMention(ev *slackevents.AppMentionEvent) {
 		"is_mention": "true",
 		"team_id":    c.teamID,
 	}
+	inboundCtx := bus.InboundContext{
+		Channel:   c.Name(),
+		Account:   c.teamID,
+		ChatID:    channelID,
+		ChatType:  mentionPeerKind,
+		TopicID:   threadTS,
+		SenderID:  senderID,
+		MessageID: messageTS,
+		SpaceID:   c.teamID,
+		SpaceType: "workspace",
+		Mentioned: true,
+		Raw:       metadata,
+	}
 
-	c.HandleMessage(c.ctx, mentionPeer, messageTS, senderID, chatID, content, nil, metadata, mentionSender)
+	c.HandleMessageWithContext(c.ctx, mentionPeer, chatID, content, nil, inboundCtx, mentionSender)
 }
 
 func (c *SlackChannel) handleSlashCommand(event socketmode.Event) {
@@ -491,16 +519,30 @@ func (c *SlackChannel) handleSlashCommand(event socketmode.Event) {
 		"command":   cmd.Command,
 		"text":      utils.Truncate(content, 50),
 	})
+	peerKind := "channel"
+	peerID := channelID
+	if strings.HasPrefix(channelID, "D") {
+		peerKind = "direct"
+		peerID = senderID
+	}
+	inboundCtx := bus.InboundContext{
+		Channel:   c.Name(),
+		Account:   c.teamID,
+		ChatID:    channelID,
+		ChatType:  peerKind,
+		SenderID:  senderID,
+		SpaceID:   c.teamID,
+		SpaceType: "workspace",
+		Raw:       metadata,
+	}
 
-	c.HandleMessage(
+	c.HandleMessageWithContext(
 		c.ctx,
-		bus.Peer{Kind: "channel", ID: channelID},
-		"",
-		senderID,
+		bus.Peer{Kind: peerKind, ID: peerID},
 		chatID,
 		content,
 		nil,
-		metadata,
+		inboundCtx,
 		cmdSender,
 	)
 }

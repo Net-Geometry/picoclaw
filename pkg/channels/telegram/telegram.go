@@ -660,8 +660,9 @@ func (c *TelegramChannel) handleMessage(ctx context.Context, message *telego.Mes
 	}
 
 	// In group chats, apply unified group trigger filtering
+	isMentioned := false
 	if message.Chat.Type != "private" {
-		isMentioned := c.isBotMentioned(message)
+		isMentioned = c.isBotMentioned(message)
 		if isMentioned {
 			content = c.stripBotMention(content)
 		}
@@ -722,24 +723,30 @@ func (c *TelegramChannel) handleMessage(ctx context.Context, message *telego.Mes
 		"first_name": user.FirstName,
 		"is_group":   fmt.Sprintf("%t", message.Chat.Type != "private"),
 	}
-	if message.ReplyToMessage != nil {
-		metadata["reply_to_message_id"] = fmt.Sprintf("%d", message.ReplyToMessage.MessageID)
-	}
 
-	// Set parent_peer metadata for per-topic agent binding.
+	inboundCtx := bus.InboundContext{
+		Channel:   c.Name(),
+		ChatID:    fmt.Sprintf("%d", chatID),
+		ChatType:  peerKind,
+		SenderID:  platformID,
+		MessageID: messageID,
+		Mentioned: isMentioned,
+		Raw:       metadata,
+	}
 	if message.Chat.IsForum && threadID != 0 {
-		metadata["parent_peer_kind"] = "topic"
-		metadata["parent_peer_id"] = fmt.Sprintf("%d", threadID)
+		inboundCtx.TopicID = fmt.Sprintf("%d", threadID)
+	}
+	if message.ReplyToMessage != nil {
+		inboundCtx.ReplyToMessageID = fmt.Sprintf("%d", message.ReplyToMessage.MessageID)
 	}
 
-	c.HandleMessage(c.ctx,
+	c.HandleMessageWithContext(
+		c.ctx,
 		peer,
-		messageID,
-		platformID,
 		compositeChatID,
 		content,
 		mediaPaths,
-		metadata,
+		inboundCtx,
 		sender,
 	)
 	return nil
