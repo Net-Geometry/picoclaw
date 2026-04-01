@@ -755,12 +755,12 @@ func TestAppendEventContextFields_IncludesInboundRouteAndScope(t *testing.T) {
 			SenderID:  "U123",
 			Mentioned: true,
 		},
-		Route: &routing.ResolvedRoute{
-			AgentID:   "support",
-			Channel:   "slack",
-			AccountID: "workspace-a",
-			MatchedBy: "binding.team",
-			SessionPolicy: routing.SessionPolicy{
+			Route: &routing.ResolvedRoute{
+				AgentID:   "support",
+				Channel:   "slack",
+				AccountID: "workspace-a",
+				MatchedBy: "default",
+				SessionPolicy: routing.SessionPolicy{
 				Dimensions: []string{"chat", "sender"},
 				IdentityLinks: map[string][]string{
 					"canonical-user": {"slack:U123"},
@@ -786,8 +786,8 @@ func TestAppendEventContextFields_IncludesInboundRouteAndScope(t *testing.T) {
 	if fields["inbound_topic_id"] != "thread-42" {
 		t.Fatalf("inbound_topic_id = %v, want thread-42", fields["inbound_topic_id"])
 	}
-	if fields["route_matched_by"] != "binding.team" {
-		t.Fatalf("route_matched_by = %v, want binding.team", fields["route_matched_by"])
+	if fields["route_matched_by"] != "default" {
+		t.Fatalf("route_matched_by = %v, want default", fields["route_matched_by"])
 	}
 	if fields["route_dimensions"] != "chat,sender" {
 		t.Fatalf("route_dimensions = %v, want chat,sender", fields["route_dimensions"])
@@ -806,7 +806,7 @@ func TestAppendEventContextFields_IncludesInboundRouteAndScope(t *testing.T) {
 	}
 }
 
-func TestResolveMessageRoute_UsesInboundContextAccountAndSpace(t *testing.T) {
+func TestResolveMessageRoute_UsesInboundContextAccount(t *testing.T) {
 	tmpDir := t.TempDir()
 	cfg := &config.Config{
 		Agents: config.AgentsConfig{
@@ -817,16 +817,6 @@ func TestResolveMessageRoute_UsesInboundContextAccountAndSpace(t *testing.T) {
 			List: []config.AgentConfig{
 				{ID: "main", Default: true},
 				{ID: "work"},
-			},
-		},
-		Bindings: []config.AgentBinding{
-			{
-				AgentID: "work",
-				Match: config.BindingMatch{
-					Channel:   "slack",
-					AccountID: "*",
-					TeamID:    "T001",
-				},
 			},
 		},
 		Session: config.SessionConfig{
@@ -852,11 +842,14 @@ func TestResolveMessageRoute_UsesInboundContextAccountAndSpace(t *testing.T) {
 	if err != nil {
 		t.Fatalf("resolveMessageRoute() error = %v", err)
 	}
-	if route.AgentID != "work" {
-		t.Fatalf("AgentID = %q, want work", route.AgentID)
+	if route.AgentID != "main" {
+		t.Fatalf("AgentID = %q, want main", route.AgentID)
 	}
-	if route.MatchedBy != "binding.team" {
-		t.Fatalf("MatchedBy = %q, want binding.team", route.MatchedBy)
+	if route.MatchedBy != "default" {
+		t.Fatalf("MatchedBy = %q, want default", route.MatchedBy)
+	}
+	if route.AccountID != "workspace-a" {
+		t.Fatalf("AccountID = %q, want workspace-a", route.AccountID)
 	}
 }
 

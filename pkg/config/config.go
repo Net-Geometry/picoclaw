@@ -27,7 +27,6 @@ const CurrentVersion = 2
 type Config struct {
 	Version   int             `json:"version"            yaml:"-"` // Config schema version for migration
 	Agents    AgentsConfig    `json:"agents"             yaml:"-"`
-	Bindings  []AgentBinding  `json:"bindings,omitempty" yaml:"-"`
 	Session   SessionConfig   `json:"session,omitempty"  yaml:"-"`
 	Channels  ChannelsConfig  `json:"channels"           yaml:"channels"`
 	ModelList SecureModelList `json:"model_list"         yaml:"model_list"` // New model-centric provider configuration
@@ -174,24 +173,6 @@ type AgentConfig struct {
 type SubagentsConfig struct {
 	AllowAgents []string          `json:"allow_agents,omitempty"`
 	Model       *AgentModelConfig `json:"model,omitempty"`
-}
-
-type PeerMatch struct {
-	Kind string `json:"kind"`
-	ID   string `json:"id"`
-}
-
-type BindingMatch struct {
-	Channel   string     `json:"channel"`
-	AccountID string     `json:"account_id,omitempty"`
-	Peer      *PeerMatch `json:"peer,omitempty"`
-	GuildID   string     `json:"guild_id,omitempty"`
-	TeamID    string     `json:"team_id,omitempty"`
-}
-
-type AgentBinding struct {
-	AgentID string       `json:"agent_id"`
-	Match   BindingMatch `json:"match"`
 }
 
 type SessionConfig struct {

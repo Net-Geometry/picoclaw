@@ -7,7 +7,7 @@ import (
 	"github.com/sipeed/picoclaw/pkg/config"
 )
 
-func testConfig(agents []config.AgentConfig, bindings []config.AgentBinding) *config.Config {
+func testConfig(agents []config.AgentConfig) *config.Config {
 	return &config.Config{
 		Agents: config.AgentsConfig{
 			Defaults: config.AgentDefaults{
@@ -16,7 +16,6 @@ func testConfig(agents []config.AgentConfig, bindings []config.AgentBinding) *co
 			},
 			List: agents,
 		},
-		Bindings: bindings,
 		Session: config.SessionConfig{
 			Dimensions: []string{"sender"},
 		},
@@ -24,7 +23,7 @@ func testConfig(agents []config.AgentConfig, bindings []config.AgentBinding) *co
 }
 
 func TestResolveRoute_DefaultAgent_NoBindings(t *testing.T) {
-	cfg := testConfig(nil, nil)
+	cfg := testConfig(nil)
 	r := NewRouteResolver(cfg)
 
 	route := r.ResolveRoute(bus.InboundContext{
@@ -47,209 +46,28 @@ func TestResolveRoute_DefaultAgent_NoBindings(t *testing.T) {
 	}
 }
 
-func TestResolveRoute_PeerBinding(t *testing.T) {
-	agents := []config.AgentConfig{
-		{ID: "sales", Default: true},
-		{ID: "support"},
-	}
-	bindings := []config.AgentBinding{
-		{
-			AgentID: "support",
-			Match: config.BindingMatch{
-				Channel:   "telegram",
-				AccountID: "*",
-				Peer:      &config.PeerMatch{Kind: "direct", ID: "user123"},
-			},
-		},
-	}
-	cfg := testConfig(agents, bindings)
+func TestResolveRoute_UsesNormalizedInboundContextFields(t *testing.T) {
+	cfg := testConfig([]config.AgentConfig{{ID: "sales", Default: true}})
 	r := NewRouteResolver(cfg)
 
 	route := r.ResolveRoute(bus.InboundContext{
-		Channel:  "telegram",
+		Channel:  "Telegram",
+		Account:  "Bot2",
 		ChatType: "direct",
 		SenderID: "user123",
 	})
 
-	if route.AgentID != "support" {
-		t.Errorf("AgentID = %q, want 'support'", route.AgentID)
+	if route.AgentID != "sales" {
+		t.Errorf("AgentID = %q, want 'sales'", route.AgentID)
 	}
-	if route.MatchedBy != "binding.peer" {
-		t.Errorf("MatchedBy = %q, want 'binding.peer'", route.MatchedBy)
+	if route.Channel != "telegram" {
+		t.Errorf("Channel = %q, want 'telegram'", route.Channel)
 	}
-}
-
-func TestResolveRoute_GuildBinding(t *testing.T) {
-	agents := []config.AgentConfig{
-		{ID: "general", Default: true},
-		{ID: "gaming"},
+	if route.AccountID != "bot2" {
+		t.Errorf("AccountID = %q, want 'bot2'", route.AccountID)
 	}
-	bindings := []config.AgentBinding{
-		{
-			AgentID: "gaming",
-			Match: config.BindingMatch{
-				Channel:   "discord",
-				AccountID: "*",
-				GuildID:   "guild-abc",
-			},
-		},
-	}
-	cfg := testConfig(agents, bindings)
-	r := NewRouteResolver(cfg)
-
-	route := r.ResolveRoute(bus.InboundContext{
-		Channel:   "discord",
-		ChatID:    "ch1",
-		ChatType:  "channel",
-		SpaceID:   "guild-abc",
-		SpaceType: "guild",
-	})
-
-	if route.AgentID != "gaming" {
-		t.Errorf("AgentID = %q, want 'gaming'", route.AgentID)
-	}
-	if route.MatchedBy != "binding.guild" {
-		t.Errorf("MatchedBy = %q, want 'binding.guild'", route.MatchedBy)
-	}
-}
-
-func TestResolveRoute_TeamBinding(t *testing.T) {
-	agents := []config.AgentConfig{
-		{ID: "general", Default: true},
-		{ID: "work"},
-	}
-	bindings := []config.AgentBinding{
-		{
-			AgentID: "work",
-			Match: config.BindingMatch{
-				Channel:   "slack",
-				AccountID: "*",
-				TeamID:    "T12345",
-			},
-		},
-	}
-	cfg := testConfig(agents, bindings)
-	r := NewRouteResolver(cfg)
-
-	route := r.ResolveRoute(bus.InboundContext{
-		Channel:   "slack",
-		ChatID:    "C001",
-		ChatType:  "channel",
-		SpaceID:   "T12345",
-		SpaceType: "team",
-	})
-
-	if route.AgentID != "work" {
-		t.Errorf("AgentID = %q, want 'work'", route.AgentID)
-	}
-	if route.MatchedBy != "binding.team" {
-		t.Errorf("MatchedBy = %q, want 'binding.team'", route.MatchedBy)
-	}
-}
-
-func TestResolveRoute_AccountBinding(t *testing.T) {
-	agents := []config.AgentConfig{
-		{ID: "default-agent", Default: true},
-		{ID: "premium"},
-	}
-	bindings := []config.AgentBinding{
-		{
-			AgentID: "premium",
-			Match: config.BindingMatch{
-				Channel:   "telegram",
-				AccountID: "bot2",
-			},
-		},
-	}
-	cfg := testConfig(agents, bindings)
-	r := NewRouteResolver(cfg)
-
-	route := r.ResolveRoute(bus.InboundContext{
-		Channel:  "telegram",
-		Account:  "bot2",
-		ChatType: "direct",
-		SenderID: "user1",
-	})
-
-	if route.AgentID != "premium" {
-		t.Errorf("AgentID = %q, want 'premium'", route.AgentID)
-	}
-	if route.MatchedBy != "binding.account" {
-		t.Errorf("MatchedBy = %q, want 'binding.account'", route.MatchedBy)
-	}
-}
-
-func TestResolveRoute_ChannelWildcard(t *testing.T) {
-	agents := []config.AgentConfig{
-		{ID: "main", Default: true},
-		{ID: "telegram-bot"},
-	}
-	bindings := []config.AgentBinding{
-		{
-			AgentID: "telegram-bot",
-			Match: config.BindingMatch{
-				Channel:   "telegram",
-				AccountID: "*",
-			},
-		},
-	}
-	cfg := testConfig(agents, bindings)
-	r := NewRouteResolver(cfg)
-
-	route := r.ResolveRoute(bus.InboundContext{
-		Channel:  "telegram",
-		ChatType: "direct",
-		SenderID: "user1",
-	})
-
-	if route.AgentID != "telegram-bot" {
-		t.Errorf("AgentID = %q, want 'telegram-bot'", route.AgentID)
-	}
-	if route.MatchedBy != "binding.channel" {
-		t.Errorf("MatchedBy = %q, want 'binding.channel'", route.MatchedBy)
-	}
-}
-
-func TestResolveRoute_PriorityOrder_PeerBeatsGuild(t *testing.T) {
-	agents := []config.AgentConfig{
-		{ID: "general", Default: true},
-		{ID: "vip"},
-		{ID: "gaming"},
-	}
-	bindings := []config.AgentBinding{
-		{
-			AgentID: "vip",
-			Match: config.BindingMatch{
-				Channel:   "discord",
-				AccountID: "*",
-				Peer:      &config.PeerMatch{Kind: "direct", ID: "user-vip"},
-			},
-		},
-		{
-			AgentID: "gaming",
-			Match: config.BindingMatch{
-				Channel:   "discord",
-				AccountID: "*",
-				GuildID:   "guild-1",
-			},
-		},
-	}
-	cfg := testConfig(agents, bindings)
-	r := NewRouteResolver(cfg)
-
-	route := r.ResolveRoute(bus.InboundContext{
-		Channel:   "discord",
-		ChatType:  "direct",
-		SenderID:  "user-vip",
-		SpaceID:   "guild-1",
-		SpaceType: "guild",
-	})
-
-	if route.AgentID != "vip" {
-		t.Errorf("AgentID = %q, want 'vip' (peer should beat guild)", route.AgentID)
-	}
-	if route.MatchedBy != "binding.peer" {
-		t.Errorf("MatchedBy = %q, want 'binding.peer'", route.MatchedBy)
+	if route.MatchedBy != "default" {
+		t.Errorf("MatchedBy = %q, want 'default'", route.MatchedBy)
 	}
 }
 
@@ -257,16 +75,7 @@ func TestResolveRoute_InvalidAgentFallsToDefault(t *testing.T) {
 	agents := []config.AgentConfig{
 		{ID: "main", Default: true},
 	}
-	bindings := []config.AgentBinding{
-		{
-			AgentID: "nonexistent",
-			Match: config.BindingMatch{
-				Channel:   "telegram",
-				AccountID: "*",
-			},
-		},
-	}
-	cfg := testConfig(agents, bindings)
+	cfg := testConfig(agents)
 	r := NewRouteResolver(cfg)
 
 	route := r.ResolveRoute(bus.InboundContext{Channel: "telegram"})
@@ -282,7 +91,7 @@ func TestResolveRoute_DefaultAgentSelection(t *testing.T) {
 		{ID: "beta", Default: true},
 		{ID: "gamma"},
 	}
-	cfg := testConfig(agents, nil)
+	cfg := testConfig(agents)
 	r := NewRouteResolver(cfg)
 
 	route := r.ResolveRoute(bus.InboundContext{Channel: "cli"})
@@ -297,7 +106,7 @@ func TestResolveRoute_NoDefaultUsesFirst(t *testing.T) {
 		{ID: "alpha"},
 		{ID: "beta"},
 	}
-	cfg := testConfig(agents, nil)
+	cfg := testConfig(agents)
 	r := NewRouteResolver(cfg)
 
 	route := r.ResolveRoute(bus.InboundContext{Channel: "cli"})

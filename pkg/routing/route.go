@@ -13,21 +13,16 @@ type SessionPolicy struct {
 	IdentityLinks map[string][]string
 }
 
-type RoutePeer struct {
-	Kind string
-	ID   string
-}
-
 // ResolvedRoute is the result of agent routing.
 type ResolvedRoute struct {
 	AgentID       string
 	Channel       string
 	AccountID     string
 	SessionPolicy SessionPolicy
-	MatchedBy     string // "binding.peer", "binding.peer.parent", "binding.guild", "binding.team", "binding.account", "binding.channel", "default"
+	MatchedBy     string // currently always "default" until the new binding system lands
 }
 
-// RouteResolver determines which agent handles a message based on config bindings.
+// RouteResolver determines which agent handles a message.
 type RouteResolver struct {
 	cfg *config.Config
 }
@@ -40,167 +35,17 @@ func NewRouteResolver(cfg *config.Config) *RouteResolver {
 // ResolveRoute determines which agent handles the message from a normalized
 // inbound context and returns the session policy that should be used to
 // allocate session state.
-// Implements the 7-level priority cascade:
-// peer > parent_peer > guild > team > account > channel_wildcard > default
 func (r *RouteResolver) ResolveRoute(inbound bus.InboundContext) ResolvedRoute {
 	channel := strings.ToLower(strings.TrimSpace(inbound.Channel))
 	accountID := NormalizeAccountID(inbound.Account)
-	peer := routePeerFromContext(inbound)
 
-	sessionPolicy := r.sessionPolicy()
-
-	bindings := r.filterBindings(channel, accountID)
-
-	choose := func(agentID string, matchedBy string) ResolvedRoute {
-		resolvedAgentID := r.pickAgentID(agentID)
-		return ResolvedRoute{
-			AgentID:       resolvedAgentID,
-			Channel:       channel,
-			AccountID:     accountID,
-			SessionPolicy: sessionPolicy,
-			MatchedBy:     matchedBy,
-		}
+	return ResolvedRoute{
+		AgentID:       r.pickAgentID(r.resolveDefaultAgentID()),
+		Channel:       channel,
+		AccountID:     accountID,
+		SessionPolicy: r.sessionPolicy(),
+		MatchedBy:     "default",
 	}
-
-	// Priority 1: Peer binding
-	if peer != nil && strings.TrimSpace(peer.ID) != "" {
-		if match := r.findPeerMatch(bindings, peer); match != nil {
-			return choose(match.AgentID, "binding.peer")
-		}
-	}
-
-	// Priority 2: Parent peer binding
-	parentPeer := parentPeerFromContext(inbound)
-	if parentPeer != nil && strings.TrimSpace(parentPeer.ID) != "" {
-		if match := r.findPeerMatch(bindings, parentPeer); match != nil {
-			return choose(match.AgentID, "binding.peer.parent")
-		}
-	}
-
-	// Priority 3: Guild binding
-	guildID := routeGuildIDFromContext(inbound)
-	if guildID != "" {
-		if match := r.findGuildMatch(bindings, guildID); match != nil {
-			return choose(match.AgentID, "binding.guild")
-		}
-	}
-
-	// Priority 4: Team binding
-	teamID := routeTeamIDFromContext(inbound)
-	if teamID != "" {
-		if match := r.findTeamMatch(bindings, teamID); match != nil {
-			return choose(match.AgentID, "binding.team")
-		}
-	}
-
-	// Priority 5: Account binding
-	if match := r.findAccountMatch(bindings); match != nil {
-		return choose(match.AgentID, "binding.account")
-	}
-
-	// Priority 6: Channel wildcard binding
-	if match := r.findChannelWildcardMatch(bindings); match != nil {
-		return choose(match.AgentID, "binding.channel")
-	}
-
-	// Priority 7: Default agent
-	return choose(r.resolveDefaultAgentID(), "default")
-}
-
-func (r *RouteResolver) filterBindings(channel, accountID string) []config.AgentBinding {
-	var filtered []config.AgentBinding
-	for _, b := range r.cfg.Bindings {
-		matchChannel := strings.ToLower(strings.TrimSpace(b.Match.Channel))
-		if matchChannel == "" || matchChannel != channel {
-			continue
-		}
-		if !matchesAccountID(b.Match.AccountID, accountID) {
-			continue
-		}
-		filtered = append(filtered, b)
-	}
-	return filtered
-}
-
-func matchesAccountID(matchAccountID, actual string) bool {
-	trimmed := strings.TrimSpace(matchAccountID)
-	if trimmed == "" {
-		return actual == DefaultAccountID
-	}
-	if trimmed == "*" {
-		return true
-	}
-	return strings.ToLower(trimmed) == strings.ToLower(actual)
-}
-
-func (r *RouteResolver) findPeerMatch(bindings []config.AgentBinding, peer *RoutePeer) *config.AgentBinding {
-	for i := range bindings {
-		b := &bindings[i]
-		if b.Match.Peer == nil {
-			continue
-		}
-		peerKind := strings.ToLower(strings.TrimSpace(b.Match.Peer.Kind))
-		peerID := strings.TrimSpace(b.Match.Peer.ID)
-		if peerKind == "" || peerID == "" {
-			continue
-		}
-		if peerKind == strings.ToLower(peer.Kind) && peerID == peer.ID {
-			return b
-		}
-	}
-	return nil
-}
-
-func (r *RouteResolver) findGuildMatch(bindings []config.AgentBinding, guildID string) *config.AgentBinding {
-	for i := range bindings {
-		b := &bindings[i]
-		matchGuild := strings.TrimSpace(b.Match.GuildID)
-		if matchGuild != "" && matchGuild == guildID {
-			return &bindings[i]
-		}
-	}
-	return nil
-}
-
-func (r *RouteResolver) findTeamMatch(bindings []config.AgentBinding, teamID string) *config.AgentBinding {
-	for i := range bindings {
-		b := &bindings[i]
-		matchTeam := strings.TrimSpace(b.Match.TeamID)
-		if matchTeam != "" && matchTeam == teamID {
-			return &bindings[i]
-		}
-	}
-	return nil
-}
-
-func (r *RouteResolver) findAccountMatch(bindings []config.AgentBinding) *config.AgentBinding {
-	for i := range bindings {
-		b := &bindings[i]
-		accountID := strings.TrimSpace(b.Match.AccountID)
-		if accountID == "*" {
-			continue
-		}
-		if b.Match.Peer != nil || b.Match.GuildID != "" || b.Match.TeamID != "" {
-			continue
-		}
-		return &bindings[i]
-	}
-	return nil
-}
-
-func (r *RouteResolver) findChannelWildcardMatch(bindings []config.AgentBinding) *config.AgentBinding {
-	for i := range bindings {
-		b := &bindings[i]
-		accountID := strings.TrimSpace(b.Match.AccountID)
-		if accountID != "*" {
-			continue
-		}
-		if b.Match.Peer != nil || b.Match.GuildID != "" || b.Match.TeamID != "" {
-			continue
-		}
-		return &bindings[i]
-	}
-	return nil
 }
 
 func (r *RouteResolver) pickAgentID(agentID string) string {
@@ -273,46 +118,6 @@ func normalizeSessionDimensions(dimensions []string) []string {
 	return normalized
 }
 
-func routePeerFromContext(ctx bus.InboundContext) *RoutePeer {
-	peerKind := normalizeChannel(strings.TrimSpace(ctx.ChatType))
-	if peerKind == "" || peerKind == "unknown" {
-		return nil
-	}
-
-	peerID := strings.TrimSpace(ctx.ChatID)
-	if peerKind == "direct" && peerID == "" {
-		peerID = strings.TrimSpace(ctx.SenderID)
-	}
-	if peerID == "" {
-		return nil
-	}
-
-	return &RoutePeer{Kind: peerKind, ID: peerID}
-}
-
-func parentPeerFromContext(ctx bus.InboundContext) *RoutePeer {
-	if topicID := strings.TrimSpace(ctx.TopicID); topicID != "" {
-		return &RoutePeer{Kind: "topic", ID: topicID}
-	}
-	return nil
-}
-
-func routeGuildIDFromContext(ctx bus.InboundContext) string {
-	if strings.EqualFold(strings.TrimSpace(ctx.SpaceType), "guild") {
-		return strings.TrimSpace(ctx.SpaceID)
-	}
-	return ""
-}
-
-func routeTeamIDFromContext(ctx bus.InboundContext) string {
-	switch strings.ToLower(strings.TrimSpace(ctx.SpaceType)) {
-	case "team", "workspace":
-		return strings.TrimSpace(ctx.SpaceID)
-	default:
-		return ""
-	}
-}
-
 func cloneIdentityLinks(src map[string][]string) map[string][]string {
 	if len(src) == 0 {
 		return nil
@@ -324,8 +129,4 @@ func cloneIdentityLinks(src map[string][]string) map[string][]string {
 		cloned[canonical] = dup
 	}
 	return cloned
-}
-
-func normalizeChannel(value string) string {
-	return strings.ToLower(strings.TrimSpace(value))
 }

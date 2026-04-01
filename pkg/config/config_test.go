@@ -175,20 +175,9 @@ func TestAgentConfig_FullParse(t *testing.T) {
 		t.Errorf("support.Subagents = %+v", support.Subagents)
 	}
 
-	if len(cfg.Bindings) != 1 {
-		t.Fatalf("bindings len = %d, want 1", len(cfg.Bindings))
-	}
-	binding := cfg.Bindings[0]
-	if binding.AgentID != "support" || binding.Match.Channel != "telegram" {
-		t.Errorf("binding = %+v", binding)
-	}
-	if binding.Match.Peer == nil || binding.Match.Peer.Kind != "direct" || binding.Match.Peer.ID != "user123" {
-		t.Errorf("binding.Match.Peer = %+v", binding.Match.Peer)
-	}
-
-	if len(cfg.Session.Dimensions) != 1 || cfg.Session.Dimensions[0] != "sender" {
-		t.Errorf("Session.Dimensions = %v", cfg.Session.Dimensions)
-	}
+		if len(cfg.Session.Dimensions) != 1 || cfg.Session.Dimensions[0] != "sender" {
+			t.Errorf("Session.Dimensions = %v", cfg.Session.Dimensions)
+		}
 	if len(cfg.Session.IdentityLinks) != 1 {
 		t.Errorf("Session.IdentityLinks = %v", cfg.Session.IdentityLinks)
 	}
@@ -217,9 +206,6 @@ func TestConfig_BackwardCompat_NoAgentsList(t *testing.T) {
 
 	if len(cfg.Agents.List) != 0 {
 		t.Errorf("agents.list should be empty for backward compat, got %d", len(cfg.Agents.List))
-	}
-	if len(cfg.Bindings) != 0 {
-		t.Errorf("bindings should be empty, got %d", len(cfg.Bindings))
 	}
 }
 

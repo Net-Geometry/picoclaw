@@ -35,7 +35,6 @@ func DefaultConfig() *Config {
 				SplitOnMarker: false,
 			},
 		},
-		Bindings: []AgentBinding{},
 		Session: SessionConfig{
 			Dimensions: []string{"chat"},
 		},
