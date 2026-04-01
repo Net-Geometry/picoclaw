@@ -1188,3 +1188,8 @@ func isPostConnectError(err error) bool {
 		strings.Contains(msg, "connection closed by foreign host") ||
 		strings.Contains(msg, "broken pipe")
 }
+
+// VoiceCapabilities returns the voice capabilities of the channel.
+func (c *TelegramChannel) VoiceCapabilities() channels.VoiceCapabilities {
+	return channels.VoiceCapabilities{ASR: true, TTS: true}
+}
