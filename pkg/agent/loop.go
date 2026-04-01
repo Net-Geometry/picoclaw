@@ -888,6 +888,8 @@ func (al *AgentLoop) logEvent(evt Event) {
 		fields["source"] = evt.Meta.Source
 	}
 
+	appendEventContextFields(fields, evt.Context)
+
 	switch payload := evt.Payload.(type) {
 	case TurnStartPayload:
 		fields["channel"] = payload.Channel
@@ -969,6 +971,87 @@ func (al *AgentLoop) logEvent(evt Event) {
 	}
 
 	logger.InfoCF("eventbus", fmt.Sprintf("Agent event: %s", evt.Kind.String()), fields)
+}
+
+func appendEventContextFields(fields map[string]any, turnCtx *TurnContext) {
+	if turnCtx == nil {
+		return
+	}
+
+	if inbound := turnCtx.Inbound; inbound != nil {
+		if inbound.Channel != "" {
+			fields["inbound_channel"] = inbound.Channel
+		}
+		if inbound.Account != "" {
+			fields["inbound_account"] = inbound.Account
+		}
+		if inbound.ChatID != "" {
+			fields["inbound_chat_id"] = inbound.ChatID
+		}
+		if inbound.ChatType != "" {
+			fields["inbound_chat_type"] = inbound.ChatType
+		}
+		if inbound.TopicID != "" {
+			fields["inbound_topic_id"] = inbound.TopicID
+		}
+		if inbound.SpaceType != "" {
+			fields["inbound_space_type"] = inbound.SpaceType
+		}
+		if inbound.SpaceID != "" {
+			fields["inbound_space_id"] = inbound.SpaceID
+		}
+		if inbound.SenderID != "" {
+			fields["inbound_sender_id"] = inbound.SenderID
+		}
+		if inbound.Mentioned {
+			fields["inbound_mentioned"] = true
+		}
+	}
+
+	if route := turnCtx.Route; route != nil {
+		if route.AgentID != "" {
+			fields["route_agent_id"] = route.AgentID
+		}
+		if route.Channel != "" {
+			fields["route_channel"] = route.Channel
+		}
+		if route.AccountID != "" {
+			fields["route_account_id"] = route.AccountID
+		}
+		if route.MatchedBy != "" {
+			fields["route_matched_by"] = route.MatchedBy
+		}
+		if route.SessionPolicy.DMScope != "" {
+			fields["route_dm_scope"] = string(route.SessionPolicy.DMScope)
+		}
+		if count := len(route.SessionPolicy.IdentityLinks); count > 0 {
+			fields["route_identity_link_count"] = count
+		}
+	}
+
+	if scope := turnCtx.Scope; scope != nil {
+		if scope.Version > 0 {
+			fields["scope_version"] = scope.Version
+		}
+		if scope.AgentID != "" {
+			fields["scope_agent_id"] = scope.AgentID
+		}
+		if scope.Channel != "" {
+			fields["scope_channel"] = scope.Channel
+		}
+		if scope.Account != "" {
+			fields["scope_account"] = scope.Account
+		}
+		if len(scope.Dimensions) > 0 {
+			fields["scope_dimensions"] = strings.Join(scope.Dimensions, ",")
+		}
+		for dim, value := range scope.Values {
+			if dim == "" || value == "" {
+				continue
+			}
+			fields["scope_"+dim] = value
+		}
+	}
 }
 
 func (al *AgentLoop) RegisterTool(tool tools.Tool) {

@@ -20,6 +20,7 @@ import (
 	"github.com/sipeed/picoclaw/pkg/media"
 	"github.com/sipeed/picoclaw/pkg/providers"
 	"github.com/sipeed/picoclaw/pkg/routing"
+	"github.com/sipeed/picoclaw/pkg/session"
 	"github.com/sipeed/picoclaw/pkg/tools"
 )
 
@@ -771,6 +772,72 @@ func TestExtractParentPeer_UsesInboundContextTopicID(t *testing.T) {
 	}
 	if parentPeer.Kind != "topic" || parentPeer.ID != "thread-42" {
 		t.Fatalf("parent peer = %+v, want topic/thread-42", parentPeer)
+	}
+}
+
+func TestAppendEventContextFields_IncludesInboundRouteAndScope(t *testing.T) {
+	fields := map[string]any{}
+
+	appendEventContextFields(fields, &TurnContext{
+		Inbound: &bus.InboundContext{
+			Channel:   "slack",
+			Account:   "workspace-a",
+			ChatID:    "C123",
+			ChatType:  "channel",
+			TopicID:   "thread-42",
+			SpaceType: "workspace",
+			SpaceID:   "T001",
+			SenderID:  "U123",
+			Mentioned: true,
+		},
+		Route: &routing.ResolvedRoute{
+			AgentID:   "support",
+			Channel:   "slack",
+			AccountID: "workspace-a",
+			MatchedBy: "binding.team",
+			SessionPolicy: routing.SessionPolicy{
+				DMScope: routing.DMScopePerChannelPeer,
+				IdentityLinks: map[string][]string{
+					"canonical-user": {"slack:U123"},
+				},
+			},
+		},
+		Scope: &session.SessionScope{
+			Version:    session.ScopeVersionV1,
+			AgentID:    "support",
+			Channel:    "slack",
+			Account:    "workspace-a",
+			Dimensions: []string{"chat", "sender"},
+			Values: map[string]string{
+				"chat":   "channel:c123",
+				"sender": "u123",
+			},
+		},
+	})
+
+	if fields["inbound_channel"] != "slack" {
+		t.Fatalf("inbound_channel = %v, want slack", fields["inbound_channel"])
+	}
+	if fields["inbound_topic_id"] != "thread-42" {
+		t.Fatalf("inbound_topic_id = %v, want thread-42", fields["inbound_topic_id"])
+	}
+	if fields["route_matched_by"] != "binding.team" {
+		t.Fatalf("route_matched_by = %v, want binding.team", fields["route_matched_by"])
+	}
+	if fields["route_dm_scope"] != string(routing.DMScopePerChannelPeer) {
+		t.Fatalf("route_dm_scope = %v, want %q", fields["route_dm_scope"], routing.DMScopePerChannelPeer)
+	}
+	if fields["route_identity_link_count"] != 1 {
+		t.Fatalf("route_identity_link_count = %v, want 1", fields["route_identity_link_count"])
+	}
+	if fields["scope_dimensions"] != "chat,sender" {
+		t.Fatalf("scope_dimensions = %v, want chat,sender", fields["scope_dimensions"])
+	}
+	if fields["scope_chat"] != "channel:c123" {
+		t.Fatalf("scope_chat = %v, want channel:c123", fields["scope_chat"])
+	}
+	if fields["scope_sender"] != "u123" {
+		t.Fatalf("scope_sender = %v, want u123", fields["scope_sender"])
 	}
 }
 
