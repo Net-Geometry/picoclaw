@@ -5,6 +5,7 @@ go 1.25.8
 require (
 	fyne.io/systray v1.12.0
 	github.com/BurntSushi/toml v1.6.0
+	github.com/SevereCloud/vksdk/v3 v3.3.1
 	github.com/adhocore/gronx v1.19.6
 	github.com/anthropics/anthropic-sdk-go v1.26.0
 	github.com/atotto/clipboard v0.1.4
@@ -89,6 +90,8 @@ require (
 	github.com/segmentio/encoding v0.5.4 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.27 // indirect
+	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.mau.fi/libsignal v0.2.1 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/otel v1.35.0 // indirect
