@@ -175,11 +175,11 @@ func TestStartAll_PartialFailure_StartsSuccessfulWorkers(t *testing.T) {
 
 	pubCtx, pubCancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer pubCancel()
-	if err := m.bus.PublishOutbound(pubCtx, bus.OutboundMessage{
+	if err := m.bus.PublishOutbound(pubCtx, testOutboundMessage(bus.OutboundMessage{
 		Channel: "good",
 		ChatID:  "chat-1",
 		Content: "hello",
-	}); err != nil {
+	})); err != nil {
 		t.Fatalf("PublishOutbound() error = %v", err)
 	}
 
