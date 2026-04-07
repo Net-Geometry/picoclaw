@@ -230,6 +230,57 @@ func TestPublishOutboundMedia_MirrorsContextToLegacyFields(t *testing.T) {
 	}
 }
 
+func TestPublishAudioChunkSubscribe(t *testing.T) {
+	mb := NewMessageBus()
+	defer mb.Close()
+
+	chunk := AudioChunk{
+		SessionID: "voice-1",
+		SpeakerID: "speaker-1",
+		ChatID:    "chat-1",
+		Channel:   "discord",
+		Sequence:  7,
+		Format:    "opus",
+		Data:      []byte{0x01, 0x02},
+	}
+
+	if err := mb.PublishAudioChunk(context.Background(), chunk); err != nil {
+		t.Fatalf("PublishAudioChunk failed: %v", err)
+	}
+
+	got, ok := <-mb.AudioChunksChan()
+	if !ok {
+		t.Fatal("AudioChunksChan returned ok=false")
+	}
+	if got.SessionID != "voice-1" || got.Sequence != 7 {
+		t.Fatalf("unexpected audio chunk: %+v", got)
+	}
+}
+
+func TestPublishVoiceControlSubscribe(t *testing.T) {
+	mb := NewMessageBus()
+	defer mb.Close()
+
+	ctrl := VoiceControl{
+		SessionID: "voice-1",
+		ChatID:    "chat-1",
+		Type:      "command",
+		Action:    "start",
+	}
+
+	if err := mb.PublishVoiceControl(context.Background(), ctrl); err != nil {
+		t.Fatalf("PublishVoiceControl failed: %v", err)
+	}
+
+	got, ok := <-mb.VoiceControlsChan()
+	if !ok {
+		t.Fatal("VoiceControlsChan returned ok=false")
+	}
+	if got.Type != "command" || got.Action != "start" {
+		t.Fatalf("unexpected voice control: %+v", got)
+	}
+}
+
 func TestNewOutboundContext_NormalizesReplyAddress(t *testing.T) {
 	ctx := NewOutboundContext(" telegram ", " chat-42 ", " msg-9 ")
 	if ctx.Channel != "telegram" {

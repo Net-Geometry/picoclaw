@@ -2682,7 +2682,10 @@ turnLoop:
 				allResponsesHandled = false
 			}
 
-			if !toolResult.Silent && toolResult.ForUser != "" && ts.opts.SendResponse {
+			shouldSendForUser := !toolResult.Silent &&
+				toolResult.ForUser != "" &&
+				(ts.opts.SendResponse || toolResult.ResponseHandled)
+			if shouldSendForUser {
 				al.bus.PublishOutbound(ctx, outboundMessageForTurn(ts, toolResult.ForUser))
 				logger.DebugCF("agent", "Sent tool result to user",
 					map[string]any{

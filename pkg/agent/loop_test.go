@@ -39,7 +39,13 @@ func (f *fakeChannel) ReasoningChannelID() string                 { return f.id 
 
 type fakeMediaChannel struct {
 	fakeChannel
-	sentMedia []bus.OutboundMediaMessage
+	sentMessages []bus.OutboundMessage
+	sentMedia    []bus.OutboundMediaMessage
+}
+
+func (f *fakeMediaChannel) Send(ctx context.Context, msg bus.OutboundMessage) ([]string, error) {
+	f.sentMessages = append(f.sentMessages, msg)
+	return nil, nil
 }
 
 func (f *fakeMediaChannel) SendMedia(ctx context.Context, msg bus.OutboundMediaMessage) ([]string, error) {
@@ -740,6 +746,63 @@ func TestProcessMessage_HandledToolProcessesQueuedSteeringBeforeReturning(t *tes
 	}
 }
 
+func TestRunAgentLoop_ResponseHandledToolPublishesForUserWhenSendResponseDisabled(t *testing.T) {
+	tmpDir := t.TempDir()
+	cfg := config.DefaultConfig()
+	cfg.Agents.Defaults.Workspace = tmpDir
+	cfg.Agents.Defaults.ModelName = "test-model"
+	cfg.Agents.Defaults.MaxTokens = 4096
+	cfg.Agents.Defaults.MaxToolIterations = 10
+
+	msgBus := bus.NewMessageBus()
+	provider := &handledUserProvider{}
+	al := NewAgentLoop(cfg, msgBus, provider)
+
+	store := media.NewFileMediaStore()
+	al.SetMediaStore(store)
+	telegramChannel := &fakeMediaChannel{fakeChannel: fakeChannel{id: "rid-telegram"}}
+	al.SetChannelManager(newStartedTestChannelManager(t, msgBus, store, "telegram", telegramChannel))
+	al.RegisterTool(&handledUserTool{})
+
+	defaultAgent := al.registry.GetDefaultAgent()
+	if defaultAgent == nil {
+		t.Fatal("expected default agent")
+	}
+
+	response, err := al.runAgentLoop(context.Background(), defaultAgent, processOptions{
+		SessionKey:      "session-1",
+		Channel:         "telegram",
+		ChatID:          "chat1",
+		UserMessage:     "take a screenshot of the screen and send it to me",
+		DefaultResponse: defaultResponse,
+		EnableSummary:   false,
+		SendResponse:    false,
+		InboundContext: &bus.InboundContext{
+			Channel:  "telegram",
+			ChatID:   "chat1",
+			ChatType: "direct",
+			SenderID: "user1",
+		},
+	})
+	if err != nil {
+		t.Fatalf("runAgentLoop() error = %v", err)
+	}
+	if response != "" {
+		t.Fatalf("expected no final response when tool already handled delivery, got %q", response)
+	}
+
+	deadline := time.Now().Add(2 * time.Second)
+	for len(telegramChannel.sentMessages) == 0 && time.Now().Before(deadline) {
+		time.Sleep(10 * time.Millisecond)
+	}
+	if len(telegramChannel.sentMessages) != 1 {
+		t.Fatalf("expected exactly 1 sent text message, got %d", len(telegramChannel.sentMessages))
+	}
+	if telegramChannel.sentMessages[0].Content != "Handled user output from tool." {
+		t.Fatalf("unexpected sent text message: %+v", telegramChannel.sentMessages[0])
+	}
+}
+
 func TestAppendEventContextFields_IncludesInboundRouteAndScope(t *testing.T) {
 	fields := map[string]any{}
 
@@ -1162,6 +1225,36 @@ func (m *handledMediaProvider) GetDefaultModel() string {
 	return "handled-media-model"
 }
 
+type handledUserProvider struct {
+	calls int
+}
+
+func (m *handledUserProvider) Chat(
+	ctx context.Context,
+	messages []providers.Message,
+	tools []providers.ToolDefinition,
+	model string,
+	opts map[string]any,
+) (*providers.LLMResponse, error) {
+	m.calls++
+	if m.calls == 1 {
+		return &providers.LLMResponse{
+			Content: "Delivering the result now.",
+			ToolCalls: []providers.ToolCall{{
+				ID:        "call_handled_user",
+				Type:      "function",
+				Name:      "handled_user_tool",
+				Arguments: map[string]any{},
+			}},
+		}, nil
+	}
+	return &providers.LLMResponse{}, nil
+}
+
+func (m *handledUserProvider) GetDefaultModel() string {
+	return "handled-user-model"
+}
+
 type artifactThenSendProvider struct {
 	calls int
 }
@@ -1329,6 +1422,24 @@ func (m *handledMediaTool) Execute(ctx context.Context, args map[string]any) *to
 		return tools.ErrorResult(err.Error()).WithError(err)
 	}
 	return tools.MediaResult("Attachment delivered by tool.", []string{ref}).WithResponseHandled()
+}
+
+type handledUserTool struct{}
+
+func (m *handledUserTool) Name() string { return "handled_user_tool" }
+func (m *handledUserTool) Description() string {
+	return "Returns a user-visible result and marks delivery as handled"
+}
+
+func (m *handledUserTool) Parameters() map[string]any {
+	return map[string]any{
+		"type":       "object",
+		"properties": map[string]any{},
+	}
+}
+
+func (m *handledUserTool) Execute(ctx context.Context, args map[string]any) *tools.ToolResult {
+	return tools.UserResult("Handled user output from tool.").WithResponseHandled()
 }
 
 type handledMediaWithSteeringProvider struct {
