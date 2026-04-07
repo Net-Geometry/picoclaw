@@ -46,3 +46,12 @@ func newError(code, message string) PicoMessage {
 		"message": message,
 	})
 }
+
+func newErrorWithPayload(code, message string, payload map[string]any) PicoMessage {
+	if payload == nil {
+		payload = map[string]any{}
+	}
+	payload["code"] = code
+	payload["message"] = message
+	return newMessage(TypeError, payload)
+}
