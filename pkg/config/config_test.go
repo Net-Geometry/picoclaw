@@ -253,6 +253,41 @@ func TestAgentConfig_ParsesDispatchRules(t *testing.T) {
 	}
 }
 
+func TestDefaultConfig_MCPMaxInlineTextChars(t *testing.T) {
+	cfg := DefaultConfig()
+	if cfg.Tools.MCP.GetMaxInlineTextChars() != DefaultMCPMaxInlineTextChars {
+		t.Fatalf(
+			"DefaultConfig().Tools.MCP.GetMaxInlineTextChars() = %d, want %d",
+			cfg.Tools.MCP.GetMaxInlineTextChars(),
+			DefaultMCPMaxInlineTextChars,
+		)
+	}
+}
+
+func TestLoadConfig_MCPMaxInlineTextChars(t *testing.T) {
+	dir := t.TempDir()
+	configPath := filepath.Join(dir, "config.json")
+	raw := `{
+		"tools": {
+			"mcp": {
+				"enabled": true,
+				"max_inline_text_chars": 2048
+			}
+		}
+	}`
+	if err := os.WriteFile(configPath, []byte(raw), 0o644); err != nil {
+		t.Fatalf("WriteFile(configPath): %v", err)
+	}
+
+	cfg, err := LoadConfig(configPath)
+	if err != nil {
+		t.Fatalf("LoadConfig() error: %v", err)
+	}
+	if got := cfg.Tools.MCP.GetMaxInlineTextChars(); got != 2048 {
+		t.Fatalf("cfg.Tools.MCP.GetMaxInlineTextChars() = %d, want 2048", got)
+	}
+}
+
 // TestDefaultConfig_HeartbeatEnabled verifies heartbeat is enabled by default
 func TestDefaultConfig_HeartbeatEnabled(t *testing.T) {
 	cfg := DefaultConfig()
@@ -328,6 +363,13 @@ func TestDefaultConfig_Channels(t *testing.T) {
 	}
 	if cfg.Channels.Matrix.Enabled {
 		t.Error("Matrix should be disabled by default")
+	}
+}
+
+func TestDefaultConfig_ReadFileMode(t *testing.T) {
+	cfg := DefaultConfig()
+	if cfg.Tools.ReadFile.EffectiveMode() != ReadFileModeBytes {
+		t.Fatalf("expected default read_file mode %q, got %q", ReadFileModeBytes, cfg.Tools.ReadFile.EffectiveMode())
 	}
 }
 
