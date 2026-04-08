@@ -515,6 +515,7 @@ type respondWithMediaHook struct {
 	media           []string
 	responseHandled bool
 	forLLM          string
+	sendMediaErr    error
 }
 
 func (h *respondWithMediaHook) BeforeTool(
