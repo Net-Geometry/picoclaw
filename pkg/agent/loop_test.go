@@ -2766,7 +2766,7 @@ func TestProcessMessage_PublishesToolFeedbackWhenEnabled(t *testing.T) {
 	}
 }
 
-func TestProcessMessage_PicoPublishesAssistantContentDuringToolCalls(t *testing.T) {
+func TestRun_PicoPublishesAssistantContentDuringToolCallsWithoutFinalDuplicate(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	cfg := &config.Config{
@@ -2790,17 +2790,21 @@ func TestProcessMessage_PicoPublishesAssistantContentDuringToolCalls(t *testing.
 	}
 	agent.Tools.Register(&toolLimitTestTool{})
 
-	response, err := al.processMessage(context.Background(), bus.InboundMessage{
+	runCtx, runCancel := context.WithCancel(context.Background())
+	defer runCancel()
+
+	runDone := make(chan error, 1)
+	go func() {
+		runDone <- al.Run(runCtx)
+	}()
+
+	if err := msgBus.PublishInbound(context.Background(), bus.InboundMessage{
 		Channel:  "pico",
 		SenderID: "user-1",
 		ChatID:   "session-1",
 		Content:  "run with tools",
-	})
-	if err != nil {
-		t.Fatalf("processMessage() error = %v", err)
-	}
-	if response != "final model text" {
-		t.Fatalf("processMessage() response = %q, want %q", response, "final model text")
+	}); err != nil {
+		t.Fatalf("PublishInbound() error = %v", err)
 	}
 
 	outputs := make([]string, 0, 2)
@@ -2819,6 +2823,16 @@ func TestProcessMessage_PicoPublishesAssistantContentDuringToolCalls(t *testing.
 	}
 	if outputs[1] != "final model text" {
 		t.Fatalf("second outbound content = %q, want %q", outputs[1], "final model text")
+	}
+
+	runCancel()
+	select {
+	case err := <-runDone:
+		if err != nil {
+			t.Fatalf("Run() error = %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for Run() to exit")
 	}
 
 	select {

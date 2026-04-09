@@ -2253,16 +2253,12 @@ turnLoop:
 		}
 		logger.DebugCF("agent", "LLM response", llmResponseFields)
 
-		if al.bus != nil && ts.channel == "pico" {
-			liveContent := response.Content
-			if liveContent == "" && len(response.ToolCalls) == 0 && response.ReasoningContent != "" {
-				liveContent = response.ReasoningContent
-			}
-			if strings.TrimSpace(liveContent) != "" {
+		if al.bus != nil && ts.channel == "pico" && len(response.ToolCalls) > 0 {
+			if strings.TrimSpace(response.Content) != "" {
 				al.bus.PublishOutbound(turnCtx, bus.OutboundMessage{
 					Channel: ts.channel,
 					ChatID:  ts.chatID,
-					Content: liveContent,
+					Content: response.Content,
 				})
 			}
 		}
