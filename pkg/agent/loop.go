@@ -2255,11 +2255,21 @@ turnLoop:
 
 		if al.bus != nil && ts.channel == "pico" && len(response.ToolCalls) > 0 {
 			if strings.TrimSpace(response.Content) != "" {
-				al.bus.PublishOutbound(turnCtx, bus.OutboundMessage{
+				outCtx, outCancel := context.WithTimeout(turnCtx, 3*time.Second)
+				err := al.bus.PublishOutbound(outCtx, bus.OutboundMessage{
 					Channel: ts.channel,
 					ChatID:  ts.chatID,
 					Content: response.Content,
 				})
+				outCancel()
+				if err != nil {
+					logger.WarnCF("agent", "Failed to publish pico interim tool-call content", map[string]any{
+						"error":     err.Error(),
+						"channel":   ts.channel,
+						"chat_id":   ts.chatID,
+						"iteration": iteration,
+					})
+				}
 			}
 		}
 
@@ -2400,7 +2410,7 @@ turnLoop:
 								string(argsJSON),
 								al.cfg.Agents.Defaults.GetToolFeedbackMaxArgsLength(),
 							)
-							feedbackMsg := fmt.Sprintf("\U0001f527 `%s`\n```\n%s\n```", toolName, feedbackPreview)
+							feedbackMsg := utils.FormatToolFeedbackMessage(toolName, feedbackPreview)
 							fbCtx, fbCancel := context.WithTimeout(turnCtx, 3*time.Second)
 							_ = al.bus.PublishOutbound(fbCtx, bus.OutboundMessage{
 								Channel: ts.channel,
@@ -2682,7 +2692,7 @@ turnLoop:
 					string(argsJSON),
 					al.cfg.Agents.Defaults.GetToolFeedbackMaxArgsLength(),
 				)
-				feedbackMsg := fmt.Sprintf("\U0001f527 `%s`\n```\n%s\n```", tc.Name, feedbackPreview)
+				feedbackMsg := utils.FormatToolFeedbackMessage(tc.Name, feedbackPreview)
 				fbCtx, fbCancel := context.WithTimeout(turnCtx, 3*time.Second)
 				_ = al.bus.PublishOutbound(fbCtx, bus.OutboundMessage{
 					Channel: ts.channel,
