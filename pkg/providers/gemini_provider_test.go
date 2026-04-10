@@ -19,8 +19,8 @@ func TestGeminiProvider_ChatSeparatesThoughtAndToolCall(t *testing.T) {
 		if !strings.Contains(r.URL.Path, ":generateContent") {
 			t.Fatalf("path = %s, expected generateContent endpoint", r.URL.Path)
 		}
-		if got := r.Header.Get("x-goog-api-key"); got != "test-key" {
-			t.Fatalf("x-goog-api-key = %q, want %q", got, "test-key")
+		if got := r.Header.Get("X-Goog-Api-Key"); got != "test-key" {
+			t.Fatalf("X-Goog-Api-Key = %q, want %q", got, "test-key")
 		}
 		if err := json.NewDecoder(r.Body).Decode(&capturedBody); err != nil {
 			t.Fatalf("decode request body: %v", err)
@@ -489,8 +489,8 @@ func TestGeminiProvider_ChatAllowsCustomAuthHeaderWithoutAPIKey(t *testing.T) {
 		if got := r.Header.Get("Authorization"); got != "Bearer test-token" {
 			t.Fatalf("Authorization = %q, want %q", got, "Bearer test-token")
 		}
-		if got := r.Header.Get("x-goog-api-key"); got != "" {
-			t.Fatalf("x-goog-api-key = %q, want empty", got)
+		if got := r.Header.Get("X-Goog-Api-Key"); got != "" {
+			t.Fatalf("X-Goog-Api-Key = %q, want empty", got)
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{
@@ -533,8 +533,8 @@ func TestGeminiProvider_ChatAllowsCustomAuthHeaderWithoutAPIKey(t *testing.T) {
 
 func TestGeminiProvider_ChatAllowsMissingAPIKeyForCustomAPIBase(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if got := r.Header.Get("x-goog-api-key"); got != "" {
-			t.Fatalf("x-goog-api-key = %q, want empty", got)
+		if got := r.Header.Get("X-Goog-Api-Key"); got != "" {
+			t.Fatalf("X-Goog-Api-Key = %q, want empty", got)
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{

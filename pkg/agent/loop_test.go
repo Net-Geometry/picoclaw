@@ -1921,7 +1921,7 @@ func TestProcessMessage_FallbackUsesPerCandidateProvider(t *testing.T) {
 			},
 			{
 				ModelName: "gemma-fallback",
-				Model:     "gemini/gemma-3-27b-it",
+				Model:     "openrouter/gemma-3-27b-it",
 				APIBase:   fallbackServer.URL,
 				APIKeys:   config.SimpleSecureStrings("fallback-key"),
 				Workspace: workspace,

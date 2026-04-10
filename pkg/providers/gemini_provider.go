@@ -153,7 +153,7 @@ func (p *GeminiProvider) ChatStream(
 func (p *GeminiProvider) applyHeaders(req *http.Request) {
 	req.Header.Set("Content-Type", "application/json")
 	if p.apiKey != "" {
-		req.Header.Set("x-goog-api-key", p.apiKey)
+		req.Header.Set("X-Goog-Api-Key", p.apiKey)
 	}
 	if p.userAgent != "" {
 		req.Header.Set("User-Agent", p.userAgent)
