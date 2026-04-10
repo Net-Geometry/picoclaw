@@ -362,6 +362,56 @@ func TestGeminiProvider_BuildRequestBody_DefaultsThinkingOffForGemini3(t *testin
 	}
 }
 
+func TestGeminiProvider_BuildRequestBody_DefaultsThinkingOffForGemini25Pro(t *testing.T) {
+	provider := NewGeminiProvider("test-key", "https://example.com/v1beta", "", "", 0, nil, nil)
+	body := provider.buildRequestBody(
+		[]Message{{Role: "user", Content: "hello"}},
+		nil,
+		"gemini-2.5-pro",
+		nil,
+	)
+
+	generationConfig, ok := body["generationConfig"].(map[string]any)
+	if !ok {
+		t.Fatalf("generationConfig = %#v, want map", body["generationConfig"])
+	}
+	thinkingConfig, ok := generationConfig["thinkingConfig"].(map[string]any)
+	if !ok {
+		t.Fatalf("thinkingConfig = %#v, want map", generationConfig["thinkingConfig"])
+	}
+	if includeThoughts, ok := thinkingConfig["includeThoughts"].(bool); !ok || includeThoughts {
+		t.Fatalf("includeThoughts = %#v, want false for default/off", thinkingConfig["includeThoughts"])
+	}
+	if _, hasBudget := thinkingConfig["thinkingBudget"]; hasBudget {
+		t.Fatalf("thinkingBudget should be omitted for Gemini 2.5 Pro default/off: %#v", thinkingConfig)
+	}
+}
+
+func TestGeminiProvider_BuildRequestBody_DefaultsThinkingOffForGemini31Pro(t *testing.T) {
+	provider := NewGeminiProvider("test-key", "https://example.com/v1beta", "", "", 0, nil, nil)
+	body := provider.buildRequestBody(
+		[]Message{{Role: "user", Content: "hello"}},
+		nil,
+		"gemini-3.1-pro",
+		nil,
+	)
+
+	generationConfig, ok := body["generationConfig"].(map[string]any)
+	if !ok {
+		t.Fatalf("generationConfig = %#v, want map", body["generationConfig"])
+	}
+	thinkingConfig, ok := generationConfig["thinkingConfig"].(map[string]any)
+	if !ok {
+		t.Fatalf("thinkingConfig = %#v, want map", generationConfig["thinkingConfig"])
+	}
+	if includeThoughts, ok := thinkingConfig["includeThoughts"].(bool); !ok || includeThoughts {
+		t.Fatalf("includeThoughts = %#v, want false for default/off", thinkingConfig["includeThoughts"])
+	}
+	if _, hasLevel := thinkingConfig["thinkingLevel"]; hasLevel {
+		t.Fatalf("thinkingLevel should be omitted for Gemini 3.1 Pro default/off: %#v", thinkingConfig)
+	}
+}
+
 func TestGeminiProvider_BuildRequestBody_PreservesMultipleSystemMessages(t *testing.T) {
 	provider := NewGeminiProvider("test-key", "https://example.com/v1beta", "", "", 0, nil, nil)
 	body := provider.buildRequestBody(

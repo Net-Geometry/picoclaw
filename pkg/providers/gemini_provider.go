@@ -347,9 +347,18 @@ func buildGeminiThinkingConfig(model string, options map[string]any) map[string]
 	config["includeThoughts"] = includeThoughts
 
 	if isGemini25Model(model) {
+		if isGemini25ProModel(model) && (rawLevel == "off" || rawLevel == "minimal") {
+			// Gemini 2.5 Pro cannot disable thinking; keep model-default thinking.
+			return config
+		}
 		if budget, ok := mapGeminiThinkingBudget(rawLevel); ok {
 			config["thinkingBudget"] = budget
 		}
+		return config
+	}
+
+	if isGemini3ProModel(model) && (rawLevel == "off" || rawLevel == "minimal") {
+		// Gemini 3.x Pro does not support minimal thinking level.
 		return config
 	}
 
@@ -367,6 +376,16 @@ func geminiModelSupportsThinkingConfig(model string) bool {
 func isGemini25Model(model string) bool {
 	lowerModel := strings.ToLower(strings.TrimSpace(model))
 	return strings.Contains(lowerModel, "gemini-2.5") || strings.Contains(lowerModel, "gemini-25")
+}
+
+func isGemini25ProModel(model string) bool {
+	lowerModel := strings.ToLower(strings.TrimSpace(model))
+	return isGemini25Model(lowerModel) && strings.Contains(lowerModel, "pro")
+}
+
+func isGemini3ProModel(model string) bool {
+	lowerModel := strings.ToLower(strings.TrimSpace(model))
+	return strings.Contains(lowerModel, "gemini-3") && strings.Contains(lowerModel, "pro")
 }
 
 func mapGeminiThinkingBudget(level string) (int, bool) {
