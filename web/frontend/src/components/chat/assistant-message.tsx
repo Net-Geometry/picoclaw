@@ -39,7 +39,7 @@ export function AssistantMessage({
         <div className="flex items-center gap-2">
           <span>PicoClaw</span>
           {isThought && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-amber-300/80 bg-amber-100/80 px-2 py-0.5 text-[11px] font-medium text-amber-800">
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-300/80 bg-amber-100/80 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-200">
               <IconBrain className="size-3" />
               <span>{t("chat.reasoningLabel")}</span>
             </span>
@@ -57,7 +57,7 @@ export function AssistantMessage({
         className={cn(
           "relative overflow-hidden rounded-xl border",
           isThought
-            ? "border-amber-200/90 bg-amber-50/70 text-amber-950"
+            ? "border-amber-200/90 bg-amber-50/70 text-amber-950 dark:border-amber-500/35 dark:bg-amber-500/10 dark:text-amber-100"
             : "bg-card text-card-foreground",
         )}
       >
@@ -82,7 +82,7 @@ export function AssistantMessage({
           className={cn(
             "absolute top-2 right-2 h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100",
             isThought
-              ? "bg-amber-100/70 hover:bg-amber-200/80"
+              ? "bg-amber-100/70 hover:bg-amber-200/80 dark:bg-amber-500/20 dark:hover:bg-amber-400/30"
               : "bg-background/50 hover:bg-background/80",
           )}
           onClick={handleCopy}
