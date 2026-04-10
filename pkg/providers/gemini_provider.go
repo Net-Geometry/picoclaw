@@ -174,13 +174,13 @@ func (p *GeminiProvider) buildRequestBody(
 ) map[string]any {
 	contents := make([]geminiContent, 0, len(messages))
 	toolCallNames := make(map[string]string)
-	var systemInstruction *geminiContent
+	systemPrompts := make([]string, 0, 1)
 
 	for _, msg := range messages {
 		switch msg.Role {
 		case "system":
 			if strings.TrimSpace(msg.Content) != "" {
-				systemInstruction = &geminiContent{Parts: []geminiPart{{Text: msg.Content}}}
+				systemPrompts = append(systemPrompts, msg.Content)
 			}
 
 		case "user":
@@ -248,8 +248,12 @@ func (p *GeminiProvider) buildRequestBody(
 	body := map[string]any{
 		"contents": contents,
 	}
-	if systemInstruction != nil {
-		body["systemInstruction"] = systemInstruction
+	if len(systemPrompts) > 0 {
+		systemParts := make([]geminiPart, 0, len(systemPrompts))
+		for _, prompt := range systemPrompts {
+			systemParts = append(systemParts, geminiPart{Text: prompt})
+		}
+		body["systemInstruction"] = &geminiContent{Parts: systemParts}
 	}
 
 	if len(tools) > 0 {
@@ -331,12 +335,19 @@ func buildGeminiThinkingConfig(model string, options map[string]any) map[string]
 		return nil
 	}
 
-	config := map[string]any{"includeThoughts": true}
+	config := map[string]any{}
 	rawLevel, _ := options["thinking_level"].(string)
 	rawLevel = strings.ToLower(strings.TrimSpace(rawLevel))
+	if rawLevel == "" {
+		// Align with agent-level default: unset means ThinkingOff.
+		rawLevel = "off"
+	}
+
+	includeThoughts := rawLevel != "off" && rawLevel != "minimal"
+	config["includeThoughts"] = includeThoughts
 
 	if isGemini25Model(model) {
-		if budget, ok := mapGeminiThinkingBudget(rawLevel, model); ok {
+		if budget, ok := mapGeminiThinkingBudget(rawLevel); ok {
 			config["thinkingBudget"] = budget
 		}
 		return config
@@ -358,7 +369,7 @@ func isGemini25Model(model string) bool {
 	return strings.Contains(lowerModel, "gemini-2.5") || strings.Contains(lowerModel, "gemini-25")
 }
 
-func mapGeminiThinkingBudget(level string, model string) (int, bool) {
+func mapGeminiThinkingBudget(level string) (int, bool) {
 	level = strings.ToLower(strings.TrimSpace(level))
 	if level == "" {
 		return 0, false
@@ -368,15 +379,8 @@ func mapGeminiThinkingBudget(level string, model string) (int, bool) {
 	case "adaptive":
 		return -1, true
 	case "minimal":
-		if strings.Contains(strings.ToLower(model), "pro") {
-			return 128, true
-		}
 		return 0, true
 	case "off":
-		if strings.Contains(strings.ToLower(model), "pro") {
-			// Gemini 2.5 Pro cannot disable thinking; use the lowest supported budget.
-			return 128, true
-		}
 		return 0, true
 	case "low":
 		return 1024, true

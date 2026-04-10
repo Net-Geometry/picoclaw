@@ -312,6 +312,81 @@ func TestGeminiProvider_BuildRequestBody_OmitsThinkingConfigForGemini20(t *testi
 	}
 }
 
+func TestGeminiProvider_BuildRequestBody_DefaultsThinkingOffForGemini25(t *testing.T) {
+	provider := NewGeminiProvider("test-key", "https://example.com/v1beta", "", "", 0, nil, nil)
+	body := provider.buildRequestBody(
+		[]Message{{Role: "user", Content: "hello"}},
+		nil,
+		"gemini-2.5-flash",
+		nil,
+	)
+
+	generationConfig, ok := body["generationConfig"].(map[string]any)
+	if !ok {
+		t.Fatalf("generationConfig = %#v, want map", body["generationConfig"])
+	}
+	thinkingConfig, ok := generationConfig["thinkingConfig"].(map[string]any)
+	if !ok {
+		t.Fatalf("thinkingConfig = %#v, want map", generationConfig["thinkingConfig"])
+	}
+	if got := thinkingConfig["thinkingBudget"]; got != 0 {
+		t.Fatalf("thinkingBudget = %#v, want 0 for default/off", got)
+	}
+	if includeThoughts, ok := thinkingConfig["includeThoughts"].(bool); !ok || includeThoughts {
+		t.Fatalf("includeThoughts = %#v, want false for default/off", thinkingConfig["includeThoughts"])
+	}
+}
+
+func TestGeminiProvider_BuildRequestBody_DefaultsThinkingOffForGemini3(t *testing.T) {
+	provider := NewGeminiProvider("test-key", "https://example.com/v1beta", "", "", 0, nil, nil)
+	body := provider.buildRequestBody(
+		[]Message{{Role: "user", Content: "hello"}},
+		nil,
+		"gemini-3-flash-preview",
+		nil,
+	)
+
+	generationConfig, ok := body["generationConfig"].(map[string]any)
+	if !ok {
+		t.Fatalf("generationConfig = %#v, want map", body["generationConfig"])
+	}
+	thinkingConfig, ok := generationConfig["thinkingConfig"].(map[string]any)
+	if !ok {
+		t.Fatalf("thinkingConfig = %#v, want map", generationConfig["thinkingConfig"])
+	}
+	if got := thinkingConfig["thinkingLevel"]; got != "minimal" {
+		t.Fatalf("thinkingLevel = %#v, want minimal for default/off", got)
+	}
+	if includeThoughts, ok := thinkingConfig["includeThoughts"].(bool); !ok || includeThoughts {
+		t.Fatalf("includeThoughts = %#v, want false for default/off", thinkingConfig["includeThoughts"])
+	}
+}
+
+func TestGeminiProvider_BuildRequestBody_PreservesMultipleSystemMessages(t *testing.T) {
+	provider := NewGeminiProvider("test-key", "https://example.com/v1beta", "", "", 0, nil, nil)
+	body := provider.buildRequestBody(
+		[]Message{
+			{Role: "system", Content: "You are helpful."},
+			{Role: "system", Content: "Be concise."},
+			{Role: "user", Content: "hello"},
+		},
+		nil,
+		"gemini-3-flash-preview",
+		nil,
+	)
+
+	systemInstruction, ok := body["systemInstruction"].(*geminiContent)
+	if !ok || systemInstruction == nil {
+		t.Fatalf("systemInstruction = %#v, want *geminiContent", body["systemInstruction"])
+	}
+	if len(systemInstruction.Parts) != 2 {
+		t.Fatalf("systemInstruction.Parts len = %d, want 2", len(systemInstruction.Parts))
+	}
+	if systemInstruction.Parts[0].Text != "You are helpful." || systemInstruction.Parts[1].Text != "Be concise." {
+		t.Fatalf("systemInstruction.Parts = %#v, want ordered system prompts", systemInstruction.Parts)
+	}
+}
+
 func TestGeminiProvider_BuildRequestBody_PreservesToolResponseMedia(t *testing.T) {
 	provider := NewGeminiProvider("test-key", "https://example.com/v1beta", "", "", 0, nil, nil)
 	body := provider.buildRequestBody(
