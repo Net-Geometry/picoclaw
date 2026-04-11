@@ -212,6 +212,83 @@ func TestGeminiProvider_ChatStreamParsesThoughtTextAndToolCalls(t *testing.T) {
 	}
 }
 
+func TestGeminiProvider_ChatStreamSkipsEmptyDataFrames(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			t.Fatal("response writer is not flushable")
+		}
+
+		_, _ = fmt.Fprint(w, "data: \n\n")
+		flusher.Flush()
+
+		chunk := map[string]any{
+			"candidates": []any{map[string]any{
+				"content": map[string]any{
+					"parts": []any{map[string]any{"text": "ok"}},
+				},
+				"finishReason": "STOP",
+			}},
+		}
+		raw, err := json.Marshal(chunk)
+		if err != nil {
+			t.Fatalf("marshal chunk: %v", err)
+		}
+		_, _ = fmt.Fprintf(w, "data: %s\n\n", raw)
+		flusher.Flush()
+		_, _ = fmt.Fprint(w, "data: [DONE]\n\n")
+		flusher.Flush()
+	}))
+	defer server.Close()
+
+	provider := NewGeminiProvider("test-key", server.URL, "", "", 0, nil, nil)
+	resp, err := provider.ChatStream(
+		t.Context(),
+		[]Message{{Role: "user", Content: "hello"}},
+		nil,
+		"gemini-2.5-flash",
+		nil,
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("ChatStream() error = %v", err)
+	}
+	if resp.Content != "ok" {
+		t.Fatalf("Content = %q, want %q", resp.Content, "ok")
+	}
+}
+
+func TestGeminiProvider_ChatStreamReturnsErrorOnInvalidDataFrame(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			t.Fatal("response writer is not flushable")
+		}
+
+		_, _ = fmt.Fprint(w, "data: {invalid-json}\n\n")
+		flusher.Flush()
+	}))
+	defer server.Close()
+
+	provider := NewGeminiProvider("test-key", server.URL, "", "", 0, nil, nil)
+	_, err := provider.ChatStream(
+		t.Context(),
+		[]Message{{Role: "user", Content: "hello"}},
+		nil,
+		"gemini-2.5-flash",
+		nil,
+		nil,
+	)
+	if err == nil {
+		t.Fatal("ChatStream() expected error for invalid SSE data frame")
+	}
+	if !strings.Contains(err.Error(), "invalid gemini stream chunk") {
+		t.Fatalf("error = %v, want contains %q", err, "invalid gemini stream chunk")
+	}
+}
+
 func TestGeminiProvider_BuildRequestBodyIncludesMediaAndThinkingConfig(t *testing.T) {
 	provider := NewGeminiProvider("test-key", "https://example.com/v1beta", "", "", 0, nil, nil)
 

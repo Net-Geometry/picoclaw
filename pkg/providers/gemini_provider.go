@@ -481,14 +481,17 @@ func parseGeminiStreamResponse(
 		if !strings.HasPrefix(line, "data: ") {
 			continue
 		}
-		data := strings.TrimPrefix(line, "data: ")
+		data := strings.TrimSpace(strings.TrimPrefix(line, "data: "))
+		if data == "" {
+			continue
+		}
 		if data == "[DONE]" {
 			break
 		}
 
 		var chunk geminiGenerateContentResponse
 		if err := json.Unmarshal([]byte(data), &chunk); err != nil {
-			continue
+			return nil, fmt.Errorf("invalid gemini stream chunk: %w", err)
 		}
 
 		for _, candidate := range chunk.Candidates {

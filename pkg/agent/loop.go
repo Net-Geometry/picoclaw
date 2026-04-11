@@ -2261,7 +2261,7 @@ turnLoop:
 			reasoningContent = response.ReasoningContent
 		}
 		if ts.channel == "pico" {
-			al.publishPicoReasoning(turnCtx, reasoningContent, ts.chatID)
+			go al.publishPicoReasoning(turnCtx, reasoningContent, ts.chatID)
 		} else {
 			go al.handleReasoning(
 				turnCtx,
