@@ -226,7 +226,6 @@ func (p *GeminiProvider) buildRequestBody(
 				}
 				if thoughtSignature != "" {
 					part.ThoughtSignature = thoughtSignature
-					part.ThoughtSignatureSnake = thoughtSignature
 				}
 				content.Parts = append(content.Parts, part)
 			}
@@ -508,12 +507,25 @@ func parseGeminiStreamResponse(
 				}
 				if part.FunctionCall != nil {
 					tc := buildGeminiToolCall(part)
-					key := tc.ID
-					if strings.TrimSpace(key) == "" {
-						fallbackIndex++
-						key = fmt.Sprintf("%s#%d", tc.Name, fallbackIndex)
-						tc.ID = key
+					if strings.TrimSpace(tc.Name) == "" {
+						continue
 					}
+
+					key := strings.TrimSpace(part.FunctionCall.ID)
+					if key == "" {
+						if len(toolCallOrder) > 0 {
+							lastKey := toolCallOrder[len(toolCallOrder)-1]
+							if lastTC, exists := toolCallsByID[lastKey]; exists && lastTC.Name == tc.Name {
+								key = lastKey
+							}
+						}
+						if key == "" {
+							fallbackIndex++
+							key = fmt.Sprintf("%s#%d", tc.Name, fallbackIndex)
+						}
+					}
+
+					tc.ID = key
 					if _, exists := toolCallsByID[key]; !exists {
 						toolCallOrder = append(toolCallOrder, key)
 					}
