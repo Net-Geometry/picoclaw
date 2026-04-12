@@ -116,7 +116,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           sudo apt-get install -y zip
-          make build-all-android
+          make build-android-bundle
           gh release upload "${{ inputs.tag }}" \
             build/picoclaw-android-universal.zip \
             --clobber

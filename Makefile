@@ -216,15 +216,12 @@ build-android-arm64: generate
 build-launcher-android-arm64:
 	@echo "Building picoclaw-launcher for android/arm64..."
 	@mkdir -p $(BUILD_DIR)
-	@$(MAKE) -C web build \
-		OUTPUT="$(CURDIR)/$(BUILD_DIR)/picoclaw-launcher-android-arm64" \
-		WEB_GO='GOOS=android GOARCH=arm64 CGO_ENABLED=0 go' \
-		GO_BUILD_TAGS='stdjson' \
-		LDFLAGS='$(LDFLAGS)'
+	@$(MAKE) -C web build-android-arm64 \
+		OUTPUT="$(CURDIR)/$(BUILD_DIR)/picoclaw-launcher-android-arm64"
 	@echo "Build complete: $(BUILD_DIR)/picoclaw-launcher-android-arm64"
 
-## build-all-android: Build core and launcher for all Android architectures and package as universal zip
-build-all-android: generate
+## build-android-bundle: Build core and launcher for all Android architectures and package as universal zip
+build-android-bundle: generate
 	@echo "Building core for all Android architectures..."
 	@mkdir -p $(BUILD_DIR)
 	GOOS=android GOARCH=arm64 $(GO) build -tags stdjson -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-android-arm64 ./$(CMD_DIR)
@@ -260,7 +257,7 @@ build-all: generate
 	GOOS=windows GOARCH=amd64 $(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe ./$(CMD_DIR)
 	GOOS=netbsd GOARCH=amd64 $(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-netbsd-amd64 ./$(CMD_DIR)
 	GOOS=netbsd GOARCH=arm64 $(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-netbsd-arm64 ./$(CMD_DIR)
-	@$(MAKE) build-all-android
+	@$(MAKE) build-android-bundle
 	@echo "All builds complete"
 
 ## install: Install picoclaw to system and copy builtin skills
