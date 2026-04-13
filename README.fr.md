@@ -167,11 +167,19 @@ Vous pouvez aussi télécharger le binaire pour votre plateforme depuis la page 
 
 ### Compiler depuis les sources (pour le développement)
 
+Prérequis :
+
+- Go 1.25+
+- Node.js 22+ avec Corepack activé pour les builds Web UI / launcher
+
 ```bash
 git clone https://github.com/sipeed/picoclaw.git
 
 cd picoclaw
 make deps
+
+# Installer le gestionnaire de paquets frontend déclaré par le dépôt
+(cd web/frontend && corepack install)
 
 # Compiler le binaire principal
 make build
@@ -179,8 +187,11 @@ make build
 # Compiler le Web UI Launcher (requis pour le mode WebUI)
 make build-launcher
 
-# Compiler pour plusieurs plateformes
+# Compiler les binaires core pour toutes les plateformes gérées par le Makefile
 make build-all
+
+# Compiler les artefacts de release empaquetés séparément des sorties principales de GoReleaser
+make build-release-artifacts
 
 # Compiler pour Raspberry Pi Zero 2 W (32 bits : make build-linux-arm ; 64 bits : make build-linux-arm64)
 make build-pi-zero
@@ -188,6 +199,10 @@ make build-pi-zero
 # Compiler et installer
 make install
 ```
+
+`make build-all` compile les binaires core de `picoclaw` pour toutes les plateformes gérées par le Makefile.
+
+`make build-release-artifacts` compile les artefacts de release empaquetés séparément des sorties principales de GoReleaser.
 
 **Raspberry Pi Zero 2 W :** Utilisez le binaire correspondant à votre OS : Raspberry Pi OS 32 bits -> `make build-linux-arm` ; 64 bits -> `make build-linux-arm64`. Ou exécutez `make build-pi-zero` pour compiler les deux.
 
@@ -619,6 +634,5 @@ Discord : <https://discord.gg/V4sAZ9XWpN>
 
 WeChat :
 <img src="assets/wechat.png" alt="WeChat group QR code" width="512">
-
 
 

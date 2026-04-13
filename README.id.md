@@ -164,11 +164,19 @@ Atau, unduh binary untuk platform Anda dari halaman [GitHub Releases](https://gi
 
 ### Build dari source (untuk pengembangan)
 
+Prasyarat:
+
+- Go 1.25+
+- Node.js 22+ dengan Corepack aktif untuk build Web UI / launcher
+
 ```bash
 git clone https://github.com/sipeed/picoclaw.git
 
 cd picoclaw
 make deps
+
+# Instal package manager frontend yang dideklarasikan repo
+(cd web/frontend && corepack install)
 
 # Build binary inti
 make build
@@ -176,8 +184,11 @@ make build
 # Build Web UI Launcher (diperlukan untuk mode WebUI)
 make build-launcher
 
-# Build untuk berbagai platform
+# Build binary inti untuk semua platform yang dikelola Makefile
 make build-all
+
+# Build artefak rilis yang dikemas terpisah dari output utama GoReleaser
+make build-release-artifacts
 
 # Build untuk Raspberry Pi Zero 2 W (32-bit: make build-linux-arm; 64-bit: make build-linux-arm64)
 make build-pi-zero
@@ -185,6 +196,10 @@ make build-pi-zero
 # Build dan instal
 make install
 ```
+
+`make build-all` membangun binary inti `picoclaw` untuk semua platform yang dikelola Makefile.
+
+`make build-release-artifacts` membangun artefak rilis yang dikemas terpisah dari output utama GoReleaser.
 
 **Raspberry Pi Zero 2 W:** Gunakan binary yang sesuai dengan OS Anda: Raspberry Pi OS 32-bit -> `make build-linux-arm`; 64-bit -> `make build-linux-arm64`. Atau jalankan `make build-pi-zero` untuk build keduanya.
 

@@ -51,9 +51,11 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/frontend/pnpm-lock.yaml
 
       - name: Setup pnpm
-        run: corepack enable && corepack prepare pnpm@latest --activate
+        run: corepack enable && corepack install
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -97,6 +99,11 @@ jobs:
           MACOS_NOTARY_KEY_ID: ${{ secrets.MACOS_NOTARY_KEY_ID }}
           MACOS_NOTARY_KEY: ${{ secrets.MACOS_NOTARY_KEY }}
 
+      - name: Build release-only artifacts
+        run: |
+          sudo apt-get install -y zip
+          make build-release-artifacts
+
       - name: Update nightly release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -123,7 +130,7 @@ jobs:
 
           # Collect release artifacts from goreleaser dist/
           ASSETS=()
-          for f in dist/*.tar.gz dist/*.zip dist/*.deb dist/*.rpm dist/checksums.txt; do
+          for f in dist/*.tar.gz dist/*.zip dist/*.deb dist/*.rpm dist/checksums.txt build/picoclaw-android-universal.zip; do
             [ -f "$f" ] && ASSETS+=("$f")
           done
 
@@ -135,4 +142,3 @@ jobs:
             --prerelease \
             --latest=false \
             "${ASSETS[@]}"
-

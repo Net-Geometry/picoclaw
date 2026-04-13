@@ -1,4 +1,4 @@
-.PHONY: all build install uninstall clean help test
+.PHONY: all build install uninstall clean help test build-core-all build-release-artifacts
 
 # Build variables
 BINARY_NAME=picoclaw
@@ -217,7 +217,9 @@ build-launcher-android-arm64:
 	@echo "Building picoclaw-launcher for android/arm64..."
 	@mkdir -p $(BUILD_DIR)
 	@$(MAKE) -C web build-android-arm64 \
-		OUTPUT="$(CURDIR)/$(BUILD_DIR)/picoclaw-launcher-android-arm64"
+		OUTPUT_ANDROID_ARM64="$(CURDIR)/$(BUILD_DIR)/picoclaw-launcher-android-arm64" \
+		GO='$(GO)' \
+		LDFLAGS='$(LDFLAGS)'
 	@echo "Build complete: $(BUILD_DIR)/picoclaw-launcher-android-arm64"
 
 ## build-android-bundle: Build core and launcher for all Android architectures and package as universal zip
@@ -240,8 +242,8 @@ build-android-bundle: generate
 build-pi-zero: build-linux-arm build-linux-arm64
 	@echo "Pi Zero 2 W builds: $(BUILD_DIR)/$(BINARY_NAME)-linux-arm (32-bit), $(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 (64-bit)"
 
-## build-all: Build picoclaw for all platforms
-build-all: generate
+## build-core-all: Build the picoclaw core binary for all Makefile-managed platforms
+build-core-all: generate
 	@echo "Building for multiple platforms..."
 	@mkdir -p $(BUILD_DIR)
 	GOOS=linux GOARCH=amd64 $(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 ./$(CMD_DIR)
@@ -257,8 +259,14 @@ build-all: generate
 	GOOS=windows GOARCH=amd64 $(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-windows-amd64.exe ./$(CMD_DIR)
 	GOOS=netbsd GOARCH=amd64 $(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-netbsd-amd64 ./$(CMD_DIR)
 	GOOS=netbsd GOARCH=arm64 $(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-netbsd-arm64 ./$(CMD_DIR)
-	@$(MAKE) build-android-bundle
-	@echo "All builds complete"
+	@echo "Core builds complete"
+
+## build-all: Build the picoclaw core binary for all Makefile-managed platforms
+build-all: build-core-all
+
+## build-release-artifacts: Build release-only artifacts that sit outside GoReleaser
+build-release-artifacts: build-android-bundle
+	@echo "Release artifact builds complete"
 
 ## install: Install picoclaw to system and copy builtin skills
 install: build

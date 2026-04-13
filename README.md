@@ -164,27 +164,44 @@ Alternatively, download the binary for your platform from the [GitHub Releases](
 
 ### Build from source (for development)
 
+Prerequisites:
+
+- Go 1.25+
+- Node.js 22+ with Corepack enabled for Web UI / launcher builds
+
 ```bash
 git clone https://github.com/sipeed/picoclaw.git
 
 cd picoclaw
 make deps
 
-# Build core binary
+# Install frontend package manager declared by the repo
+(cd web/frontend && corepack install)
+
+# Build the core binary for the current platform
 make build
 
-# Build Web UI Launcher (required for WebUI mode)
+# Build the Web UI Launcher (required for WebUI mode)
 make build-launcher
 
-# Build for multiple platforms
+# Build core binaries for all Makefile-managed platforms
 make build-all
 
-# Build for Raspberry Pi Zero 2 W (32-bit: make build-linux-arm; 64-bit: make build-linux-arm64)
+# Build release-only artifacts packaged separately from the main GoReleaser outputs
+make build-release-artifacts
+
+# Build for Raspberry Pi Zero 2 W
+# 32-bit: make build-linux-arm
+# 64-bit: make build-linux-arm64
 make build-pi-zero
 
 # Build and install
 make install
 ```
+
+`make build-all` builds the core `picoclaw` binaries for all Makefile-managed platforms.
+
+`make build-release-artifacts` builds release-only artifacts that are packaged separately from the main GoReleaser outputs.
 
 **Raspberry Pi Zero 2 W:** Use the binary that matches your OS: 32-bit Raspberry Pi OS -> `make build-linux-arm`; 64-bit -> `make build-linux-arm64`. Or run `make build-pi-zero` to build both.
 

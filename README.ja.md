@@ -164,11 +164,19 @@ PicoClaw はほぼすべての Linux デバイスにデプロイできます！
 
 ### ソースからビルド（開発用）
 
+前提条件:
+
+- Go 1.25+
+- Web UI / launcher のビルドには Corepack を有効にした Node.js 22+
+
 ```bash
 git clone https://github.com/sipeed/picoclaw.git
 
 cd picoclaw
 make deps
+
+# リポジトリで宣言されたフロントエンド用パッケージマネージャーをインストール
+(cd web/frontend && corepack install)
 
 # コアバイナリをビルド
 make build
@@ -176,8 +184,11 @@ make build
 # Web UI Launcher をビルド（WebUI モードに必要）
 make build-launcher
 
-# 複数プラットフォーム向けビルド
+# Makefile が管理するすべてのプラットフォーム向けにコアバイナリをビルド
 make build-all
+
+# メインの GoReleaser 出力とは別にパッケージ化されるリリース専用成果物をビルド
+make build-release-artifacts
 
 # Raspberry Pi Zero 2 W 向けビルド（32-bit: make build-linux-arm; 64-bit: make build-linux-arm64）
 make build-pi-zero
@@ -185,6 +196,10 @@ make build-pi-zero
 # ビルドとインストール
 make install
 ```
+
+`make build-all` は、Makefile が管理するすべてのプラットフォーム向けにコアの `picoclaw` バイナリをビルドします。
+
+`make build-release-artifacts` は、メインの GoReleaser 出力とは別にパッケージ化されるリリース専用成果物をビルドします。
 
 **Raspberry Pi Zero 2 W:** OS に合ったバイナリを使用してください：32-bit Raspberry Pi OS → `make build-linux-arm`、64-bit → `make build-linux-arm64`。または `make build-pi-zero` で両方をビルド。
 
