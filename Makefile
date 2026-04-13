@@ -1,4 +1,4 @@
-.PHONY: all build install uninstall clean help test build-core-all build-release-artifacts
+.PHONY: all build install uninstall clean help test build-all
 
 # Build variables
 BINARY_NAME=picoclaw
@@ -242,8 +242,8 @@ build-android-bundle: generate
 build-pi-zero: build-linux-arm build-linux-arm64
 	@echo "Pi Zero 2 W builds: $(BUILD_DIR)/$(BINARY_NAME)-linux-arm (32-bit), $(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 (64-bit)"
 
-## build-core-all: Build the picoclaw core binary for all Makefile-managed platforms
-build-core-all: generate
+## build-all: Build the picoclaw core binary for all Makefile-managed platforms
+build-all: generate
 	@echo "Building for multiple platforms..."
 	@mkdir -p $(BUILD_DIR)
 	GOOS=linux GOARCH=amd64 $(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 ./$(CMD_DIR)
@@ -260,13 +260,6 @@ build-core-all: generate
 	GOOS=netbsd GOARCH=amd64 $(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-netbsd-amd64 ./$(CMD_DIR)
 	GOOS=netbsd GOARCH=arm64 $(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-netbsd-arm64 ./$(CMD_DIR)
 	@echo "Core builds complete"
-
-## build-all: Build the picoclaw core binary for all Makefile-managed platforms
-build-all: build-core-all
-
-## build-release-artifacts: Build release-only artifacts that sit outside GoReleaser
-build-release-artifacts: build-android-bundle
-	@echo "Release artifact builds complete"
 
 ## install: Install picoclaw to system and copy builtin skills
 install: build

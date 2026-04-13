@@ -187,19 +187,12 @@ make build-launcher
 # Build các binary lõi cho mọi nền tảng do Makefile quản lý
 make build-all
 
-# Build các release artifact được đóng gói tách biệt với các đầu ra chính của GoReleaser
-make build-release-artifacts
-
 # Build for Raspberry Pi Zero 2 W (32-bit: make build-linux-arm; 64-bit: make build-linux-arm64)
 make build-pi-zero
 
 # Build and install
 make install
 ```
-
-`make build-all` build các binary lõi `picoclaw` cho mọi nền tảng do Makefile quản lý.
-
-`make build-release-artifacts` build các release artifact được đóng gói tách biệt với các đầu ra chính của GoReleaser.
 
 **Raspberry Pi Zero 2 W:** Sử dụng binary phù hợp với hệ điều hành của bạn: Raspberry Pi OS 32-bit -> `make build-linux-arm`; 64-bit -> `make build-linux-arm64`. Hoặc chạy `make build-pi-zero` để xây dựng cả hai.
 

@@ -26,5 +26,5 @@ jobs:
       - name: Setup pnpm
         run: corepack enable && corepack install
 
-      - name: Build
+      - name: Build core binaries
         run: make build-all

@@ -187,19 +187,12 @@ make build-launcher
 # 为 Makefile 管理的所有平台构建核心二进制文件
 make build-all
 
-# 构建独立于主 GoReleaser 输出之外的发布附加产物
-make build-release-artifacts
-
 # 为 Raspberry Pi Zero 2 W 构建（32位: make build-linux-arm; 64位: make build-linux-arm64）
 make build-pi-zero
 
 # 构建并安装
 make install
 ```
-
-`make build-all` 会为所有由 Makefile 管理的平台构建核心 `picoclaw` 二进制文件。
-
-`make build-release-artifacts` 会构建独立于主 GoReleaser 输出之外打包的发布附加产物。
 
 **Raspberry Pi Zero 2 W:** 请使用与系统匹配的二进制文件：32 位 Raspberry Pi OS → `make build-linux-arm`；64 位 → `make build-linux-arm64`。或运行 `make build-pi-zero` 同时构建两者。
 
@@ -631,6 +624,5 @@ Discord: <https://discord.gg/V4sAZ9XWpN>
 
 WeChat:
 <img src="assets/wechat.png" alt="WeChat group QR code" width="512">
-
 
 

@@ -187,19 +187,12 @@ make build-launcher
 # Compila i binari core per tutte le piattaforme gestite dal Makefile
 make build-all
 
-# Compila gli artefatti di release impacchettati separatamente dagli output principali di GoReleaser
-make build-release-artifacts
-
 # Compila per Raspberry Pi Zero 2 W (32-bit: make build-linux-arm; 64-bit: make build-linux-arm64)
 make build-pi-zero
 
 # Compila e installa
 make install
 ```
-
-`make build-all` compila i binari core di `picoclaw` per tutte le piattaforme gestite dal Makefile.
-
-`make build-release-artifacts` compila gli artefatti di release impacchettati separatamente dagli output principali di GoReleaser.
 
 **Raspberry Pi Zero 2 W:** Usa il binario che corrisponde al tuo OS: Raspberry Pi OS 32-bit -> `make build-linux-arm`; 64-bit -> `make build-linux-arm64`. Oppure esegui `make build-pi-zero` per compilare entrambi.
 

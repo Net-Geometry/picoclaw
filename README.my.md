@@ -187,19 +187,12 @@ make build-launcher
 # Bina binari teras untuk semua platform yang diuruskan oleh Makefile
 make build-all
 
-# Bina artifak keluaran yang dibungkus berasingan daripada output utama GoReleaser
-make build-release-artifacts
-
 # Bina untuk Raspberry Pi Zero 2 W (32-bit: make build-linux-arm; 64-bit: make build-linux-arm64)
 make build-pi-zero
 
 # Bina dan pasang
 make install
 ```
-
-`make build-all` membina binari teras `picoclaw` untuk semua platform yang diuruskan oleh Makefile.
-
-`make build-release-artifacts` membina artifak keluaran yang dibungkus berasingan daripada output utama GoReleaser.
 
 **Raspberry Pi Zero 2 W:** Gunakan binari yang sepadan dengan OS anda: Raspberry Pi OS 32-bit -> `make build-linux-arm`; 64-bit -> `make build-linux-arm64`. Atau jalankan `make build-pi-zero` untuk membina kedua-duanya.
 
