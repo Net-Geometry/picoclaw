@@ -292,16 +292,18 @@ func (al *AgentLoop) continueWithSteeringMessages(
 	ctx context.Context,
 	agent *AgentInstance,
 	sessionKey, channel, chatID string,
+	scope *session.SessionScope,
 	steeringMsgs []providers.Message,
 ) (string, error) {
 	dispatch := DispatchRequest{
-		SessionKey: sessionKey,
+		SessionKey:   sessionKey,
+		SessionScope: session.CloneScope(scope),
 	}
 	if channel != "" || chatID != "" {
 		dispatch.InboundContext = &bus.InboundContext{
 			Channel:  channel,
 			ChatID:   chatID,
-			ChatType: "direct",
+			ChatType: inferChatTypeFromSessionScope(scope),
 		}
 	}
 	return al.runAgentLoop(ctx, agent, processOptions{
@@ -372,7 +374,12 @@ func (al *AgentLoop) Continue(ctx context.Context, sessionKey, channel, chatID s
 		}
 	}
 
-	return al.continueWithSteeringMessages(ctx, agent, sessionKey, channel, chatID, steeringMsgs)
+	var scope *session.SessionScope
+	if metaStore, ok := agent.Sessions.(session.MetadataAwareSessionStore); ok {
+		scope = metaStore.GetSessionScope(sessionKey)
+	}
+
+	return al.continueWithSteeringMessages(ctx, agent, sessionKey, channel, chatID, scope, steeringMsgs)
 }
 
 func (al *AgentLoop) InterruptGraceful(hint string) error {

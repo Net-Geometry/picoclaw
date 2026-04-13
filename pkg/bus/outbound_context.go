@@ -34,7 +34,12 @@ func NormalizeOutboundMessage(msg OutboundMessage) OutboundMessage {
 	if msg.ChatID == "" {
 		msg.ChatID = msg.Context.ChatID
 	}
-	msg.ReplyToMessageID = msg.Context.ReplyToMessageID
+	if msg.ReplyToMessageID == "" {
+		msg.ReplyToMessageID = msg.Context.ReplyToMessageID
+	}
+	if msg.Context.ReplyToMessageID == "" {
+		msg.Context.ReplyToMessageID = msg.ReplyToMessageID
+	}
 	msg.Scope = cloneOutboundScope(msg.Scope)
 	return msg
 }

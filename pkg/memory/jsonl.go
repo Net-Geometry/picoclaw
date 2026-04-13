@@ -374,6 +374,11 @@ func (s *JSONLStore) promoteAliasHistoryLocked(
 		return false, nil
 	}
 
+	previousJSONL, hadPreviousJSONL, err := s.readRawJSONL(sessionKey)
+	if err != nil {
+		return false, err
+	}
+
 	now := time.Now()
 	if canonicalMeta.CreatedAt.IsZero() {
 		canonicalMeta.CreatedAt = now
@@ -387,10 +392,13 @@ func (s *JSONLStore) promoteAliasHistoryLocked(
 		canonicalMeta.Summary = aliasSummary
 	}
 
-	if err := s.writeMeta(sessionKey, canonicalMeta); err != nil {
+	if err := s.rewriteJSONL(sessionKey, aliasHistory); err != nil {
 		return false, err
 	}
-	if err := s.rewriteJSONL(sessionKey, aliasHistory); err != nil {
+	if err := s.writeMeta(sessionKey, canonicalMeta); err != nil {
+		if rollbackErr := s.restoreRawJSONL(sessionKey, previousJSONL, hadPreviousJSONL); rollbackErr != nil {
+			return false, fmt.Errorf("memory: write promoted meta: %w (rollback jsonl: %v)", err, rollbackErr)
+		}
 		return false, err
 	}
 	return true, nil
@@ -408,6 +416,31 @@ func (s *JSONLStore) sessionHasVisibleContentLocked(sessionKey string, meta Sess
 		return false, err
 	}
 	return len(history) > 0, nil
+}
+
+func (s *JSONLStore) readRawJSONL(sessionKey string) ([]byte, bool, error) {
+	data, err := os.ReadFile(s.jsonlPath(sessionKey))
+	if os.IsNotExist(err) {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, false, fmt.Errorf("memory: read jsonl: %w", err)
+	}
+	return data, true, nil
+}
+
+func (s *JSONLStore) restoreRawJSONL(sessionKey string, data []byte, existed bool) error {
+	path := s.jsonlPath(sessionKey)
+	if !existed {
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("memory: remove jsonl rollback: %w", err)
+		}
+		return nil
+	}
+	if err := fileutil.WriteFileAtomic(path, data, 0o644); err != nil {
+		return fmt.Errorf("memory: restore jsonl rollback: %w", err)
+	}
+	return nil
 }
 
 // readMessages reads valid JSON lines from a .jsonl file, skipping

@@ -92,61 +92,6 @@ func (b *JSONLBackend) EnsureSessionMetadata(sessionKey string, scope *SessionSc
 		if _, err := promotingStore.PromoteAliasHistory(ctx, sessionKey, rawScope, aliases); err != nil {
 			log.Printf("session: promote alias history: %v", err)
 		}
-		return
-	}
-
-	canonicalMeta, metaErr := metaStore.GetSessionMeta(ctx, sessionKey)
-	if metaErr != nil {
-		log.Printf("session: get canonical session metadata: %v", metaErr)
-	} else if canonicalMeta.Count > 0 || strings.TrimSpace(canonicalMeta.Summary) != "" {
-		return
-	}
-
-	canonicalHistory, historyErr := b.store.GetHistory(ctx, sessionKey)
-	if historyErr != nil {
-		log.Printf("session: get canonical history: %v", historyErr)
-		return
-	}
-	canonicalSummary, summaryErr := b.store.GetSummary(ctx, sessionKey)
-	if summaryErr != nil {
-		log.Printf("session: get canonical summary: %v", summaryErr)
-		return
-	}
-	if len(canonicalHistory) > 0 || strings.TrimSpace(canonicalSummary) != "" {
-		return
-	}
-
-	for _, alias := range aliases {
-		alias = strings.TrimSpace(alias)
-		if alias == "" || alias == sessionKey {
-			continue
-		}
-		aliasHistory, err := b.store.GetHistory(ctx, alias)
-		if err != nil {
-			log.Printf("session: get alias history: %v", err)
-			continue
-		}
-		aliasSummary, err := b.store.GetSummary(ctx, alias)
-		if err != nil {
-			log.Printf("session: get alias summary: %v", err)
-			continue
-		}
-		if len(aliasHistory) == 0 && strings.TrimSpace(aliasSummary) == "" {
-			continue
-		}
-		if err := b.store.SetHistory(ctx, sessionKey, aliasHistory); err != nil {
-			log.Printf("session: promote alias history: %v", err)
-			return
-		}
-		if strings.TrimSpace(aliasSummary) != "" {
-			if err := b.store.SetSummary(ctx, sessionKey, aliasSummary); err != nil {
-				log.Printf("session: promote alias summary: %v", err)
-			}
-		}
-		if err := metaStore.UpsertSessionMeta(ctx, sessionKey, rawScope, aliases); err != nil {
-			log.Printf("session: refresh session metadata after promotion: %v", err)
-		}
-		return
 	}
 }
 

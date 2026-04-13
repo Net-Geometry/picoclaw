@@ -93,9 +93,7 @@ func normalizeProcessOptions(opts processOptions) processOptions {
 				MessageID:        strings.TrimSpace(opts.MessageID),
 				ReplyToMessageID: strings.TrimSpace(opts.ReplyToMessageID),
 			}
-			if inbound.Channel != "" && inbound.ChatID != "" {
-				inbound.ChatType = "direct"
-			}
+			inbound.ChatType = inferChatTypeFromSessionScope(opts.Dispatch.SessionScope)
 			if inbound.Channel != "" || inbound.ChatID != "" || inbound.SenderID != "" ||
 				inbound.MessageID != "" || inbound.ReplyToMessageID != "" {
 				inbound = bus.NormalizeInboundMessage(bus.InboundMessage{Context: inbound}).Context
@@ -131,4 +129,19 @@ func normalizeProcessOptions(opts processOptions) processOptions {
 	}
 
 	return opts
+}
+
+func inferChatTypeFromSessionScope(scope *session.SessionScope) string {
+	if scope == nil || len(scope.Values) == 0 {
+		return ""
+	}
+	chatValue := strings.TrimSpace(scope.Values["chat"])
+	if chatValue == "" {
+		return ""
+	}
+	chatType, _, ok := strings.Cut(chatValue, ":")
+	if !ok {
+		return ""
+	}
+	return strings.ToLower(strings.TrimSpace(chatType))
 }

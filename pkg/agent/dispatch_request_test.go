@@ -108,3 +108,28 @@ func TestNormalizeProcessOptions_UsesDispatchAsSourceOfTruth(t *testing.T) {
 		t.Fatalf("SessionScope = %#v, want support scope", opts.SessionScope)
 	}
 }
+
+func TestNormalizeProcessOptions_InfersLegacyChatTypeFromSessionScope(t *testing.T) {
+	opts := normalizeProcessOptions(processOptions{
+		Channel:     "telegram",
+		ChatID:      "-100123",
+		SenderID:    "user-1",
+		UserMessage: "hello",
+		SessionScope: &session.SessionScope{
+			Version:    session.ScopeVersionV1,
+			AgentID:    "main",
+			Channel:    "telegram",
+			Dimensions: []string{"chat"},
+			Values: map[string]string{
+				"chat": "group:-100123",
+			},
+		},
+	})
+
+	if opts.Dispatch.InboundContext == nil {
+		t.Fatal("Dispatch.InboundContext is nil")
+	}
+	if opts.Dispatch.InboundContext.ChatType != "group" {
+		t.Fatalf("Dispatch.InboundContext.ChatType = %q, want group", opts.Dispatch.InboundContext.ChatType)
+	}
+}
