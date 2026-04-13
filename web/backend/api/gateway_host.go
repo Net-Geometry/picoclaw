@@ -12,8 +12,11 @@ import (
 )
 
 var (
-	adaptiveLoopbackHostOnce sync.Once
-	adaptiveLoopbackHost     string
+	adaptiveIPFamiliesOnce sync.Once
+	adaptiveHasIPv4        bool
+	adaptiveHasIPv6        bool
+	lookupLocalhostIPs     = func() ([]net.IP, error) { return net.LookupIP("localhost") }
+	listInterfaceAddrs     = net.InterfaceAddrs
 )
 
 func selectAdaptiveLoopbackHost(hasIPv4, hasIPv6 bool) string {
@@ -25,7 +28,20 @@ func selectAdaptiveLoopbackHost(hasIPv4, hasIPv6 bool) string {
 	case hasIPv4:
 		return "127.0.0.1"
 	default:
-		return "127.0.0.1"
+		return "localhost"
+	}
+}
+
+func selectAdaptiveAnyHost(hasIPv4, hasIPv6 bool) string {
+	switch {
+	case hasIPv4 && hasIPv6:
+		return "::"
+	case hasIPv6:
+		return "::"
+	case hasIPv4:
+		return "0.0.0.0"
+	default:
+		return "::"
 	}
 }
 
@@ -42,34 +58,59 @@ func isLoopbackEquivalentHost(host string) bool {
 	return ip != nil && ip.IsLoopback()
 }
 
-func resolveAdaptiveLoopbackHost() string {
-	adaptiveLoopbackHostOnce.Do(func() {
-		ips, err := net.LookupIP("localhost")
-		if err != nil {
-			adaptiveLoopbackHost = selectAdaptiveLoopbackHost(false, false)
+func detectAdaptiveIPFamilies() (bool, bool) {
+	adaptiveIPFamiliesOnce.Do(func() {
+		if ips, err := lookupLocalhostIPs(); err == nil {
+			for _, ip := range ips {
+				if ip == nil {
+					continue
+				}
+				if ip.To4() != nil {
+					adaptiveHasIPv4 = true
+					continue
+				}
+				adaptiveHasIPv6 = true
+			}
+		}
+
+		if adaptiveHasIPv4 && adaptiveHasIPv6 {
 			return
 		}
 
-		hasIPv4 := false
-		hasIPv6 := false
-		for _, ip := range ips {
-			if ip == nil {
-				continue
+		if addrs, err := listInterfaceAddrs(); err == nil {
+			for _, addr := range addrs {
+				ipnet, ok := addr.(*net.IPNet)
+				if !ok || ipnet.IP == nil {
+					continue
+				}
+				if ipnet.IP.To4() != nil {
+					adaptiveHasIPv4 = true
+					continue
+				}
+				adaptiveHasIPv6 = true
 			}
-			if ip.To4() != nil {
-				hasIPv4 = true
-				continue
-			}
-			hasIPv6 = true
 		}
-
-		adaptiveLoopbackHost = selectAdaptiveLoopbackHost(hasIPv4, hasIPv6)
 	})
-	return adaptiveLoopbackHost
+
+	return adaptiveHasIPv4, adaptiveHasIPv6
+}
+
+func resolveAdaptiveLoopbackHost() string {
+	hasIPv4, hasIPv6 := detectAdaptiveIPFamilies()
+	return selectAdaptiveLoopbackHost(hasIPv4, hasIPv6)
+}
+
+func resolveAdaptiveAnyHost() string {
+	hasIPv4, hasIPv6 := detectAdaptiveIPFamilies()
+	return selectAdaptiveAnyHost(hasIPv4, hasIPv6)
 }
 
 func resolveDefaultLoopbackHost() string {
 	return resolveAdaptiveLoopbackHost()
+}
+
+func resolveDefaultAnyHost() string {
+	return resolveAdaptiveAnyHost()
 }
 
 func resolveLocalhostLoopbackHost() string {
@@ -102,6 +143,10 @@ func canonicalLauncherBindHost(host string) string {
 	if strings.EqualFold(host, "localhost") {
 		return resolveLocalhostLoopbackHost()
 	}
+	trimmed := strings.Trim(host, "[]")
+	if ip := net.ParseIP(trimmed); ip != nil && ip.IsUnspecified() {
+		return resolveDefaultAnyHost()
+	}
 	return host
 }
 
@@ -110,8 +155,8 @@ func (h *Handler) launcherAndGatewayBindHostsAligned(cfg *config.Config) bool {
 		return false
 	}
 
-	// With -host specified, -public is ignored, so launcher's legacy bind host is loopback.
-	launcherHost := canonicalLauncherBindHost("127.0.0.1")
+	// With -host specified, -public is ignored, so launcher baseline bind host is loopback.
+	launcherHost := canonicalLauncherBindHost("")
 	gatewayHost := canonicalLauncherBindHost(cfg.Gateway.Host)
 	if isLoopbackEquivalentHost(launcherHost) && isLoopbackEquivalentHost(gatewayHost) {
 		return true
@@ -129,7 +174,7 @@ func (h *Handler) gatewayHostOverrideForConfig(cfg *config.Config) string {
 	}
 
 	if h.effectiveLauncherPublic() {
-		return "0.0.0.0"
+		return resolveDefaultAnyHost()
 	}
 	return ""
 }
@@ -167,10 +212,7 @@ func gatewayProbeHost(bindHost string) string {
 
 	trimmed := strings.Trim(bindHost, "[]")
 	if ip := net.ParseIP(trimmed); ip != nil && ip.IsUnspecified() {
-		if ip.To4() == nil {
-			return "::1"
-		}
-		return "127.0.0.1"
+		return resolveDefaultLoopbackHost()
 	}
 	return bindHost
 }
@@ -200,7 +242,7 @@ func requestHostName(r *http.Request) string {
 	if strings.TrimSpace(r.Host) != "" {
 		return r.Host
 	}
-	return "127.0.0.1"
+	return resolveDefaultLoopbackHost()
 }
 
 func requestWSScheme(r *http.Request) string {

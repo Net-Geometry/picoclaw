@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -40,8 +39,9 @@ func TestLoadConfig_GatewayHostBlankEnvFallsBackToConfigHost(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}
-	if cfg.Gateway.Host != "localhost" {
-		t.Fatalf("cfg.Gateway.Host = %q, want %q", cfg.Gateway.Host, "localhost")
+	want := normalizeGatewayHost("localhost")
+	if cfg.Gateway.Host != want {
+		t.Fatalf("cfg.Gateway.Host = %q, want %q", cfg.Gateway.Host, want)
 	}
 }
 
@@ -54,8 +54,23 @@ func TestLoadConfig_GatewayHostBlankEnvAndConfigFallsBackToDefault(t *testing.T)
 		t.Fatalf("LoadConfig() error: %v", err)
 	}
 
-	defaultHost := strings.TrimSpace(DefaultConfig().Gateway.Host)
+	defaultHost := normalizeGatewayHost(DefaultConfig().Gateway.Host)
 	if cfg.Gateway.Host != defaultHost {
 		t.Fatalf("cfg.Gateway.Host = %q, want %q", cfg.Gateway.Host, defaultHost)
+	}
+}
+
+func TestLoadConfig_GatewayHostEnvWildcardUsesAdaptiveAnyHost(t *testing.T) {
+	configPath := writeGatewayHostTestConfig(t, "localhost")
+	t.Setenv(EnvGatewayHost, "  0.0.0.0  ")
+
+	cfg, err := LoadConfig(configPath)
+	if err != nil {
+		t.Fatalf("LoadConfig() error: %v", err)
+	}
+
+	want := normalizeGatewayHost("0.0.0.0")
+	if cfg.Gateway.Host != want {
+		t.Fatalf("cfg.Gateway.Host = %q, want %q", cfg.Gateway.Host, want)
 	}
 }

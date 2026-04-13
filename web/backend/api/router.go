@@ -32,7 +32,7 @@ func NewHandler(configPath string) *Handler {
 	return &Handler{
 		configPath:  configPath,
 		serverPort:  launcherconfig.DefaultPort,
-		serverHost:  "127.0.0.1",
+		serverHost:  resolveDefaultLoopbackHost(),
 		oauthFlows:  make(map[string]*oauthFlow),
 		oauthState:  make(map[string]string),
 		weixinFlows: make(map[string]*weixinFlow),
@@ -45,9 +45,9 @@ func (h *Handler) SetServerOptions(port int, public bool, publicExplicit bool, a
 	h.serverPort = port
 	h.serverPublic = public
 	h.serverPublicExplicit = publicExplicit
-	h.serverHost = "127.0.0.1"
+	h.serverHost = resolveDefaultLoopbackHost()
 	if public {
-		h.serverHost = "0.0.0.0"
+		h.serverHost = resolveDefaultAnyHost()
 	}
 	h.serverHostExplicit = false
 	h.serverCIDRs = append([]string(nil), allowedCIDRs...)
@@ -58,12 +58,13 @@ func (h *Handler) SetServerOptions(port int, public bool, publicExplicit bool, a
 func (h *Handler) SetServerBindHost(host string, explicit bool) {
 	host = strings.TrimSpace(host)
 	if host == "" {
-		host = "127.0.0.1"
+		host = resolveDefaultLoopbackHost()
 		if h.serverPublic {
-			host = "0.0.0.0"
+			host = resolveDefaultAnyHost()
 		}
 		explicit = false
 	}
+	host = canonicalLauncherBindHost(host)
 
 	h.serverHost = host
 	h.serverHostExplicit = explicit

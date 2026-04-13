@@ -262,7 +262,7 @@ func (h *Handler) getGatewayHealthForPidData(
 		host = gatewayProbeHost(h.effectiveGatewayBindHost(cfg))
 	}
 	if host == "" {
-		host = "127.0.0.1"
+		host = resolveDefaultLoopbackHost()
 	}
 
 	url := "http://" + net.JoinHostPort(host, strconv.Itoa(port)) + "/health"

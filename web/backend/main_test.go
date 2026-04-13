@@ -113,7 +113,7 @@ func TestResolveLauncherBindHost(t *testing.T) {
 			host:         "0.0.0.0",
 			explicitHost: true,
 			effectivePub: true,
-			wantHost:     "0.0.0.0",
+			wantHost:     resolveDefaultLauncherAnyHost(),
 			wantPublic:   false,
 			wantExplicit: true,
 		},
@@ -139,7 +139,7 @@ func TestResolveLauncherBindHost(t *testing.T) {
 			envHost:      "0.0.0.0",
 			explicitHost: false,
 			effectivePub: true,
-			wantHost:     "0.0.0.0",
+			wantHost:     resolveDefaultLauncherAnyHost(),
 			wantPublic:   false,
 			wantExplicit: true,
 		},
@@ -148,7 +148,7 @@ func TestResolveLauncherBindHost(t *testing.T) {
 			host:         "",
 			explicitHost: false,
 			effectivePub: true,
-			wantHost:     "0.0.0.0",
+			wantHost:     resolveDefaultLauncherAnyHost(),
 			wantPublic:   true,
 			wantExplicit: false,
 		},
@@ -157,7 +157,7 @@ func TestResolveLauncherBindHost(t *testing.T) {
 			host:         "",
 			explicitHost: false,
 			effectivePub: false,
-			wantHost:     "127.0.0.1",
+			wantHost:     resolveDefaultLauncherPrivateHost(),
 			wantPublic:   false,
 			wantExplicit: false,
 		},
@@ -190,6 +190,38 @@ func TestResolveLauncherBindHost(t *testing.T) {
 	}
 }
 
+func TestLauncherConsoleHosts(t *testing.T) {
+	t.Run("explicit wildcard dedupes localhost and includes loopback ipv6", func(t *testing.T) {
+		hosts := launcherConsoleHosts("0.0.0.0", true, false)
+		seen := make(map[string]bool, len(hosts))
+		for _, host := range hosts {
+			if seen[host] {
+				t.Fatalf("duplicate host %q in %#v", host, hosts)
+			}
+			seen[host] = true
+		}
+		if !seen["localhost"] {
+			t.Fatalf("expected localhost in %#v", hosts)
+		}
+		if !seen["::1"] {
+			t.Fatalf("expected ::1 in %#v", hosts)
+		}
+		if !seen["127.0.0.1"] {
+			t.Fatalf("expected 127.0.0.1 in %#v", hosts)
+		}
+	})
+
+	t.Run("explicit ipv6 host remains visible", func(t *testing.T) {
+		hosts := launcherConsoleHosts("::1", true, false)
+		if len(hosts) != 2 {
+			t.Fatalf("len(hosts) = %d, want 2 (%#v)", len(hosts), hosts)
+		}
+		if hosts[0] != "localhost" || hosts[1] != "::1" {
+			t.Fatalf("hosts = %#v, want [localhost ::1]", hosts)
+		}
+	})
+}
+
 func TestBrowserHostForLauncher(t *testing.T) {
 	if got := browserHostForLauncher("0.0.0.0"); got != "localhost" {
 		t.Fatalf("browserHostForLauncher(0.0.0.0) = %q, want %q", got, "localhost")
@@ -210,10 +242,10 @@ func TestWildcardAdvertiseIP(t *testing.T) {
 		ipv6     string
 		want     string
 	}{
-		{name: "ipv4 wildcard uses ipv4", bindHost: "0.0.0.0", ipv4: "192.168.1.2", ipv6: "2001:db8::1", want: "192.168.1.2"},
+		{name: "ipv4 wildcard prefers ipv6 when available", bindHost: "0.0.0.0", ipv4: "192.168.1.2", ipv6: "2001:db8::1", want: "2001:db8::1"},
 		{name: "ipv6 wildcard uses ipv6", bindHost: "::", ipv4: "192.168.1.2", ipv6: "2001:db8::1", want: "2001:db8::1"},
-		{name: "ipv6 wildcard with no ipv6 address", bindHost: "::", ipv4: "192.168.1.2", ipv6: "", want: ""},
-		{name: "ipv4 wildcard with no ipv4 address", bindHost: "0.0.0.0", ipv4: "", ipv6: "2001:db8::1", want: ""},
+		{name: "ipv6 wildcard falls back to ipv4", bindHost: "::", ipv4: "192.168.1.2", ipv6: "", want: "192.168.1.2"},
+		{name: "ipv4 wildcard uses ipv6-only network", bindHost: "0.0.0.0", ipv4: "", ipv6: "2001:db8::1", want: "2001:db8::1"},
 		{name: "non wildcard does not advertise", bindHost: "127.0.0.1", ipv4: "192.168.1.2", ipv6: "2001:db8::1", want: ""},
 	}
 

@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -46,6 +47,10 @@ const (
 var (
 	appVersion = config.Version
 
+	launcherIPFamiliesOnce sync.Once
+	launcherHasIPv4        bool
+	launcherHasIPv6        bool
+
 	server     *http.Server
 	serverAddr string
 	// browserLaunchURL is opened by openBrowser() (auto-open + tray "open console").
@@ -67,6 +72,103 @@ func dashboardTokenConfigHelpPath(source launcherconfig.DashboardTokenSource, la
 	return launcherPath
 }
 
+func detectLauncherIPFamilies() (bool, bool) {
+	launcherIPFamiliesOnce.Do(func() {
+		if ips, err := net.LookupIP("localhost"); err == nil {
+			for _, ip := range ips {
+				if ip == nil {
+					continue
+				}
+				if ip.To4() != nil {
+					launcherHasIPv4 = true
+					continue
+				}
+				launcherHasIPv6 = true
+			}
+		}
+
+		if launcherHasIPv4 && launcherHasIPv6 {
+			return
+		}
+
+		if addrs, err := net.InterfaceAddrs(); err == nil {
+			for _, addr := range addrs {
+				ipnet, ok := addr.(*net.IPNet)
+				if !ok || ipnet.IP == nil {
+					continue
+				}
+				if ipnet.IP.To4() != nil {
+					launcherHasIPv4 = true
+					continue
+				}
+				launcherHasIPv6 = true
+			}
+		}
+	})
+
+	return launcherHasIPv4, launcherHasIPv6
+}
+
+func selectAdaptiveLauncherLoopbackHost(hasIPv4, hasIPv6 bool) string {
+	switch {
+	case hasIPv4 && hasIPv6:
+		return "localhost"
+	case hasIPv6:
+		return "::1"
+	case hasIPv4:
+		return "127.0.0.1"
+	default:
+		return "localhost"
+	}
+}
+
+func selectAdaptiveLauncherAnyHost(hasIPv4, hasIPv6 bool) string {
+	switch {
+	case hasIPv4 && hasIPv6:
+		return "::"
+	case hasIPv6:
+		return "::"
+	case hasIPv4:
+		return "0.0.0.0"
+	default:
+		return "::"
+	}
+}
+
+func resolveDefaultLauncherLoopbackHost() string {
+	hasIPv4, hasIPv6 := detectLauncherIPFamilies()
+	return selectAdaptiveLauncherLoopbackHost(hasIPv4, hasIPv6)
+}
+
+func resolveDefaultLauncherAnyHost() string {
+	hasIPv4, hasIPv6 := detectLauncherIPFamilies()
+	return selectAdaptiveLauncherAnyHost(hasIPv4, hasIPv6)
+}
+
+func resolveDefaultLauncherPrivateHost() string {
+	hasIPv4, hasIPv6 := detectLauncherIPFamilies()
+	if hasIPv4 && hasIPv6 {
+		// In dual-stack environments, use wildcard IPv6 bind so localhost can serve both families.
+		return selectAdaptiveLauncherAnyHost(hasIPv4, hasIPv6)
+	}
+	return selectAdaptiveLauncherLoopbackHost(hasIPv4, hasIPv6)
+}
+
+func normalizeLauncherSpecialHost(host string) string {
+	host = strings.TrimSpace(host)
+	if host == "" {
+		return host
+	}
+	if strings.EqualFold(host, "localhost") {
+		return resolveDefaultLauncherLoopbackHost()
+	}
+	trimmed := strings.Trim(host, "[]")
+	if ip := net.ParseIP(trimmed); ip != nil && ip.IsUnspecified() {
+		return resolveDefaultLauncherAnyHost()
+	}
+	return host
+}
+
 func resolveLauncherBindHost(
 	host string,
 	explicitHost bool,
@@ -79,25 +181,30 @@ func resolveLauncherBindHost(
 			return "", false, false, errors.New("host cannot be empty")
 		}
 		// When -host is specified, -public is ignored.
-		return host, false, true, nil
+		return normalizeLauncherSpecialHost(host), false, true, nil
 	}
 
 	envHost = strings.TrimSpace(envHost)
 	if envHost != "" {
 		// Environment host follows explicit override semantics.
-		return envHost, false, true, nil
+		return normalizeLauncherSpecialHost(envHost), false, true, nil
 	}
 
 	if effectivePublic {
-		return "0.0.0.0", true, false, nil
+		return resolveDefaultLauncherAnyHost(), true, false, nil
 	}
 
-	return "127.0.0.1", false, false, nil
+	return resolveDefaultLauncherPrivateHost(), false, false, nil
 }
 
 func isWildcardBindHost(host string) bool {
 	host = strings.TrimSpace(host)
-	return host == "0.0.0.0" || host == "::"
+	if host == "" {
+		return false
+	}
+	trimmed := strings.Trim(host, "[]")
+	ip := net.ParseIP(trimmed)
+	return ip != nil && ip.IsUnspecified()
 }
 
 func browserHostForLauncher(bindHost string) string {
@@ -109,18 +216,55 @@ func browserHostForLauncher(bindHost string) string {
 }
 
 func wildcardAdvertiseIP(bindHost, ipv4, ipv6 string) string {
-	switch strings.TrimSpace(bindHost) {
-	case "0.0.0.0":
-		return strings.TrimSpace(ipv4)
-	case "::":
-		return strings.TrimSpace(ipv6)
-	default:
+	if !isWildcardBindHost(bindHost) {
 		return ""
 	}
+
+	if v6 := strings.TrimSpace(ipv6); v6 != "" {
+		return v6
+	}
+	return strings.TrimSpace(ipv4)
 }
 
 func advertiseIPForWildcardBindHost(bindHost string) string {
 	return wildcardAdvertiseIP(bindHost, utils.GetLocalIPv4(), utils.GetLocalIPv6())
+}
+
+func appendUniqueHost(hosts []string, seen map[string]struct{}, host string) []string {
+	host = strings.TrimSpace(host)
+	if host == "" {
+		return hosts
+	}
+	key := strings.ToLower(host)
+	if _, ok := seen[key]; ok {
+		return hosts
+	}
+	seen[key] = struct{}{}
+	return append(hosts, host)
+}
+
+func launcherConsoleHosts(bindHost string, hostExplicit bool, effectivePublic bool) []string {
+	hosts := make([]string, 0, 6)
+	seen := make(map[string]struct{}, 6)
+
+	hosts = appendUniqueHost(hosts, seen, "localhost")
+
+	if isWildcardBindHost(bindHost) {
+		hosts = appendUniqueHost(hosts, seen, "::1")
+		hosts = appendUniqueHost(hosts, seen, "127.0.0.1")
+
+		if effectivePublic || hostExplicit {
+			hosts = appendUniqueHost(hosts, seen, utils.GetLocalIPv6())
+			hosts = appendUniqueHost(hosts, seen, utils.GetLocalIPv4())
+		}
+		return hosts
+	}
+
+	if hostExplicit {
+		hosts = appendUniqueHost(hosts, seen, bindHost)
+	}
+
+	return hosts
 }
 
 // maskSecret masks a secret for display. It always shows up to the first 3
@@ -144,7 +288,7 @@ func maskSecret(s string) string {
 func main() {
 	port := flag.String("port", "18800", "Port to listen on")
 	host := flag.String("host", "", "Host to listen on (overrides -public when set)")
-	public := flag.Bool("public", false, "Listen on all interfaces (0.0.0.0) instead of localhost only")
+	public := flag.Bool("public", false, "Listen on all interfaces (dual-stack) instead of localhost only")
 	noBrowser = flag.Bool("no-browser", false, "Do not auto-open browser on startup")
 	lang := flag.String("lang", "", "Language: en (English) or zh (Chinese). Default: auto-detect from system locale")
 	console := flag.Bool("console", false, "Console mode, no GUI")
@@ -171,8 +315,8 @@ func main() {
 			os.Args[0],
 		)
 		fmt.Fprintf(os.Stderr, "      Allow access from other devices on the local network\n")
-		fmt.Fprintf(os.Stderr, "  %s -host 0.0.0.0 ./config.json\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "      Bind launcher host explicitly (gateway forwarding follows compatibility rules)\n")
+		fmt.Fprintf(os.Stderr, "  %s -host :: ./config.json\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "      Bind launcher host explicitly (dual-stack normalization applies)\n")
 		fmt.Fprintf(os.Stderr, "  %s -console -d ./config.json\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "      Run in the terminal with debug logs enabled\n")
 	}
@@ -287,6 +431,12 @@ func main() {
 		logger.Fatalf("Invalid host %q: %v", *host, err)
 	}
 
+	effectiveAllowedCIDRs := append([]string(nil), launcherCfg.AllowedCIDRs...)
+	if len(effectiveAllowedCIDRs) == 0 && !effectivePublic && !hostExplicit && isWildcardBindHost(effectiveHost) {
+		effectiveAllowedCIDRs = []string{"127.0.0.1/32", "::1/128"}
+		logger.InfoC("web", "Applying loopback-only access policy for default dual-stack bind")
+	}
+
 	if !explicitHost && envHost != "" {
 		logger.InfoC("web", "Using launcher host from environment PICOCLAW_LAUNCHER_HOST")
 	}
@@ -349,14 +499,14 @@ func main() {
 	if _, err = apiHandler.EnsurePicoChannel(""); err != nil {
 		logger.ErrorC("web", fmt.Sprintf("Warning: failed to ensure pico channel on startup: %v", err))
 	}
-	apiHandler.SetServerOptions(portNum, effectivePublic, explicitPublic, launcherCfg.AllowedCIDRs)
+	apiHandler.SetServerOptions(portNum, effectivePublic, explicitPublic, effectiveAllowedCIDRs)
 	apiHandler.SetServerBindHost(effectiveHost, hostExplicit)
 	apiHandler.RegisterRoutes(mux)
 
 	// Frontend Embedded Assets
 	registerEmbedRoutes(mux)
 
-	accessControlledMux, err := middleware.IPAllowlist(launcherCfg.AllowedCIDRs, mux)
+	accessControlledMux, err := middleware.IPAllowlist(effectiveAllowedCIDRs, mux)
 	if err != nil {
 		logger.Fatalf("Invalid allowed CIDR configuration: %v", err)
 	}
@@ -381,14 +531,8 @@ func main() {
 		fmt.Println()
 		fmt.Println("  Open the following URL in your browser:")
 		fmt.Println()
-		fmt.Printf("    >> http://localhost:%s <<\n", effectivePort)
-		if isWildcardBindHost(effectiveHost) {
-			if ip := advertiseIPForWildcardBindHost(effectiveHost); ip != "" {
-				fmt.Printf("    >> http://%s <<\n", net.JoinHostPort(ip, effectivePort))
-			}
-		}
-		if hostExplicit {
-			fmt.Printf("    >> http://%s <<\n", net.JoinHostPort(browserHostForLauncher(effectiveHost), effectivePort))
+		for _, host := range launcherConsoleHosts(effectiveHost, hostExplicit, effectivePublic) {
+			fmt.Printf("    >> http://%s <<\n", net.JoinHostPort(host, effectivePort))
 		}
 		fmt.Println()
 		switch dashboardTokenSource {
