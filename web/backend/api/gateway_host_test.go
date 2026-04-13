@@ -63,9 +63,51 @@ func TestBuildWsURLUsesRequestHostWhenLauncherPublicSaved(t *testing.T) {
 	}
 }
 
+func TestSelectAdaptiveLoopbackHost(t *testing.T) {
+	tests := []struct {
+		name    string
+		hasIPv4 bool
+		hasIPv6 bool
+		want    string
+	}{
+		{name: "dual stack prefers localhost", hasIPv4: true, hasIPv6: true, want: "localhost"},
+		{name: "ipv6 only", hasIPv4: false, hasIPv6: true, want: "::1"},
+		{name: "ipv4 only", hasIPv4: true, hasIPv6: false, want: "127.0.0.1"},
+		{name: "fallback", hasIPv4: false, hasIPv6: false, want: "127.0.0.1"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := selectAdaptiveLoopbackHost(tt.hasIPv4, tt.hasIPv6); got != tt.want {
+				t.Fatalf("selectAdaptiveLoopbackHost(%t, %t) = %q, want %q", tt.hasIPv4, tt.hasIPv6, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestGatewayProbeHostUsesLoopbackForWildcardBind(t *testing.T) {
 	if got := gatewayProbeHost("0.0.0.0"); got != "127.0.0.1" {
 		t.Fatalf("gatewayProbeHost() = %q, want %q", got, "127.0.0.1")
+	}
+}
+
+func TestGatewayProbeHostUsesPreferredLoopbackForEmptyBind(t *testing.T) {
+	want := resolveDefaultLoopbackHost()
+	if got := gatewayProbeHost(""); got != want {
+		t.Fatalf("gatewayProbeHost(empty) = %q, want %q", got, want)
+	}
+}
+
+func TestGatewayProbeHostUsesPreferredLoopbackForLocalhostBind(t *testing.T) {
+	want := resolveLocalhostLoopbackHost()
+	if got := gatewayProbeHost("localhost"); got != want {
+		t.Fatalf("gatewayProbeHost(localhost) = %q, want %q", got, want)
+	}
+}
+
+func TestGatewayProbeHostUsesLoopbackForIPv6WildcardBind(t *testing.T) {
+	if got := gatewayProbeHost("::"); got != "::1" {
+		t.Fatalf("gatewayProbeHost(::) = %q, want %q", got, "::1")
 	}
 }
 
@@ -251,6 +293,19 @@ func TestGatewayHostOverrideWithExplicitHostAndAlignedGatewayHost(t *testing.T) 
 
 	if got := h.gatewayHostOverride(); got != "0.0.0.0" {
 		t.Fatalf("gatewayHostOverride() = %q, want %q", got, "0.0.0.0")
+	}
+}
+
+func TestGatewayHostOverrideWithExplicitHostAndLocalhostGatewayHost(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "config.json")
+	writeGatewayHostConfig(t, configPath, "localhost")
+
+	h := NewHandler(configPath)
+	h.SetServerOptions(18800, false, false, nil)
+	h.SetServerBindHost("::", true)
+
+	if got := h.gatewayHostOverride(); got != "::" {
+		t.Fatalf("gatewayHostOverride() = %q, want %q", got, "::")
 	}
 }
 

@@ -54,8 +54,8 @@ func FindPicoclawBinary() string {
 	return "picoclaw"
 }
 
-// GetLocalIP returns the local IP address of the machine.
-func GetLocalIP() string {
+// GetLocalIPv4 returns a non-loopback local IPv4 address.
+func GetLocalIPv4() string {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
 		return ""
@@ -66,6 +66,34 @@ func GetLocalIP() string {
 		}
 	}
 	return ""
+}
+
+// GetLocalIPv6 returns a non-loopback local IPv6 address.
+func GetLocalIPv6() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return ""
+	}
+	for _, a := range addrs {
+		ipnet, ok := a.(*net.IPNet)
+		if !ok || ipnet.IP == nil {
+			continue
+		}
+		ip := ipnet.IP
+		if ip.IsLoopback() || ip.To4() != nil {
+			continue
+		}
+		if ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+			continue
+		}
+		return ip.String()
+	}
+	return ""
+}
+
+// GetLocalIP returns a non-loopback local IPv4 address for backward compatibility.
+func GetLocalIP() string {
+	return GetLocalIPv4()
 }
 
 // OpenBrowser automatically opens the given URL in the default browser.

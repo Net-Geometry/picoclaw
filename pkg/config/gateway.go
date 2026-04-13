@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"os"
+	"strings"
 
 	"github.com/sipeed/picoclaw/pkg/logger"
 )
@@ -47,6 +48,33 @@ func EffectiveGatewayLogLevel(cfg *Config) string {
 		return DefaultGatewayLogLevel
 	}
 	return normalizeGatewayLogLevel(cfg.Gateway.LogLevel)
+}
+
+func normalizeGatewayHost(host string) string {
+	host = strings.TrimSpace(host)
+	if host != "" {
+		return host
+	}
+
+	defaultHost := strings.TrimSpace(DefaultConfig().Gateway.Host)
+	if defaultHost == "" {
+		return "127.0.0.1"
+	}
+	return defaultHost
+}
+
+func resolveGatewayHostFromEnv(baseHost string) string {
+	envHost, ok := os.LookupEnv(EnvGatewayHost)
+	if !ok {
+		return normalizeGatewayHost(baseHost)
+	}
+
+	envHost = strings.TrimSpace(envHost)
+	if envHost == "" {
+		return normalizeGatewayHost(baseHost)
+	}
+
+	return envHost
 }
 
 // ResolveGatewayLogLevel reads the configured gateway log level without triggering

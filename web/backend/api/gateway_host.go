@@ -6,9 +6,75 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/sipeed/picoclaw/pkg/config"
 )
+
+var (
+	adaptiveLoopbackHostOnce sync.Once
+	adaptiveLoopbackHost     string
+)
+
+func selectAdaptiveLoopbackHost(hasIPv4, hasIPv6 bool) string {
+	switch {
+	case hasIPv4 && hasIPv6:
+		return "localhost"
+	case hasIPv6:
+		return "::1"
+	case hasIPv4:
+		return "127.0.0.1"
+	default:
+		return "127.0.0.1"
+	}
+}
+
+func isLoopbackEquivalentHost(host string) bool {
+	host = strings.TrimSpace(host)
+	if host == "" {
+		return false
+	}
+	if strings.EqualFold(host, "localhost") {
+		return true
+	}
+	trimmed := strings.Trim(host, "[]")
+	ip := net.ParseIP(trimmed)
+	return ip != nil && ip.IsLoopback()
+}
+
+func resolveAdaptiveLoopbackHost() string {
+	adaptiveLoopbackHostOnce.Do(func() {
+		ips, err := net.LookupIP("localhost")
+		if err != nil {
+			adaptiveLoopbackHost = selectAdaptiveLoopbackHost(false, false)
+			return
+		}
+
+		hasIPv4 := false
+		hasIPv6 := false
+		for _, ip := range ips {
+			if ip == nil {
+				continue
+			}
+			if ip.To4() != nil {
+				hasIPv4 = true
+				continue
+			}
+			hasIPv6 = true
+		}
+
+		adaptiveLoopbackHost = selectAdaptiveLoopbackHost(hasIPv4, hasIPv6)
+	})
+	return adaptiveLoopbackHost
+}
+
+func resolveDefaultLoopbackHost() string {
+	return resolveAdaptiveLoopbackHost()
+}
+
+func resolveLocalhostLoopbackHost() string {
+	return resolveAdaptiveLoopbackHost()
+}
 
 func (h *Handler) effectiveLauncherPublic() bool {
 	if h.serverHostExplicit {
@@ -30,27 +96,33 @@ func (h *Handler) effectiveLauncherPublic() bool {
 
 func canonicalLauncherBindHost(host string) string {
 	host = strings.TrimSpace(host)
-	if host == "" || strings.EqualFold(host, "localhost") {
-		return "127.0.0.1"
+	if host == "" {
+		return resolveDefaultLoopbackHost()
+	}
+	if strings.EqualFold(host, "localhost") {
+		return resolveLocalhostLoopbackHost()
 	}
 	return host
 }
 
-func (h *Handler) launcherAndGatewayBindHostsAligned() bool {
-	cfg, err := config.LoadConfig(h.configPath)
-	if err != nil || cfg == nil {
+func (h *Handler) launcherAndGatewayBindHostsAligned(cfg *config.Config) bool {
+	if cfg == nil {
 		return false
 	}
 
 	// With -host specified, -public is ignored, so launcher's legacy bind host is loopback.
 	launcherHost := canonicalLauncherBindHost("127.0.0.1")
 	gatewayHost := canonicalLauncherBindHost(cfg.Gateway.Host)
+	if isLoopbackEquivalentHost(launcherHost) && isLoopbackEquivalentHost(gatewayHost) {
+		return true
+	}
+
 	return launcherHost == gatewayHost
 }
 
-func (h *Handler) gatewayHostOverride() string {
+func (h *Handler) gatewayHostOverrideForConfig(cfg *config.Config) string {
 	if h.serverHostExplicit {
-		if h.launcherAndGatewayBindHostsAligned() {
+		if h.launcherAndGatewayBindHostsAligned(cfg) {
 			return strings.TrimSpace(h.serverHost)
 		}
 		return ""
@@ -62,8 +134,20 @@ func (h *Handler) gatewayHostOverride() string {
 	return ""
 }
 
+func (h *Handler) gatewayHostOverride() string {
+	if !h.serverHostExplicit {
+		return h.gatewayHostOverrideForConfig(nil)
+	}
+
+	cfg, err := config.LoadConfig(h.configPath)
+	if err != nil {
+		return ""
+	}
+	return h.gatewayHostOverrideForConfig(cfg)
+}
+
 func (h *Handler) effectiveGatewayBindHost(cfg *config.Config) string {
-	if override := h.gatewayHostOverride(); override != "" {
+	if override := h.gatewayHostOverrideForConfig(cfg); override != "" {
 		return override
 	}
 	if cfg == nil {
@@ -73,7 +157,19 @@ func (h *Handler) effectiveGatewayBindHost(cfg *config.Config) string {
 }
 
 func gatewayProbeHost(bindHost string) string {
-	if bindHost == "" || bindHost == "0.0.0.0" {
+	bindHost = strings.TrimSpace(bindHost)
+	if bindHost == "" {
+		return resolveDefaultLoopbackHost()
+	}
+	if strings.EqualFold(bindHost, "localhost") {
+		return resolveLocalhostLoopbackHost()
+	}
+
+	trimmed := strings.Trim(bindHost, "[]")
+	if ip := net.ParseIP(trimmed); ip != nil && ip.IsUnspecified() {
+		if ip.To4() == nil {
+			return "::1"
+		}
 		return "127.0.0.1"
 	}
 	return bindHost

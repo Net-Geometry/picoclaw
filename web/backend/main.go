@@ -108,6 +108,21 @@ func browserHostForLauncher(bindHost string) string {
 	return bindHost
 }
 
+func wildcardAdvertiseIP(bindHost, ipv4, ipv6 string) string {
+	switch strings.TrimSpace(bindHost) {
+	case "0.0.0.0":
+		return strings.TrimSpace(ipv4)
+	case "::":
+		return strings.TrimSpace(ipv6)
+	default:
+		return ""
+	}
+}
+
+func advertiseIPForWildcardBindHost(bindHost string) string {
+	return wildcardAdvertiseIP(bindHost, utils.GetLocalIPv4(), utils.GetLocalIPv6())
+}
+
 // maskSecret masks a secret for display. It always shows up to the first 3
 // runes. The last 4 runes are only appended when at least 5 runes remain
 // hidden in the middle (i.e. string length >= 12), so an 8-char minimum
@@ -157,7 +172,7 @@ func main() {
 		)
 		fmt.Fprintf(os.Stderr, "      Allow access from other devices on the local network\n")
 		fmt.Fprintf(os.Stderr, "  %s -host 0.0.0.0 ./config.json\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "      Bind launcher and gateway host explicitly\n")
+		fmt.Fprintf(os.Stderr, "      Bind launcher host explicitly (gateway forwarding follows compatibility rules)\n")
 		fmt.Fprintf(os.Stderr, "  %s -console -d ./config.json\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "      Run in the terminal with debug logs enabled\n")
 	}
@@ -368,8 +383,8 @@ func main() {
 		fmt.Println()
 		fmt.Printf("    >> http://localhost:%s <<\n", effectivePort)
 		if isWildcardBindHost(effectiveHost) {
-			if ip := utils.GetLocalIP(); ip != "" {
-				fmt.Printf("    >> http://%s:%s <<\n", ip, effectivePort)
+			if ip := advertiseIPForWildcardBindHost(effectiveHost); ip != "" {
+				fmt.Printf("    >> http://%s <<\n", net.JoinHostPort(ip, effectivePort))
 			}
 		}
 		if hostExplicit {
@@ -401,8 +416,8 @@ func main() {
 	// Log startup info to file
 	logger.InfoC("web", fmt.Sprintf("Server will listen on http://%s", net.JoinHostPort(effectiveHost, effectivePort)))
 	if isWildcardBindHost(effectiveHost) {
-		if ip := utils.GetLocalIP(); ip != "" {
-			logger.InfoC("web", fmt.Sprintf("Public access enabled at http://%s:%s", ip, effectivePort))
+		if ip := advertiseIPForWildcardBindHost(effectiveHost); ip != "" {
+			logger.InfoC("web", fmt.Sprintf("Public access enabled at http://%s", net.JoinHostPort(ip, effectivePort)))
 		}
 	}
 

@@ -731,8 +731,19 @@ func (h *Handler) startGatewayLocked(initialStatus string, existingPid int) (int
 	if h.configPath != "" {
 		cmd.Env = append(cmd.Env, config.EnvConfig+"="+h.configPath)
 	}
-	if host := h.gatewayHostOverride(); host != "" {
-		cmd.Env = append(cmd.Env, config.EnvGatewayHost+"="+host)
+	gatewayHostOverride := h.gatewayHostOverrideForConfig(cfg)
+	if h.serverHostExplicit && gatewayHostOverride == "" {
+		logger.WarnC(
+			"gateway",
+			fmt.Sprintf(
+				"Explicit launcher host %q was not forwarded to gateway because configured gateway host is %q; gateway keeps original bind host",
+				strings.TrimSpace(h.serverHost),
+				strings.TrimSpace(cfg.Gateway.Host),
+			),
+		)
+	}
+	if gatewayHostOverride != "" {
+		cmd.Env = append(cmd.Env, config.EnvGatewayHost+"="+gatewayHostOverride)
 	}
 
 	stdoutPipe, err := cmd.StdoutPipe()

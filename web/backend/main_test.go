@@ -201,3 +201,27 @@ func TestBrowserHostForLauncher(t *testing.T) {
 		t.Fatalf("browserHostForLauncher(192.168.1.10) = %q, want %q", got, "192.168.1.10")
 	}
 }
+
+func TestWildcardAdvertiseIP(t *testing.T) {
+	tests := []struct {
+		name     string
+		bindHost string
+		ipv4     string
+		ipv6     string
+		want     string
+	}{
+		{name: "ipv4 wildcard uses ipv4", bindHost: "0.0.0.0", ipv4: "192.168.1.2", ipv6: "2001:db8::1", want: "192.168.1.2"},
+		{name: "ipv6 wildcard uses ipv6", bindHost: "::", ipv4: "192.168.1.2", ipv6: "2001:db8::1", want: "2001:db8::1"},
+		{name: "ipv6 wildcard with no ipv6 address", bindHost: "::", ipv4: "192.168.1.2", ipv6: "", want: ""},
+		{name: "ipv4 wildcard with no ipv4 address", bindHost: "0.0.0.0", ipv4: "", ipv6: "2001:db8::1", want: ""},
+		{name: "non wildcard does not advertise", bindHost: "127.0.0.1", ipv4: "192.168.1.2", ipv6: "2001:db8::1", want: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := wildcardAdvertiseIP(tt.bindHost, tt.ipv4, tt.ipv6); got != tt.want {
+				t.Fatalf("wildcardAdvertiseIP(%q, %q, %q) = %q, want %q", tt.bindHost, tt.ipv4, tt.ipv6, got, tt.want)
+			}
+		})
+	}
+}

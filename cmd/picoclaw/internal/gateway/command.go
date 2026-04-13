@@ -14,6 +14,14 @@ import (
 	"github.com/sipeed/picoclaw/pkg/utils"
 )
 
+func resolveGatewayHostOverride(explicit bool, host string) (string, error) {
+	host = strings.TrimSpace(host)
+	if explicit && host == "" {
+		return "", fmt.Errorf("the --host option cannot be empty")
+	}
+	return host, nil
+}
+
 func NewGatewayCommand() *cobra.Command {
 	var debug bool
 	var noTruncate bool
@@ -37,11 +45,14 @@ func NewGatewayCommand() *cobra.Command {
 
 			return nil
 		},
-		RunE: func(_ *cobra.Command, _ []string) error {
-			host = strings.TrimSpace(host)
-			if host != "" {
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			resolvedHost, err := resolveGatewayHostOverride(cmd.Flags().Changed("host"), host)
+			if err != nil {
+				return err
+			}
+			if resolvedHost != "" {
 				prevHost, hadPrev := os.LookupEnv(config.EnvGatewayHost)
-				if err := os.Setenv(config.EnvGatewayHost, host); err != nil {
+				if err := os.Setenv(config.EnvGatewayHost, resolvedHost); err != nil {
 					return fmt.Errorf("failed to set %s: %w", config.EnvGatewayHost, err)
 				}
 				defer func() {
