@@ -2,10 +2,13 @@ package gateway
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/sipeed/picoclaw/cmd/picoclaw/internal"
+	"github.com/sipeed/picoclaw/pkg/config"
 	"github.com/sipeed/picoclaw/pkg/gateway"
 	"github.com/sipeed/picoclaw/pkg/logger"
 	"github.com/sipeed/picoclaw/pkg/utils"
@@ -15,6 +18,7 @@ func NewGatewayCommand() *cobra.Command {
 	var debug bool
 	var noTruncate bool
 	var allowEmpty bool
+	var host string
 
 	cmd := &cobra.Command{
 		Use:     "gateway",
@@ -34,6 +38,21 @@ func NewGatewayCommand() *cobra.Command {
 			return nil
 		},
 		RunE: func(_ *cobra.Command, _ []string) error {
+			host = strings.TrimSpace(host)
+			if host != "" {
+				prevHost, hadPrev := os.LookupEnv(config.EnvGatewayHost)
+				if err := os.Setenv(config.EnvGatewayHost, host); err != nil {
+					return fmt.Errorf("failed to set %s: %w", config.EnvGatewayHost, err)
+				}
+				defer func() {
+					if hadPrev {
+						_ = os.Setenv(config.EnvGatewayHost, prevHost)
+						return
+					}
+					_ = os.Unsetenv(config.EnvGatewayHost)
+				}()
+			}
+
 			return gateway.Run(debug, internal.GetPicoclawHome(), internal.GetConfigPath(), allowEmpty)
 		},
 	}
@@ -46,6 +65,12 @@ func NewGatewayCommand() *cobra.Command {
 		"E",
 		false,
 		"Continue starting even when no default model is configured",
+	)
+	cmd.Flags().StringVar(
+		&host,
+		"host",
+		"",
+		"Host address for gateway binding (overrides gateway.host for this run)",
 	)
 
 	return cmd

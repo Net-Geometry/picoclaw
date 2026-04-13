@@ -240,3 +240,52 @@ func TestBuildWsURLUsesRequestHostNotGatewayBindLoopback(t *testing.T) {
 		t.Fatalf("buildWsURL() = %q, want %q", got, "ws://localhost:18800/pico/ws")
 	}
 }
+
+func TestGatewayHostOverrideWithExplicitHostAndAlignedGatewayHost(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "config.json")
+	writeGatewayHostConfig(t, configPath, "127.0.0.1")
+
+	h := NewHandler(configPath)
+	h.SetServerOptions(18800, false, false, nil)
+	h.SetServerBindHost("0.0.0.0", true)
+
+	if got := h.gatewayHostOverride(); got != "0.0.0.0" {
+		t.Fatalf("gatewayHostOverride() = %q, want %q", got, "0.0.0.0")
+	}
+}
+
+func TestGatewayHostOverrideWithExplicitHostAndMismatchedGatewayHost(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "config.json")
+	writeGatewayHostConfig(t, configPath, "0.0.0.0")
+
+	h := NewHandler(configPath)
+	h.SetServerOptions(18800, false, false, nil)
+	h.SetServerBindHost("192.168.1.10", true)
+
+	if got := h.gatewayHostOverride(); got != "" {
+		t.Fatalf("gatewayHostOverride() = %q, want empty", got)
+	}
+}
+
+func TestGatewayHostExplicitIgnoresPublicFlag(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "config.json")
+	writeGatewayHostConfig(t, configPath, "127.0.0.1")
+
+	h := NewHandler(configPath)
+	h.SetServerOptions(18800, true, true, nil)
+	h.SetServerBindHost("127.0.0.1", true)
+
+	if got := h.effectiveLauncherPublic(); got {
+		t.Fatalf("effectiveLauncherPublic() = %t, want false when explicit host is set", got)
+	}
+}
+
+func writeGatewayHostConfig(t *testing.T, configPath, host string) {
+	t.Helper()
+
+	cfg := config.DefaultConfig()
+	cfg.Gateway.Host = host
+	if err := config.SaveConfig(configPath, cfg); err != nil {
+		t.Fatalf("SaveConfig() error = %v", err)
+	}
+}

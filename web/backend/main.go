@@ -15,12 +15,14 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -65,6 +67,47 @@ func dashboardTokenConfigHelpPath(source launcherconfig.DashboardTokenSource, la
 	return launcherPath
 }
 
+func resolveLauncherBindHost(
+	host string,
+	explicitHost bool,
+	envHost string,
+	effectivePublic bool,
+) (string, bool, bool, error) {
+	if explicitHost {
+		host = strings.TrimSpace(host)
+		if host == "" {
+			return "", false, false, errors.New("host cannot be empty")
+		}
+		// When -host is specified, -public is ignored.
+		return host, false, true, nil
+	}
+
+	envHost = strings.TrimSpace(envHost)
+	if envHost != "" {
+		// Environment host follows explicit override semantics.
+		return envHost, false, true, nil
+	}
+
+	if effectivePublic {
+		return "0.0.0.0", true, false, nil
+	}
+
+	return "127.0.0.1", false, false, nil
+}
+
+func isWildcardBindHost(host string) bool {
+	host = strings.TrimSpace(host)
+	return host == "0.0.0.0" || host == "::"
+}
+
+func browserHostForLauncher(bindHost string) string {
+	bindHost = strings.TrimSpace(bindHost)
+	if bindHost == "" || isWildcardBindHost(bindHost) {
+		return "localhost"
+	}
+	return bindHost
+}
+
 // maskSecret masks a secret for display. It always shows up to the first 3
 // runes. The last 4 runes are only appended when at least 5 runes remain
 // hidden in the middle (i.e. string length >= 12), so an 8-char minimum
@@ -85,6 +128,7 @@ func maskSecret(s string) string {
 
 func main() {
 	port := flag.String("port", "18800", "Port to listen on")
+	host := flag.String("host", "", "Host to listen on (overrides -public when set)")
 	public := flag.Bool("public", false, "Listen on all interfaces (0.0.0.0) instead of localhost only")
 	noBrowser = flag.Bool("no-browser", false, "Do not auto-open browser on startup")
 	lang := flag.String("lang", "", "Language: en (English) or zh (Chinese). Default: auto-detect from system locale")
@@ -112,6 +156,8 @@ func main() {
 			os.Args[0],
 		)
 		fmt.Fprintf(os.Stderr, "      Allow access from other devices on the local network\n")
+		fmt.Fprintf(os.Stderr, "  %s -host 0.0.0.0 ./config.json\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "      Bind launcher and gateway host explicitly\n")
 		fmt.Fprintf(os.Stderr, "  %s -console -d ./config.json\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "      Run in the terminal with debug logs enabled\n")
 	}
@@ -175,8 +221,9 @@ func main() {
 		logger.DebugC(
 			"web",
 			fmt.Sprintf(
-				"Launcher flags: console=%t public=%t no_browser=%t config=%s",
+				"Launcher flags: console=%t host=%q public=%t no_browser=%t config=%s",
 				enableConsole,
+				*host,
 				*public,
 				*noBrowser,
 				absPath,
@@ -186,10 +233,13 @@ func main() {
 
 	var explicitPort bool
 	var explicitPublic bool
+	var explicitHost bool
 	flag.Visit(func(f *flag.Flag) {
 		switch f.Name {
 		case "port":
 			explicitPort = true
+		case "host":
+			explicitHost = true
 		case "public":
 			explicitPublic = true
 		}
@@ -209,6 +259,25 @@ func main() {
 	}
 	if !explicitPublic {
 		effectivePublic = launcherCfg.Public
+	}
+	envHost := strings.TrimSpace(os.Getenv(launcherconfig.EnvLauncherHost))
+
+	effectiveHost, effectivePublic, hostExplicit, err := resolveLauncherBindHost(
+		*host,
+		explicitHost,
+		envHost,
+		effectivePublic,
+	)
+	if err != nil {
+		logger.Fatalf("Invalid host %q: %v", *host, err)
+	}
+
+	if !explicitHost && envHost != "" {
+		logger.InfoC("web", "Using launcher host from environment PICOCLAW_LAUNCHER_HOST")
+	}
+
+	if hostExplicit && explicitPublic {
+		logger.InfoC("web", "Ignoring -public because launcher host was explicitly set")
 	}
 
 	portNum, err := strconv.Atoi(effectivePort)
@@ -247,12 +316,7 @@ func main() {
 	}
 
 	// Determine listen address
-	var addr string
-	if effectivePublic {
-		addr = "0.0.0.0:" + effectivePort
-	} else {
-		addr = "127.0.0.1:" + effectivePort
-	}
+	addr := net.JoinHostPort(effectiveHost, effectivePort)
 
 	// Initialize Server components
 	mux := http.NewServeMux()
@@ -271,6 +335,7 @@ func main() {
 		logger.ErrorC("web", fmt.Sprintf("Warning: failed to ensure pico channel on startup: %v", err))
 	}
 	apiHandler.SetServerOptions(portNum, effectivePublic, explicitPublic, launcherCfg.AllowedCIDRs)
+	apiHandler.SetServerBindHost(effectiveHost, hostExplicit)
 	apiHandler.RegisterRoutes(mux)
 
 	// Frontend Embedded Assets
@@ -302,10 +367,13 @@ func main() {
 		fmt.Println("  Open the following URL in your browser:")
 		fmt.Println()
 		fmt.Printf("    >> http://localhost:%s <<\n", effectivePort)
-		if effectivePublic {
+		if isWildcardBindHost(effectiveHost) {
 			if ip := utils.GetLocalIP(); ip != "" {
 				fmt.Printf("    >> http://%s:%s <<\n", ip, effectivePort)
 			}
+		}
+		if hostExplicit {
+			fmt.Printf("    >> http://%s <<\n", net.JoinHostPort(browserHostForLauncher(effectiveHost), effectivePort))
 		}
 		fmt.Println()
 		switch dashboardTokenSource {
@@ -331,15 +399,15 @@ func main() {
 	}
 
 	// Log startup info to file
-	logger.InfoC("web", fmt.Sprintf("Server will listen on http://localhost:%s", effectivePort))
-	if effectivePublic {
+	logger.InfoC("web", fmt.Sprintf("Server will listen on http://%s", net.JoinHostPort(effectiveHost, effectivePort)))
+	if isWildcardBindHost(effectiveHost) {
 		if ip := utils.GetLocalIP(); ip != "" {
 			logger.InfoC("web", fmt.Sprintf("Public access enabled at http://%s:%s", ip, effectivePort))
 		}
 	}
 
 	// Share the local URL with the launcher runtime.
-	serverAddr = fmt.Sprintf("http://localhost:%s", effectivePort)
+	serverAddr = fmt.Sprintf("http://%s", net.JoinHostPort(browserHostForLauncher(effectiveHost), effectivePort))
 	if dashboardToken != "" {
 		browserLaunchURL = serverAddr + "?token=" + url.QueryEscape(dashboardToken)
 	} else {

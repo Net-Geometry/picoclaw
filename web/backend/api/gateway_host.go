@@ -11,6 +11,11 @@ import (
 )
 
 func (h *Handler) effectiveLauncherPublic() bool {
+	if h.serverHostExplicit {
+		// -host takes precedence over -public and launcher-config public setting.
+		return false
+	}
+
 	if h.serverPublicExplicit {
 		return h.serverPublic
 	}
@@ -23,7 +28,34 @@ func (h *Handler) effectiveLauncherPublic() bool {
 	return h.serverPublic
 }
 
+func canonicalLauncherBindHost(host string) string {
+	host = strings.TrimSpace(host)
+	if host == "" || strings.EqualFold(host, "localhost") {
+		return "127.0.0.1"
+	}
+	return host
+}
+
+func (h *Handler) launcherAndGatewayBindHostsAligned() bool {
+	cfg, err := config.LoadConfig(h.configPath)
+	if err != nil || cfg == nil {
+		return false
+	}
+
+	// With -host specified, -public is ignored, so launcher's legacy bind host is loopback.
+	launcherHost := canonicalLauncherBindHost("127.0.0.1")
+	gatewayHost := canonicalLauncherBindHost(cfg.Gateway.Host)
+	return launcherHost == gatewayHost
+}
+
 func (h *Handler) gatewayHostOverride() string {
+	if h.serverHostExplicit {
+		if h.launcherAndGatewayBindHostsAligned() {
+			return strings.TrimSpace(h.serverHost)
+		}
+		return ""
+	}
+
 	if h.effectiveLauncherPublic() {
 		return "0.0.0.0"
 	}

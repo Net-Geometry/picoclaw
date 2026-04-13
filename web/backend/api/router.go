@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/sipeed/picoclaw/web/backend/launcherconfig"
@@ -13,6 +14,8 @@ type Handler struct {
 	serverPort           int
 	serverPublic         bool
 	serverPublicExplicit bool
+	serverHost           string
+	serverHostExplicit   bool
 	serverCIDRs          []string
 	debug                bool
 	oauthMu              sync.Mutex
@@ -29,6 +32,7 @@ func NewHandler(configPath string) *Handler {
 	return &Handler{
 		configPath:  configPath,
 		serverPort:  launcherconfig.DefaultPort,
+		serverHost:  "127.0.0.1",
 		oauthFlows:  make(map[string]*oauthFlow),
 		oauthState:  make(map[string]string),
 		weixinFlows: make(map[string]*weixinFlow),
@@ -41,7 +45,28 @@ func (h *Handler) SetServerOptions(port int, public bool, publicExplicit bool, a
 	h.serverPort = port
 	h.serverPublic = public
 	h.serverPublicExplicit = publicExplicit
+	h.serverHost = "127.0.0.1"
+	if public {
+		h.serverHost = "0.0.0.0"
+	}
+	h.serverHostExplicit = false
 	h.serverCIDRs = append([]string(nil), allowedCIDRs...)
+}
+
+// SetServerBindHost stores the launcher's effective bind host.
+// When explicit is true, the value came from the -host flag.
+func (h *Handler) SetServerBindHost(host string, explicit bool) {
+	host = strings.TrimSpace(host)
+	if host == "" {
+		host = "127.0.0.1"
+		if h.serverPublic {
+			host = "0.0.0.0"
+		}
+		explicit = false
+	}
+
+	h.serverHost = host
+	h.serverHostExplicit = explicit
 }
 
 func (h *Handler) SetDebug(debug bool) {

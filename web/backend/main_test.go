@@ -95,3 +95,109 @@ func TestMaskSecret(t *testing.T) {
 		}
 	}
 }
+
+func TestResolveLauncherBindHost(t *testing.T) {
+	tests := []struct {
+		name         string
+		host         string
+		envHost      string
+		explicitHost bool
+		effectivePub bool
+		wantHost     string
+		wantPublic   bool
+		wantExplicit bool
+		wantErr      bool
+	}{
+		{
+			name:         "explicit host overrides public",
+			host:         "0.0.0.0",
+			explicitHost: true,
+			effectivePub: true,
+			wantHost:     "0.0.0.0",
+			wantPublic:   false,
+			wantExplicit: true,
+		},
+		{
+			name:         "explicit host overrides env host",
+			host:         "127.0.0.1",
+			envHost:      "0.0.0.0",
+			explicitHost: true,
+			effectivePub: true,
+			wantHost:     "127.0.0.1",
+			wantPublic:   false,
+			wantExplicit: true,
+		},
+		{
+			name:         "explicit host cannot be empty",
+			host:         "   ",
+			explicitHost: true,
+			effectivePub: false,
+			wantErr:      true,
+		},
+		{
+			name:         "env host overrides public",
+			envHost:      "0.0.0.0",
+			explicitHost: false,
+			effectivePub: true,
+			wantHost:     "0.0.0.0",
+			wantPublic:   false,
+			wantExplicit: true,
+		},
+		{
+			name:         "public mode without explicit host",
+			host:         "",
+			explicitHost: false,
+			effectivePub: true,
+			wantHost:     "0.0.0.0",
+			wantPublic:   true,
+			wantExplicit: false,
+		},
+		{
+			name:         "private mode without explicit host",
+			host:         "",
+			explicitHost: false,
+			effectivePub: false,
+			wantHost:     "127.0.0.1",
+			wantPublic:   false,
+			wantExplicit: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotHost, gotPublic, gotExplicit, err := resolveLauncherBindHost(
+				tt.host,
+				tt.explicitHost,
+				tt.envHost,
+				tt.effectivePub,
+			)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("resolveLauncherBindHost() error = %v, wantErr %t", err, tt.wantErr)
+			}
+			if tt.wantErr {
+				return
+			}
+			if gotHost != tt.wantHost {
+				t.Fatalf("resolveLauncherBindHost() host = %q, want %q", gotHost, tt.wantHost)
+			}
+			if gotPublic != tt.wantPublic {
+				t.Fatalf("resolveLauncherBindHost() public = %t, want %t", gotPublic, tt.wantPublic)
+			}
+			if gotExplicit != tt.wantExplicit {
+				t.Fatalf("resolveLauncherBindHost() explicit = %t, want %t", gotExplicit, tt.wantExplicit)
+			}
+		})
+	}
+}
+
+func TestBrowserHostForLauncher(t *testing.T) {
+	if got := browserHostForLauncher("0.0.0.0"); got != "localhost" {
+		t.Fatalf("browserHostForLauncher(0.0.0.0) = %q, want %q", got, "localhost")
+	}
+	if got := browserHostForLauncher("::"); got != "localhost" {
+		t.Fatalf("browserHostForLauncher(::) = %q, want %q", got, "localhost")
+	}
+	if got := browserHostForLauncher("192.168.1.10"); got != "192.168.1.10" {
+		t.Fatalf("browserHostForLauncher(192.168.1.10) = %q, want %q", got, "192.168.1.10")
+	}
+}
