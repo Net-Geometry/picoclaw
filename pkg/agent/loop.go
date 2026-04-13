@@ -607,6 +607,19 @@ func (al *AgentLoop) Run(ctx context.Context) error {
 // immediately available messages, blocking for the first one until ctx is done.
 func (al *AgentLoop) drainBusToSteering(ctx context.Context, activeScope, activeAgentID string) {
 	blocking := true
+	var requeue []bus.InboundMessage
+	defer func() {
+		for _, msg := range requeue {
+			if err := al.requeueInboundMessage(msg); err != nil {
+				logger.WarnCF("agent", "Failed to flush requeued inbound message", map[string]any{
+					"error":     err.Error(),
+					"channel":   msg.Channel,
+					"sender_id": msg.SenderID,
+				})
+			}
+		}
+	}()
+
 	for {
 		var msg bus.InboundMessage
 
@@ -637,13 +650,7 @@ func (al *AgentLoop) drainBusToSteering(ctx context.Context, activeScope, active
 
 		msgScope, _, scopeOK := al.resolveSteeringTarget(msg)
 		if !scopeOK || msgScope != activeScope {
-			if err := al.requeueInboundMessage(msg); err != nil {
-				logger.WarnCF("agent", "Failed to requeue non-steering inbound message", map[string]any{
-					"error":     err.Error(),
-					"channel":   msg.Channel,
-					"sender_id": msg.SenderID,
-				})
-			}
+			requeue = append(requeue, msg)
 			continue
 		}
 
@@ -1706,10 +1713,7 @@ func (al *AgentLoop) requeueInboundMessage(msg bus.InboundMessage) error {
 	}
 	pubCtx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	return al.bus.PublishOutbound(pubCtx, bus.OutboundMessage{
-		Context: msg.Context,
-		Content: msg.Content,
-	})
+	return al.bus.PublishInbound(pubCtx, msg)
 }
 
 func (al *AgentLoop) processSystemMessage(

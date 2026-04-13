@@ -223,6 +223,32 @@ func (s *JSONLStore) UpsertSessionMeta(
 	return s.writeMeta(sessionKey, meta)
 }
 
+// PromoteAliasHistory atomically promotes the first non-empty alias session
+// into the canonical session when the canonical session is still empty.
+func (s *JSONLStore) PromoteAliasHistory(
+	_ context.Context,
+	sessionKey string,
+	scope json.RawMessage,
+	aliases []string,
+) (bool, error) {
+	sessionKey = strings.TrimSpace(sessionKey)
+	if sessionKey == "" {
+		return false, nil
+	}
+
+	aliases = normalizeAliases(sessionKey, aliases)
+	for _, alias := range aliases {
+		unlock := s.lockSessionPair(sessionKey, alias)
+		promoted, err := s.promoteAliasHistoryLocked(sessionKey, alias, scope, aliases)
+		unlock()
+		if err != nil || promoted {
+			return promoted, err
+		}
+	}
+
+	return false, nil
+}
+
 // ResolveSessionKey returns the canonical session key for a candidate key.
 // It short-circuits direct canonical keys when possible, then scans metadata
 // once to resolve aliases or canonical metadata keys.
@@ -292,6 +318,96 @@ func shouldShortCircuitSessionResolve(sessionKey string) bool {
 		return false
 	}
 	return !strings.ContainsAny(sessionKey, ":/\\")
+}
+
+func (s *JSONLStore) lockSessionPair(keyA, keyB string) func() {
+	lockA := s.sessionLock(keyA)
+	lockB := s.sessionLock(keyB)
+	if lockA == lockB {
+		lockA.Lock()
+		return func() { lockA.Unlock() }
+	}
+	if keyA <= keyB {
+		lockA.Lock()
+		lockB.Lock()
+		return func() {
+			lockB.Unlock()
+			lockA.Unlock()
+		}
+	}
+	lockB.Lock()
+	lockA.Lock()
+	return func() {
+		lockA.Unlock()
+		lockB.Unlock()
+	}
+}
+
+func (s *JSONLStore) promoteAliasHistoryLocked(
+	sessionKey string,
+	alias string,
+	scope json.RawMessage,
+	aliases []string,
+) (bool, error) {
+	canonicalMeta, err := s.readMeta(sessionKey)
+	if err != nil {
+		return false, err
+	}
+	canonicalHasContent, err := s.sessionHasVisibleContentLocked(sessionKey, canonicalMeta)
+	if err != nil {
+		return false, err
+	}
+	if canonicalHasContent {
+		return false, nil
+	}
+
+	aliasMeta, err := s.readMeta(alias)
+	if err != nil {
+		return false, err
+	}
+	aliasHistory, err := readMessages(s.jsonlPath(alias), aliasMeta.Skip)
+	if err != nil {
+		return false, err
+	}
+	aliasSummary := strings.TrimSpace(aliasMeta.Summary)
+	if len(aliasHistory) == 0 && aliasSummary == "" {
+		return false, nil
+	}
+
+	now := time.Now()
+	if canonicalMeta.CreatedAt.IsZero() {
+		canonicalMeta.CreatedAt = now
+	}
+	canonicalMeta.Scope = cloneRawJSON(scope)
+	canonicalMeta.Aliases = normalizeAliases(sessionKey, aliases)
+	canonicalMeta.Skip = 0
+	canonicalMeta.Count = len(aliasHistory)
+	canonicalMeta.UpdatedAt = now
+	if aliasSummary != "" {
+		canonicalMeta.Summary = aliasSummary
+	}
+
+	if err := s.writeMeta(sessionKey, canonicalMeta); err != nil {
+		return false, err
+	}
+	if err := s.rewriteJSONL(sessionKey, aliasHistory); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (s *JSONLStore) sessionHasVisibleContentLocked(sessionKey string, meta SessionMeta) (bool, error) {
+	if meta.Count-meta.Skip > 0 || strings.TrimSpace(meta.Summary) != "" {
+		return true, nil
+	}
+	if meta.Count != 0 || meta.Skip != 0 {
+		return false, nil
+	}
+	history, err := readMessages(s.jsonlPath(sessionKey), meta.Skip)
+	if err != nil {
+		return false, err
+	}
+	return len(history) > 0, nil
 }
 
 // readMessages reads valid JSON lines from a .jsonl file, skipping

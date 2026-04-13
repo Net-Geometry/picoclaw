@@ -282,3 +282,23 @@ func TestJSONLBackend_EnsureSessionMetadata_PromotesLegacyPicoDirectAliasHistory
 		t.Fatalf("promoted history = %+v", history)
 	}
 }
+
+func TestJSONLBackend_EnsureSessionMetadata_DoesNotOverwriteNonEmptyCanonicalHistory(t *testing.T) {
+	b := newBackend(t)
+
+	canonicalKey := session.BuildOpaqueSessionKey("agent:main:direct:current-user")
+	legacyKey := "agent:main:direct:legacy-user"
+
+	b.AddMessage(canonicalKey, "user", "current canonical history")
+	b.AddMessage(legacyKey, "user", "legacy history")
+
+	b.EnsureSessionMetadata(canonicalKey, &session.SessionScope{
+		Version: session.ScopeVersionV1,
+		AgentID: "main",
+	}, []string{legacyKey})
+
+	history := b.GetHistory(canonicalKey)
+	if len(history) != 1 || history[0].Content != "current canonical history" {
+		t.Fatalf("canonical history overwritten: %+v", history)
+	}
+}

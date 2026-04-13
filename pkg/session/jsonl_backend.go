@@ -23,6 +23,10 @@ type metaAwareStore interface {
 	ResolveSessionKey(ctx context.Context, sessionKey string) (string, bool, error)
 }
 
+type aliasPromotingStore interface {
+	PromoteAliasHistory(ctx context.Context, sessionKey string, scope json.RawMessage, aliases []string) (bool, error)
+}
+
 // MetadataAwareSessionStore exposes structured session metadata operations.
 type MetadataAwareSessionStore interface {
 	EnsureSessionMetadata(sessionKey string, scope *SessionScope, aliases []string)
@@ -81,6 +85,13 @@ func (b *JSONLBackend) EnsureSessionMetadata(sessionKey string, scope *SessionSc
 	ctx := context.Background()
 	if err := metaStore.UpsertSessionMeta(ctx, sessionKey, rawScope, aliases); err != nil {
 		log.Printf("session: upsert session metadata: %v", err)
+		return
+	}
+
+	if promotingStore, ok := b.store.(aliasPromotingStore); ok {
+		if _, err := promotingStore.PromoteAliasHistory(ctx, sessionKey, rawScope, aliases); err != nil {
+			log.Printf("session: promote alias history: %v", err)
+		}
 		return
 	}
 

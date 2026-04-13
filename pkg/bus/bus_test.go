@@ -221,6 +221,32 @@ func TestPublishOutbound_MirrorsContextToLegacyFields(t *testing.T) {
 	}
 }
 
+func TestPublishOutbound_PreservesExplicitReplyToMessageID(t *testing.T) {
+	mb := NewMessageBus()
+	defer mb.Close()
+
+	msg := OutboundMessage{
+		Context: InboundContext{
+			Channel: "telegram",
+			ChatID:  "chat-42",
+		},
+		ReplyToMessageID: "msg-9",
+		Content:          "reply",
+	}
+
+	if err := mb.PublishOutbound(context.Background(), msg); err != nil {
+		t.Fatalf("PublishOutbound failed: %v", err)
+	}
+
+	got := <-mb.OutboundChan()
+	if got.ReplyToMessageID != "msg-9" {
+		t.Fatalf("expected mirrored reply_to_message_id msg-9, got %q", got.ReplyToMessageID)
+	}
+	if got.Context.ReplyToMessageID != "msg-9" {
+		t.Fatalf("expected context reply_to_message_id msg-9, got %q", got.Context.ReplyToMessageID)
+	}
+}
+
 func TestPublishOutboundMedia_MirrorsContextToLegacyFields(t *testing.T) {
 	mb := NewMessageBus()
 	defer mb.Close()

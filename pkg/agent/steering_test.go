@@ -421,8 +421,8 @@ func TestDrainBusToSteering_RequeuesDifferentScopeMessage(t *testing.T) {
 
 	select {
 	case <-ctx.Done():
-		t.Fatalf("timeout waiting for requeued message on outbound bus")
-	case requeued := <-msgBus.OutboundChan():
+		t.Fatalf("timeout waiting for requeued message on inbound bus")
+	case requeued := <-msgBus.InboundChan():
 		if requeued.Context.Channel != otherMsg.Context.Channel || requeued.Context.ChatID != otherMsg.Context.ChatID ||
 			requeued.Content != otherMsg.Content {
 			t.Fatalf("requeued message mismatch: got %+v want %+v", requeued, otherMsg)
