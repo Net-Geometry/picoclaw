@@ -24,13 +24,14 @@ var rrCounter atomic.Uint64
 // CurrentVersion is the latest config schema version
 const CurrentVersion = 2
 
-// Config is the current config structure with version support
+// Config is the current config structure with version support.
 type Config struct {
 	// Config schema version for migration.
-	Version  int            `json:"version"           yaml:"-"`
-	Agents   AgentsConfig   `json:"agents"            yaml:"-"`
-	Session  SessionConfig  `json:"session,omitempty" yaml:"-"`
-	Channels ChannelsConfig `json:"channels"          yaml:"channels"`
+	Version   int             `json:"version"             yaml:"-"`
+	Isolation IsolationConfig `json:"isolation,omitempty" yaml:"-"`
+	Agents    AgentsConfig    `json:"agents"              yaml:"-"`
+	Session   SessionConfig   `json:"session,omitempty"   yaml:"-"`
+	Channels  ChannelsConfig  `json:"channels"            yaml:"channels"`
 	// New model-centric provider configuration.
 	ModelList SecureModelList `json:"model_list"      yaml:"model_list"`
 	Gateway   GatewayConfig   `json:"gateway"         yaml:"-"`
@@ -44,6 +45,21 @@ type Config struct {
 
 	// cache for sensitive values and compiled regex (computed once)
 	sensitiveCache *SensitiveDataCache
+}
+
+// IsolationConfig controls subprocess isolation for commands started by PicoClaw.
+// It is applied by the isolation package rather than by sandboxing the main process.
+type IsolationConfig struct {
+	Enabled     bool         `json:"enabled,omitempty"`
+	ExposePaths []ExposePath `json:"expose_paths,omitempty"`
+}
+
+// ExposePath describes a host path that should remain visible inside the isolated
+// child-process environment. This is currently implemented on Linux only.
+type ExposePath struct {
+	Source string `json:"source"`
+	Target string `json:"target,omitempty"`
+	Mode   string `json:"mode"`
 }
 
 // FilterSensitiveData filters sensitive values from content before sending to LLM.

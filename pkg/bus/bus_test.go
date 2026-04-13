@@ -140,6 +140,37 @@ func TestPublishInbound_MirrorsContextIntoConvenienceFields(t *testing.T) {
 	}
 }
 
+func TestPublishInbound_BackfillsContextFromLegacyFields(t *testing.T) {
+	mb := NewMessageBus()
+	defer mb.Close()
+
+	msg := InboundMessage{
+		Channel:   "pico",
+		ChatID:    "session-1",
+		SenderID:  "user-1",
+		MessageID: "msg-1",
+		Content:   "hello",
+	}
+
+	if err := mb.PublishInbound(context.Background(), msg); err != nil {
+		t.Fatalf("PublishInbound failed: %v", err)
+	}
+
+	got := <-mb.InboundChan()
+	if got.Context.Channel != "pico" {
+		t.Fatalf("expected context channel pico, got %q", got.Context.Channel)
+	}
+	if got.Context.ChatID != "session-1" {
+		t.Fatalf("expected context chat ID session-1, got %q", got.Context.ChatID)
+	}
+	if got.Context.SenderID != "user-1" {
+		t.Fatalf("expected context sender ID user-1, got %q", got.Context.SenderID)
+	}
+	if got.Context.MessageID != "msg-1" {
+		t.Fatalf("expected context message ID msg-1, got %q", got.Context.MessageID)
+	}
+}
+
 func TestPublishOutboundSubscribe(t *testing.T) {
 	mb := NewMessageBus()
 	defer mb.Close()

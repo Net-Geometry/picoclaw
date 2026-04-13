@@ -5,6 +5,18 @@ import "strings"
 // NormalizeInboundMessage ensures the inbound context is normalized and keeps
 // convenience mirrors in sync for runtime consumers.
 func NormalizeInboundMessage(msg InboundMessage) InboundMessage {
+	if msg.Context.Channel == "" {
+		msg.Context.Channel = msg.Channel
+	}
+	if msg.Context.ChatID == "" {
+		msg.Context.ChatID = msg.ChatID
+	}
+	if msg.Context.SenderID == "" {
+		msg.Context.SenderID = msg.SenderID
+	}
+	if msg.Context.MessageID == "" {
+		msg.Context.MessageID = msg.MessageID
+	}
 	msg.Context = normalizeInboundContext(msg.Context)
 	msg.Channel = msg.Context.Channel
 	msg.SenderID = msg.Context.SenderID
