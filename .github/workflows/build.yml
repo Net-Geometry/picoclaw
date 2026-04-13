@@ -16,15 +16,5 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: web/frontend/pnpm-lock.yaml
-
-      - name: Setup pnpm
-        run: corepack enable && corepack install
-
       - name: Build core binaries
         run: make build-all
