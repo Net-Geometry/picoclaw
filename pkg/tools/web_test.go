@@ -1667,3 +1667,63 @@ func TestWebTool_GLMSearch_Priority(t *testing.T) {
 		t.Errorf("Expected GLMSearchProvider when only GLM enabled, got %T", tool2.provider)
 	}
 }
+
+func TestWebTool_SogouSearch_Success(t *testing.T) {
+	provider := &SogouSearchProvider{
+		client: &http.Client{
+			Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				rec := httptest.NewRecorder()
+				fmt.Fprint(rec, `<html><body>
+<a class=resultLink href="/link?url=https%3A%2F%2Fexample.com%2Fa" id="sogou_vr_0_0">Result A</a>
+<div class="clamp3">Snippet A</div>
+<a class=resultLink href="/link?url=https%3A%2F%2Fexample.com%2Fb" id="sogou_vr_0_1">Result B</a>
+<div class="clamp3">Snippet B</div>
+</body></html>`)
+				return rec.Result(), nil
+			}),
+		},
+	}
+
+	out, err := provider.Search(context.Background(), "test query", 2, "")
+	if err != nil {
+		t.Fatalf("Search() error: %v", err)
+	}
+	if !strings.Contains(out, "via Sogou") || !strings.Contains(out, "https://example.com/a") {
+		t.Fatalf("unexpected output: %s", out)
+	}
+}
+
+func TestWebTool_SogouPriorityAndExplicitProvider(t *testing.T) {
+	tool, err := NewWebSearchTool(WebSearchToolOptions{
+		SogouEnabled:         true,
+		SogouMaxResults:      5,
+		DuckDuckGoEnabled:    true,
+		DuckDuckGoMaxResults: 5,
+	})
+	if err != nil {
+		t.Fatalf("NewWebSearchTool() error: %v", err)
+	}
+	if _, ok := tool.provider.(*SogouSearchProvider); !ok {
+		t.Fatalf("expected SogouSearchProvider, got %T", tool.provider)
+	}
+
+	tool, err = NewWebSearchTool(WebSearchToolOptions{
+		Provider:             "duckduckgo",
+		SogouEnabled:         true,
+		SogouMaxResults:      5,
+		DuckDuckGoEnabled:    true,
+		DuckDuckGoMaxResults: 5,
+	})
+	if err != nil {
+		t.Fatalf("NewWebSearchTool() error: %v", err)
+	}
+	if _, ok := tool.provider.(*DuckDuckGoSearchProvider); !ok {
+		t.Fatalf("expected DuckDuckGoSearchProvider, got %T", tool.provider)
+	}
+}
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (fn roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return fn(req)
+}

@@ -46,7 +46,10 @@ var (
 	reDDGLink = regexp.MustCompile(
 		`<a[^>]*class="[^"]*result__a[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)</a>`,
 	)
-	reDDGSnippet = regexp.MustCompile(`<a class="result__snippet[^"]*".*?>([\s\S]*?)</a>`)
+	reDDGSnippet   = regexp.MustCompile(`<a class="result__snippet[^"]*".*?>([\s\S]*?)</a>`)
+	reSogouTitle   = regexp.MustCompile(`<a\s+class=resultLink\s+href="([^"]+)"[^>]*id="sogou_vr_\d+_\d+"[^>]*>\s*(.*?)\s*</a>`)
+	reSogouSnippet = regexp.MustCompile(`<div class="clamp\d*">\s*(.*?)\s*</div>`)
+	reSogouRealURL = regexp.MustCompile(`url=([^&]+)`)
 )
 
 type APIKeyPool struct {
@@ -89,6 +92,24 @@ func (it *APIKeyIterator) Next() (string, bool) {
 
 type SearchProvider interface {
 	Search(ctx context.Context, query string, count int, rangeCode string) (string, error)
+}
+
+type SearchResultItem struct {
+	Title   string
+	URL     string
+	Snippet string
+}
+
+func extractSogouURL(href string) string {
+	match := reSogouRealURL.FindStringSubmatch(href)
+	if len(match) < 2 {
+		return ""
+	}
+	decoded, err := url.QueryUnescape(match[1])
+	if err != nil {
+		return ""
+	}
+	return decoded
 }
 
 func normalizeSearchRange(raw string) (string, error) {
@@ -415,6 +436,104 @@ func (p *TavilySearchProvider) Search(
 	}
 
 	return "", fmt.Errorf("all api keys failed, last error: %w", lastErr)
+}
+
+type SogouSearchProvider struct {
+	proxy  string
+	client *http.Client
+}
+
+func (p *SogouSearchProvider) Search(
+	ctx context.Context,
+	query string,
+	count int,
+	rangeCode string,
+) (string, error) {
+	const sogouWAPURL = "https://wap.sogou.com/web/searchList.jsp"
+
+	results := make([]SearchResultItem, 0, count)
+	seenURLs := make(map[string]bool)
+	maxPages := min(3, (count+1)/2+1)
+
+	for page := 1; page <= maxPages && len(results) < count; page++ {
+		params := url.Values{}
+		params.Set("keyword", query)
+		params.Set("v", "5")
+		params.Set("p", fmt.Sprintf("%d", page))
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, sogouWAPURL+"?"+params.Encode(), nil)
+		if err != nil {
+			return "", fmt.Errorf("failed to create request: %w", err)
+		}
+		req.Header.Set("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1")
+
+		resp, err := p.client.Do(req)
+		if err != nil {
+			return "", fmt.Errorf("request failed: %w", err)
+		}
+
+		body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+		resp.Body.Close()
+		if err != nil {
+			return "", fmt.Errorf("failed to read response: %w", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			return "", fmt.Errorf("Sogou returned status %d", resp.StatusCode)
+		}
+
+		html := string(body)
+		if len(html) < 200 {
+			break
+		}
+
+		matches := reSogouTitle.FindAllStringSubmatch(html, -1)
+		for _, match := range matches {
+			if len(match) < 3 {
+				continue
+			}
+
+			title := stripTags(match[2])
+			link := extractSogouURL(match[1])
+			if title == "" || link == "" || seenURLs[link] {
+				continue
+			}
+			seenURLs[link] = true
+
+			start := strings.Index(html, match[0])
+			snippet := ""
+			if start >= 0 {
+				after := html[start+len(match[0]):]
+				if len(after) > 2000 {
+					after = after[:2000]
+				}
+				if snippetMatch := reSogouSnippet.FindStringSubmatch(after); len(snippetMatch) > 1 {
+					snippet = stripTags(snippetMatch[1])
+				}
+			}
+
+			results = append(results, SearchResultItem{
+				Title:   title,
+				URL:     link,
+				Snippet: snippet,
+			})
+			if len(results) >= count {
+				break
+			}
+		}
+	}
+
+	if len(results) == 0 {
+		return fmt.Sprintf("No results for: %s", query), nil
+	}
+
+	lines := []string{fmt.Sprintf("Results for: %s (via Sogou)", query)}
+	for i, item := range results {
+		lines = append(lines, fmt.Sprintf("%d. %s\n   %s", i+1, item.Title, item.URL))
+		if item.Snippet != "" {
+			lines = append(lines, fmt.Sprintf("   %s", item.Snippet))
+		}
+	}
+	return strings.Join(lines, "\n"), nil
 }
 
 type DuckDuckGoSearchProvider struct {
@@ -890,6 +1009,7 @@ type WebSearchTool struct {
 }
 
 type WebSearchToolOptions struct {
+	Provider              string
 	BraveAPIKeys          []string
 	BraveMaxResults       int
 	BraveEnabled          bool
@@ -897,6 +1017,8 @@ type WebSearchToolOptions struct {
 	TavilyBaseURL         string
 	TavilyMaxResults      int
 	TavilyEnabled         bool
+	SogouMaxResults       int
+	SogouEnabled          bool
 	DuckDuckGoMaxResults  int
 	DuckDuckGoEnabled     bool
 	PerplexityAPIKeys     []string
@@ -917,94 +1039,157 @@ type WebSearchToolOptions struct {
 	Proxy                 string
 }
 
-func NewWebSearchTool(opts WebSearchToolOptions) (*WebSearchTool, error) {
-	var provider SearchProvider
-	maxResults := 10
-	// Priority: Perplexity > Brave > SearXNG > Tavily > DuckDuckGo > Baidu Search > GLM Search
-	if opts.PerplexityEnabled && len(opts.PerplexityAPIKeys) > 0 {
+func (opts WebSearchToolOptions) providerByName(name string) (SearchProvider, int, error) {
+	switch strings.ToLower(strings.TrimSpace(name)) {
+	case "", "auto":
+		return nil, 0, nil
+	case "sogou":
+		if !opts.SogouEnabled {
+			return nil, 0, nil
+		}
+		client, err := utils.CreateHTTPClient(opts.Proxy, searchTimeout)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to create HTTP client for Sogou: %w", err)
+		}
+		maxResults := 10
+		if opts.SogouMaxResults > 0 {
+			maxResults = min(opts.SogouMaxResults, 10)
+		}
+		return &SogouSearchProvider{proxy: opts.Proxy, client: client}, maxResults, nil
+	case "perplexity":
+		if !opts.PerplexityEnabled || len(opts.PerplexityAPIKeys) == 0 {
+			return nil, 0, nil
+		}
 		client, err := utils.CreateHTTPClient(opts.Proxy, perplexityTimeout)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create HTTP client for Perplexity: %w", err)
+			return nil, 0, fmt.Errorf("failed to create HTTP client for Perplexity: %w", err)
 		}
-		provider = &PerplexitySearchProvider{
-			keyPool: NewAPIKeyPool(opts.PerplexityAPIKeys),
-			proxy:   opts.Proxy,
-			client:  client,
-		}
+		maxResults := 10
 		if opts.PerplexityMaxResults > 0 {
 			maxResults = min(opts.PerplexityMaxResults, 10)
 		}
-	} else if opts.BraveEnabled && len(opts.BraveAPIKeys) > 0 {
+		return &PerplexitySearchProvider{
+			keyPool: NewAPIKeyPool(opts.PerplexityAPIKeys),
+			proxy:   opts.Proxy,
+			client:  client,
+		}, maxResults, nil
+	case "brave":
+		if !opts.BraveEnabled || len(opts.BraveAPIKeys) == 0 {
+			return nil, 0, nil
+		}
 		client, err := utils.CreateHTTPClient(opts.Proxy, searchTimeout)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create HTTP client for Brave: %w", err)
+			return nil, 0, fmt.Errorf("failed to create HTTP client for Brave: %w", err)
 		}
-		provider = &BraveSearchProvider{keyPool: NewAPIKeyPool(opts.BraveAPIKeys), proxy: opts.Proxy, client: client}
+		maxResults := 10
 		if opts.BraveMaxResults > 0 {
 			maxResults = min(opts.BraveMaxResults, 10)
 		}
-	} else if opts.SearXNGEnabled && opts.SearXNGBaseURL != "" {
-		provider = &SearXNGSearchProvider{baseURL: opts.SearXNGBaseURL}
+		return &BraveSearchProvider{keyPool: NewAPIKeyPool(opts.BraveAPIKeys), proxy: opts.Proxy, client: client}, maxResults, nil
+	case "searxng":
+		if !opts.SearXNGEnabled || opts.SearXNGBaseURL == "" {
+			return nil, 0, nil
+		}
+		maxResults := 10
 		if opts.SearXNGMaxResults > 0 {
 			maxResults = min(opts.SearXNGMaxResults, 10)
 		}
-	} else if opts.TavilyEnabled && len(opts.TavilyAPIKeys) > 0 {
+		return &SearXNGSearchProvider{baseURL: opts.SearXNGBaseURL}, maxResults, nil
+	case "tavily":
+		if !opts.TavilyEnabled || len(opts.TavilyAPIKeys) == 0 {
+			return nil, 0, nil
+		}
 		client, err := utils.CreateHTTPClient(opts.Proxy, searchTimeout)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create HTTP client for Tavily: %w", err)
+			return nil, 0, fmt.Errorf("failed to create HTTP client for Tavily: %w", err)
 		}
-		provider = &TavilySearchProvider{
+		maxResults := 10
+		if opts.TavilyMaxResults > 0 {
+			maxResults = min(opts.TavilyMaxResults, 10)
+		}
+		return &TavilySearchProvider{
 			keyPool: NewAPIKeyPool(opts.TavilyAPIKeys),
 			baseURL: opts.TavilyBaseURL,
 			proxy:   opts.Proxy,
 			client:  client,
+		}, maxResults, nil
+	case "duckduckgo":
+		if !opts.DuckDuckGoEnabled {
+			return nil, 0, nil
 		}
-		if opts.TavilyMaxResults > 0 {
-			maxResults = min(opts.TavilyMaxResults, 10)
-		}
-	} else if opts.DuckDuckGoEnabled {
 		client, err := utils.CreateHTTPClient(opts.Proxy, searchTimeout)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create HTTP client for DuckDuckGo: %w", err)
+			return nil, 0, fmt.Errorf("failed to create HTTP client for DuckDuckGo: %w", err)
 		}
-		provider = &DuckDuckGoSearchProvider{proxy: opts.Proxy, client: client}
+		maxResults := 10
 		if opts.DuckDuckGoMaxResults > 0 {
 			maxResults = min(opts.DuckDuckGoMaxResults, 10)
 		}
-	} else if opts.BaiduSearchEnabled && opts.BaiduSearchAPIKey != "" {
+		return &DuckDuckGoSearchProvider{proxy: opts.Proxy, client: client}, maxResults, nil
+	case "baidu_search":
+		if !opts.BaiduSearchEnabled || opts.BaiduSearchAPIKey == "" {
+			return nil, 0, nil
+		}
 		client, err := utils.CreateHTTPClient(opts.Proxy, perplexityTimeout)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create HTTP client for Baidu Search: %w", err)
+			return nil, 0, fmt.Errorf("failed to create HTTP client for Baidu Search: %w", err)
 		}
-		provider = &BaiduSearchProvider{
+		maxResults := 10
+		if opts.BaiduSearchMaxResults > 0 {
+			maxResults = min(opts.BaiduSearchMaxResults, 10)
+		}
+		return &BaiduSearchProvider{
 			apiKey:  opts.BaiduSearchAPIKey,
 			baseURL: opts.BaiduSearchBaseURL,
 			proxy:   opts.Proxy,
 			client:  client,
+		}, maxResults, nil
+	case "glm_search":
+		if !opts.GLMSearchEnabled || opts.GLMSearchAPIKey == "" {
+			return nil, 0, nil
 		}
-		if opts.BaiduSearchMaxResults > 0 {
-			maxResults = min(opts.BaiduSearchMaxResults, 10)
-		}
-	} else if opts.GLMSearchEnabled && opts.GLMSearchAPIKey != "" {
 		client, err := utils.CreateHTTPClient(opts.Proxy, searchTimeout)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create HTTP client for GLM Search: %w", err)
+			return nil, 0, fmt.Errorf("failed to create HTTP client for GLM Search: %w", err)
 		}
 		searchEngine := opts.GLMSearchEngine
 		if searchEngine == "" {
 			searchEngine = "search_std"
 		}
-		provider = &GLMSearchProvider{
+		maxResults := 10
+		if opts.GLMSearchMaxResults > 0 {
+			maxResults = min(opts.GLMSearchMaxResults, 10)
+		}
+		return &GLMSearchProvider{
 			apiKey:       opts.GLMSearchAPIKey,
 			baseURL:      opts.GLMSearchBaseURL,
 			searchEngine: searchEngine,
 			proxy:        opts.Proxy,
 			client:       client,
+		}, maxResults, nil
+	default:
+		return nil, 0, fmt.Errorf("unknown web search provider %q", name)
+	}
+}
+
+func NewWebSearchTool(opts WebSearchToolOptions) (*WebSearchTool, error) {
+	provider, maxResults, err := opts.providerByName(opts.Provider)
+	if err != nil {
+		return nil, err
+	}
+
+	if provider == nil {
+		for _, name := range []string{"sogou", "perplexity", "brave", "searxng", "tavily", "duckduckgo", "baidu_search", "glm_search"} {
+			provider, maxResults, err = opts.providerByName(name)
+			if err != nil {
+				return nil, err
+			}
+			if provider != nil {
+				break
+			}
 		}
-		if opts.GLMSearchMaxResults > 0 {
-			maxResults = min(opts.GLMSearchMaxResults, 10)
-		}
-	} else {
+	}
+	if provider == nil {
 		return nil, nil
 	}
 

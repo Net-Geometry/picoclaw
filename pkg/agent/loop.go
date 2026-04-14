@@ -194,6 +194,7 @@ func registerSharedTools(
 
 		if cfg.Tools.IsToolEnabled("web") {
 			searchTool, err := tools.NewWebSearchTool(tools.WebSearchToolOptions{
+				Provider:              cfg.Tools.Web.Provider,
 				BraveAPIKeys:          cfg.Tools.Web.Brave.APIKeys.Values(),
 				BraveMaxResults:       cfg.Tools.Web.Brave.MaxResults,
 				BraveEnabled:          cfg.Tools.Web.Brave.Enabled,
@@ -201,6 +202,8 @@ func registerSharedTools(
 				TavilyBaseURL:         cfg.Tools.Web.Tavily.BaseURL,
 				TavilyMaxResults:      cfg.Tools.Web.Tavily.MaxResults,
 				TavilyEnabled:         cfg.Tools.Web.Tavily.Enabled,
+				SogouMaxResults:       cfg.Tools.Web.Sogou.MaxResults,
+				SogouEnabled:          cfg.Tools.Web.Sogou.Enabled,
 				DuckDuckGoMaxResults:  cfg.Tools.Web.DuckDuckGo.MaxResults,
 				DuckDuckGoEnabled:     cfg.Tools.Web.DuckDuckGo.Enabled,
 				PerplexityAPIKeys:     cfg.Tools.Web.Perplexity.APIKeys.Values(),

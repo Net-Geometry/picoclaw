@@ -278,6 +278,7 @@ func DefaultConfig() *Config {
 				ToolConfig: ToolConfig{
 					Enabled: true,
 				},
+				Provider:        "sogou",
 				PreferNative:    true,
 				Proxy:           "",
 				FetchLimitBytes: 10 * 1024 * 1024, // 10MB by default
@@ -290,8 +291,12 @@ func DefaultConfig() *Config {
 					Enabled:    false,
 					MaxResults: 5,
 				},
-				DuckDuckGo: DuckDuckGoConfig{
+				Sogou: SogouConfig{
 					Enabled:    true,
+					MaxResults: 5,
+				},
+				DuckDuckGo: DuckDuckGoConfig{
+					Enabled:    false,
 					MaxResults: 5,
 				},
 				Perplexity: PerplexityConfig{

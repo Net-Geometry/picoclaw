@@ -196,3 +196,101 @@ func TestHandleUpdateToolState(t *testing.T) {
 		t.Fatalf("cron should be enabled: %#v", updated.Tools.Cron)
 	}
 }
+
+func TestHandleGetWebSearchConfig(t *testing.T) {
+	configPath, cleanup := setupOAuthTestEnv(t)
+	defer cleanup()
+
+	cfg, err := config.LoadConfig(configPath)
+	if err != nil {
+		t.Fatalf("LoadConfig() error = %v", err)
+	}
+	cfg.Tools.Web.Provider = "sogou"
+	cfg.Tools.Web.Sogou.Enabled = true
+	cfg.Tools.Web.Sogou.MaxResults = 6
+	cfg.Tools.Web.Brave.Enabled = true
+	cfg.Tools.Web.Brave.SetAPIKey("brave-test-key")
+	if err := config.SaveConfig(configPath, cfg); err != nil {
+		t.Fatalf("SaveConfig() error = %v", err)
+	}
+
+	h := NewHandler(configPath)
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/api/tools/web-search-config", nil)
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d, body=%s", rec.Code, http.StatusOK, rec.Body.String())
+	}
+
+	var resp webSearchConfigResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("Unmarshal() error = %v", err)
+	}
+	if resp.Provider != "sogou" {
+		t.Fatalf("provider = %q, want sogou", resp.Provider)
+	}
+	if resp.CurrentService != "sogou" {
+		t.Fatalf("current_service = %q, want sogou", resp.CurrentService)
+	}
+	if !resp.Settings["brave"].APIKeySet {
+		t.Fatalf("brave api_key_set should be true: %#v", resp.Settings["brave"])
+	}
+}
+
+func TestHandleUpdateWebSearchConfig(t *testing.T) {
+	configPath, cleanup := setupOAuthTestEnv(t)
+	defer cleanup()
+
+	h := NewHandler(configPath)
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(
+		http.MethodPut,
+		"/api/tools/web-search-config",
+		bytes.NewBufferString(`{
+			"provider":"brave",
+			"prefer_native":false,
+			"proxy":"http://127.0.0.1:7890",
+			"settings":{
+				"sogou":{"enabled":true,"max_results":4},
+				"brave":{"enabled":true,"max_results":7,"api_key":"brave-new-key"},
+				"duckduckgo":{"enabled":false,"max_results":3}
+			}
+		}`),
+	)
+	req.Header.Set("Content-Type", "application/json")
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d, body=%s", rec.Code, http.StatusOK, rec.Body.String())
+	}
+
+	updated, err := config.LoadConfig(configPath)
+	if err != nil {
+		t.Fatalf("LoadConfig() error = %v", err)
+	}
+	if updated.Tools.Web.Provider != "brave" {
+		t.Fatalf("provider = %q, want brave", updated.Tools.Web.Provider)
+	}
+	if updated.Tools.Web.PreferNative {
+		t.Fatal("prefer_native should be false after update")
+	}
+	if updated.Tools.Web.Proxy != "http://127.0.0.1:7890" {
+		t.Fatalf("proxy = %q", updated.Tools.Web.Proxy)
+	}
+	if !updated.Tools.Web.Sogou.Enabled || updated.Tools.Web.Sogou.MaxResults != 4 {
+		t.Fatalf("sogou config not updated: %#v", updated.Tools.Web.Sogou)
+	}
+	if !updated.Tools.Web.Brave.Enabled || updated.Tools.Web.Brave.MaxResults != 7 {
+		t.Fatalf("brave config not updated: %#v", updated.Tools.Web.Brave)
+	}
+	if updated.Tools.Web.Brave.APIKey() != "brave-new-key" {
+		t.Fatalf("brave api key not updated")
+	}
+}
