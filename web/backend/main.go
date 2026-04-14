@@ -298,7 +298,7 @@ func launcherConsoleHostsWithLocalAddrs(
 	return hosts
 }
 
-func launcherConsoleHosts(_ []string, hostInput string, public bool) []string {
+func launcherConsoleHosts(hostInput string, public bool) []string {
 	return launcherConsoleHostsWithLocalAddrs(
 		hostInput,
 		public,
@@ -572,7 +572,7 @@ func main() {
 
 	// Print startup banner and token (console mode only).
 	if enableConsole || debug {
-		consoleHosts := launcherConsoleHosts(openResult.BindHosts, hostInput, effectivePublic)
+		consoleHosts := launcherConsoleHosts(hostInput, effectivePublic)
 
 		fmt.Print(utils.Banner)
 		fmt.Println()

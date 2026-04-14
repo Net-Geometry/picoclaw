@@ -35,9 +35,6 @@ func shutdownApp() {
 	}
 
 	if len(servers) > 0 {
-		ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
-		defer cancel()
-
 		for _, srv := range servers {
 			if srv == nil {
 				continue
@@ -46,7 +43,11 @@ func shutdownApp() {
 			// Disable keep-alive to allow graceful shutdown
 			srv.SetKeepAlivesEnabled(false)
 
-			if err := srv.Shutdown(ctx); err != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+			err := srv.Shutdown(ctx)
+			cancel()
+
+			if err != nil {
 				// Context deadline exceeded is expected if there are active connections
 				// This is not necessarily an error, so log it at info level
 				if errors.Is(err, context.DeadlineExceeded) {

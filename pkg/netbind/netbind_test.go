@@ -92,6 +92,17 @@ func TestOpenPlan_DefaultAnySupportsDualStackLoopback(t *testing.T) {
 	if hasIPv4 {
 		requireHTTPReachable(t, "127.0.0.1", port)
 	}
+
+	switch {
+	case hasIPv4 && hasIPv6:
+		if len(result.BindHosts) != 2 {
+			t.Fatalf("len(BindHosts) = %d, want 2 (%#v)", len(result.BindHosts), result.BindHosts)
+		}
+	case hasIPv6 || hasIPv4:
+		if len(result.BindHosts) != 1 {
+			t.Fatalf("len(BindHosts) = %d, want 1 (%#v)", len(result.BindHosts), result.BindHosts)
+		}
+	}
 }
 
 func TestOpenPlan_ExplicitIPv6AnyIsIPv6Only(t *testing.T) {

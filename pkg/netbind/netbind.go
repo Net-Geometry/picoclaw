@@ -538,18 +538,38 @@ func openAdaptiveLoopbackGroup(allowIPv6, allowIPv4 bool, port string) ([]net.Li
 }
 
 func openAdaptiveAnyGroup(port string) ([]net.Listener, []string, string, error) {
-	// Intentionally bind tcp/:: here. Go's compatibility layer handles dual-stack
-	// wildcard binding where the platform supports it, while tcp4 remains the
-	// fallback for IPv4-only environments.
-	if ln, actualPort, err := openExactListener(exactBinding{host: "::", network: "tcp"}, port); err == nil {
-		return []net.Listener{ln}, []string{"::"}, actualPort, nil
+	hasIPv4, hasIPv6 := DetectIPFamilies()
+
+	if hasIPv4 && hasIPv6 {
+		if ln6, actualPort, err6 := openExactListener(
+			exactBinding{host: "::", network: "tcp6", v6Only: true},
+			port,
+		); err6 == nil {
+			if ln4, _, err4 := openExactListener(
+				exactBinding{host: "0.0.0.0", network: "tcp4"},
+				actualPort,
+			); err4 == nil {
+				return []net.Listener{ln6, ln4}, []string{"::", "0.0.0.0"}, actualPort, nil
+			}
+			_ = ln6.Close()
+		}
 	}
 
-	ln4, actualPort, err := openExactListener(exactBinding{host: "0.0.0.0", network: "tcp4"}, port)
-	if err != nil {
-		return nil, nil, "", fmt.Errorf("failed to open adaptive any-host listener on port %s", port)
+	if hasIPv6 {
+		ln6, actualPort, err := openExactListener(exactBinding{host: "::", network: "tcp6", v6Only: true}, port)
+		if err == nil {
+			return []net.Listener{ln6}, []string{"::"}, actualPort, nil
+		}
 	}
-	return []net.Listener{ln4}, []string{"0.0.0.0"}, actualPort, nil
+
+	if hasIPv4 {
+		ln4, actualPort, err := openExactListener(exactBinding{host: "0.0.0.0", network: "tcp4"}, port)
+		if err == nil {
+			return []net.Listener{ln4}, []string{"0.0.0.0"}, actualPort, nil
+		}
+	}
+
+	return nil, nil, "", fmt.Errorf("failed to open adaptive any-host listener on port %s", port)
 }
 
 func openExactListener(binding exactBinding, port string) (net.Listener, string, error) {
