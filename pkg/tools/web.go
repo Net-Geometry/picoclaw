@@ -23,6 +23,7 @@ import (
 
 const (
 	userAgent       = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+	sogouUserAgent  = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1"
 	userAgentHonest = "picoclaw/%s (+https://github.com/sipeed/picoclaw; AI assistant bot)"
 
 	// HTTP client timeouts for web tool providers.
@@ -469,7 +470,7 @@ func (p *SogouSearchProvider) Search(
 		if err != nil {
 			return "", fmt.Errorf("failed to create request: %w", err)
 		}
-		req.Header.Set("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1")
+		req.Header.Set("User-Agent", sogouUserAgent)
 
 		resp, err := p.client.Do(req)
 		if err != nil {
