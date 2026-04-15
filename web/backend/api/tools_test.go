@@ -245,6 +245,15 @@ func TestHandleUpdateWebSearchConfig(t *testing.T) {
 	configPath, cleanup := setupOAuthTestEnv(t)
 	defer cleanup()
 
+	cfg, err := config.LoadConfig(configPath)
+	if err != nil {
+		t.Fatalf("LoadConfig() error = %v", err)
+	}
+	cfg.Tools.Web.Brave.SetAPIKeys([]string{"brave-old-1", "brave-old-2"})
+	if err := config.SaveConfig(configPath, cfg); err != nil {
+		t.Fatalf("SaveConfig() error = %v", err)
+	}
+
 	h := NewHandler(configPath)
 	mux := http.NewServeMux()
 	h.RegisterRoutes(mux)
@@ -292,5 +301,91 @@ func TestHandleUpdateWebSearchConfig(t *testing.T) {
 	}
 	if updated.Tools.Web.Brave.APIKey() != "brave-new-key" {
 		t.Fatalf("brave api key not updated")
+	}
+}
+
+func TestHandleUpdateWebSearchConfig_PreservesAndReplacesMultiKeys(t *testing.T) {
+	configPath, cleanup := setupOAuthTestEnv(t)
+	defer cleanup()
+
+	cfg, err := config.LoadConfig(configPath)
+	if err != nil {
+		t.Fatalf("LoadConfig() error = %v", err)
+	}
+	cfg.Tools.Web.Brave.SetAPIKeys([]string{"brave-old-1", "brave-old-2"})
+	if err := config.SaveConfig(configPath, cfg); err != nil {
+		t.Fatalf("SaveConfig() error = %v", err)
+	}
+
+	h := NewHandler(configPath)
+	mux := http.NewServeMux()
+	h.RegisterRoutes(mux)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(
+		http.MethodPut,
+		"/api/tools/web-search-config",
+		bytes.NewBufferString(`{
+			"provider":"auto",
+			"prefer_native":true,
+			"proxy":"",
+			"settings":{
+				"brave":{"enabled":true,"max_results":7}
+			}
+		}`),
+	)
+	req.Header.Set("Content-Type", "application/json")
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d, body=%s", rec.Code, http.StatusOK, rec.Body.String())
+	}
+
+	updated, err := config.LoadConfig(configPath)
+	if err != nil {
+		t.Fatalf("LoadConfig() error = %v", err)
+	}
+	if got := updated.Tools.Web.Brave.APIKeys.Values(); len(got) != 2 || got[0] != "brave-old-1" || got[1] != "brave-old-2" {
+		t.Fatalf("brave api keys should be preserved, got %#v", got)
+	}
+
+	rec = httptest.NewRecorder()
+	req = httptest.NewRequest(
+		http.MethodPut,
+		"/api/tools/web-search-config",
+		bytes.NewBufferString(`{
+			"provider":"auto",
+			"prefer_native":true,
+			"proxy":"",
+			"settings":{
+				"brave":{"enabled":true,"max_results":7,"api_keys":["brave-new-1","brave-new-2","brave-new-1"]}
+			}
+		}`),
+	)
+	req.Header.Set("Content-Type", "application/json")
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d, body=%s", rec.Code, http.StatusOK, rec.Body.String())
+	}
+
+	updated, err = config.LoadConfig(configPath)
+	if err != nil {
+		t.Fatalf("LoadConfig() error = %v", err)
+	}
+	if got := updated.Tools.Web.Brave.APIKeys.Values(); len(got) != 2 || got[0] != "brave-new-1" || got[1] != "brave-new-2" {
+		t.Fatalf("brave api keys should be replaced by api_keys, got %#v", got)
+	}
+}
+
+func TestResolveCurrentWebSearchProvider_PrefersConfiguredProvidersBeforeSogou(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.Tools.Web.Provider = "auto"
+	cfg.Tools.Web.Sogou.Enabled = true
+	cfg.Tools.Web.Brave.Enabled = true
+	cfg.Tools.Web.Brave.SetAPIKey("brave-test-key")
+
+	if got := resolveCurrentWebSearchProvider(cfg); got != "brave" {
+		t.Fatalf("resolveCurrentWebSearchProvider() = %q, want brave", got)
 	}
 }

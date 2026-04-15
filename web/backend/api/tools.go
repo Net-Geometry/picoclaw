@@ -43,11 +43,12 @@ type webSearchProviderOption struct {
 }
 
 type webSearchProviderConfig struct {
-	Enabled    bool   `json:"enabled"`
-	MaxResults int    `json:"max_results"`
-	BaseURL    string `json:"base_url,omitempty"`
-	APIKey     string `json:"api_key,omitempty"`
-	APIKeySet  bool   `json:"api_key_set,omitempty"`
+	Enabled    bool     `json:"enabled"`
+	MaxResults int      `json:"max_results"`
+	BaseURL    string   `json:"base_url,omitempty"`
+	APIKey     string   `json:"api_key,omitempty"`
+	APIKeys    []string `json:"api_keys,omitempty"`
+	APIKeySet  bool     `json:"api_key_set,omitempty"`
 }
 
 type webSearchConfigResponse struct {
@@ -416,23 +417,23 @@ func (h *Handler) handleUpdateWebSearchConfig(w http.ResponseWriter, r *http.Req
 	if settings, ok := req.Settings["brave"]; ok {
 		cfg.Tools.Web.Brave.Enabled = settings.Enabled
 		cfg.Tools.Web.Brave.MaxResults = settings.MaxResults
-		if key := strings.TrimSpace(settings.APIKey); key != "" {
-			cfg.Tools.Web.Brave.SetAPIKey(key)
+		if keys, ok := normalizeWebSearchAPIKeys(settings.APIKeys, settings.APIKey); ok {
+			cfg.Tools.Web.Brave.SetAPIKeys(keys)
 		}
 	}
 	if settings, ok := req.Settings["tavily"]; ok {
 		cfg.Tools.Web.Tavily.Enabled = settings.Enabled
 		cfg.Tools.Web.Tavily.MaxResults = settings.MaxResults
 		cfg.Tools.Web.Tavily.BaseURL = strings.TrimSpace(settings.BaseURL)
-		if key := strings.TrimSpace(settings.APIKey); key != "" {
-			cfg.Tools.Web.Tavily.SetAPIKey(key)
+		if keys, ok := normalizeWebSearchAPIKeys(settings.APIKeys, settings.APIKey); ok {
+			cfg.Tools.Web.Tavily.SetAPIKeys(keys)
 		}
 	}
 	if settings, ok := req.Settings["perplexity"]; ok {
 		cfg.Tools.Web.Perplexity.Enabled = settings.Enabled
 		cfg.Tools.Web.Perplexity.MaxResults = settings.MaxResults
-		if key := strings.TrimSpace(settings.APIKey); key != "" {
-			cfg.Tools.Web.Perplexity.SetAPIKey(key)
+		if keys, ok := normalizeWebSearchAPIKeys(settings.APIKeys, settings.APIKey); ok {
+			cfg.Tools.Web.Perplexity.APIKeys = config.SimpleSecureStrings(keys...)
 		}
 	}
 	if settings, ok := req.Settings["searxng"]; ok {
@@ -477,6 +478,31 @@ func normalizeWebSearchProvider(provider string) string {
 	default:
 		return ""
 	}
+}
+
+func normalizeWebSearchAPIKeys(apiKeys []string, apiKey string) ([]string, bool) {
+	if apiKeys != nil {
+		keys := make([]string, 0, len(apiKeys))
+		seen := make(map[string]struct{}, len(apiKeys))
+		for _, key := range apiKeys {
+			trimmed := strings.TrimSpace(key)
+			if trimmed == "" {
+				continue
+			}
+			if _, ok := seen[trimmed]; ok {
+				continue
+			}
+			seen[trimmed] = struct{}{}
+			keys = append(keys, trimmed)
+		}
+		return keys, true
+	}
+
+	if trimmed := strings.TrimSpace(apiKey); trimmed != "" {
+		return []string{trimmed}, true
+	}
+
+	return nil, false
 }
 
 func buildWebSearchConfigResponse(cfg *config.Config) webSearchConfigResponse {
@@ -614,7 +640,7 @@ func resolveCurrentWebSearchProvider(cfg *config.Config) string {
 	if selected != "" && selected != "auto" && webSearchProviderConfigured(cfg, selected) {
 		return selected
 	}
-	for _, name := range []string{"sogou", "perplexity", "brave", "searxng", "tavily", "duckduckgo", "baidu_search", "glm_search"} {
+	for _, name := range []string{"perplexity", "brave", "searxng", "tavily", "sogou", "duckduckgo", "baidu_search", "glm_search"} {
 		if webSearchProviderConfigured(cfg, name) {
 			return name
 		}

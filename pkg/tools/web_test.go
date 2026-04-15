@@ -385,14 +385,24 @@ func TestWebFetchTool_PayloadTooLarge(t *testing.T) {
 	}
 }
 
-// TestWebTool_WebSearch_NoApiKey verifies that no tool is created when API key is missing
+// TestWebTool_WebSearch_NoApiKey verifies missing credentials are surfaced at execution time.
 func TestWebTool_WebSearch_NoApiKey(t *testing.T) {
 	tool, err := NewWebSearchTool(WebSearchToolOptions{BraveEnabled: true, BraveAPIKeys: nil})
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
-	if tool != nil {
-		t.Errorf("Expected nil tool when Brave API key is empty")
+	if tool == nil {
+		t.Fatalf("Expected tool when Brave is enabled, even without API keys")
+	}
+
+	result := tool.Execute(context.Background(), map[string]any{
+		"query": "test query",
+	})
+	if !result.IsError {
+		t.Fatalf("Expected missing Brave API key to return error")
+	}
+	if !strings.Contains(result.ForLLM, "no API key provided") {
+		t.Fatalf("Unexpected error message: %s", result.ForLLM)
 	}
 
 	// Also nil when nothing is enabled
@@ -1693,6 +1703,29 @@ func TestWebTool_SogouSearch_Success(t *testing.T) {
 	}
 }
 
+func TestApplySogouRangeHint(t *testing.T) {
+	tests := []struct {
+		name      string
+		query     string
+		rangeCode string
+		want      string
+	}{
+		{name: "empty range", query: "golang", rangeCode: "", want: "golang"},
+		{name: "day", query: "golang", rangeCode: "d", want: "golang 最近一天"},
+		{name: "week", query: "golang", rangeCode: "w", want: "golang 最近一周"},
+		{name: "month", query: "golang", rangeCode: "m", want: "golang 最近一个月"},
+		{name: "year", query: "golang", rangeCode: "y", want: "golang 最近一年"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := applySogouRangeHint(tt.query, tt.rangeCode); got != tt.want {
+				t.Fatalf("applySogouRangeHint(%q, %q) = %q, want %q", tt.query, tt.rangeCode, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestWebTool_SogouPriorityAndExplicitProvider(t *testing.T) {
 	tool, err := NewWebSearchTool(WebSearchToolOptions{
 		SogouEnabled:         true,
@@ -1719,6 +1752,24 @@ func TestWebTool_SogouPriorityAndExplicitProvider(t *testing.T) {
 	}
 	if _, ok := tool.provider.(*DuckDuckGoSearchProvider); !ok {
 		t.Fatalf("expected DuckDuckGoSearchProvider, got %T", tool.provider)
+	}
+}
+
+func TestWebTool_AutoProviderPrefersConfiguredProvidersBeforeSogou(t *testing.T) {
+	tool, err := NewWebSearchTool(WebSearchToolOptions{
+		SogouEnabled:         true,
+		SogouMaxResults:      5,
+		BraveEnabled:         true,
+		BraveAPIKeys:         []string{"brave-key"},
+		BraveMaxResults:      5,
+		DuckDuckGoEnabled:    true,
+		DuckDuckGoMaxResults: 5,
+	})
+	if err != nil {
+		t.Fatalf("NewWebSearchTool() error: %v", err)
+	}
+	if _, ok := tool.provider.(*BraveSearchProvider); !ok {
+		t.Fatalf("expected BraveSearchProvider, got %T", tool.provider)
 	}
 }
 

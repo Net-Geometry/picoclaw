@@ -117,6 +117,21 @@ func extractSogouURL(href string) string {
 	return decoded
 }
 
+func applySogouRangeHint(query string, rangeCode string) string {
+	switch rangeCode {
+	case "d":
+		return query + " 最近一天"
+	case "w":
+		return query + " 最近一周"
+	case "m":
+		return query + " 最近一个月"
+	case "y":
+		return query + " 最近一年"
+	default:
+		return query
+	}
+}
+
 func normalizeSearchRange(raw string) (string, error) {
 	rangeCode := strings.ToLower(strings.TrimSpace(raw))
 	switch rangeCode {
@@ -244,6 +259,10 @@ func (p *BraveSearchProvider) Search(
 	count int,
 	rangeCode string,
 ) (string, error) {
+	if p.keyPool == nil || len(p.keyPool.keys) == 0 {
+		return "", errors.New("no API key provided")
+	}
+
 	searchURL := fmt.Sprintf("https://api.search.brave.com/res/v1/web/search?q=%s&count=%d",
 		url.QueryEscape(query), count)
 	if freshness := mapBraveFreshness(rangeCode); freshness != "" {
@@ -343,6 +362,10 @@ func (p *TavilySearchProvider) Search(
 	count int,
 	rangeCode string,
 ) (string, error) {
+	if p.keyPool == nil || len(p.keyPool.keys) == 0 {
+		return "", errors.New("no API key provided")
+	}
+
 	searchURL := p.baseURL
 	if searchURL == "" {
 		searchURL = "https://api.tavily.com/search"
@@ -462,7 +485,7 @@ func (p *SogouSearchProvider) Search(
 
 	for page := 1; page <= maxPages && len(results) < count; page++ {
 		params := url.Values{}
-		params.Set("keyword", query)
+		params.Set("keyword", applySogouRangeHint(query, rangeCode))
 		params.Set("v", "5")
 		params.Set("p", fmt.Sprintf("%d", page))
 
@@ -656,6 +679,10 @@ func (p *PerplexitySearchProvider) Search(
 	count int,
 	rangeCode string,
 ) (string, error) {
+	if p.keyPool == nil || len(p.keyPool.keys) == 0 {
+		return "", errors.New("no API key provided")
+	}
+
 	searchURL := "https://api.perplexity.ai/chat/completions"
 
 	var lastErr error
@@ -769,6 +796,10 @@ func (p *SearXNGSearchProvider) Search(
 	count int,
 	rangeCode string,
 ) (string, error) {
+	if p.baseURL == "" {
+		return "", errors.New("no SearXNG URL provided")
+	}
+
 	searchURL := fmt.Sprintf("%s/search?q=%s&format=json&categories=general",
 		strings.TrimSuffix(p.baseURL, "/"),
 		url.QueryEscape(query))
@@ -843,6 +874,10 @@ func (p *GLMSearchProvider) Search(
 	count int,
 	rangeCode string,
 ) (string, error) {
+	if p.apiKey == "" {
+		return "", errors.New("no API key provided")
+	}
+
 	searchURL := p.baseURL
 	if searchURL == "" {
 		searchURL = "https://open.bigmodel.cn/api/paas/v4/web_search"
@@ -932,6 +967,10 @@ func (p *BaiduSearchProvider) Search(
 	count int,
 	rangeCode string,
 ) (string, error) {
+	if p.apiKey == "" {
+		return "", errors.New("no API key provided")
+	}
+
 	searchURL := p.baseURL
 	if searchURL == "" {
 		searchURL = "https://qianfan.baidubce.com/v2/ai_search/web_search"
@@ -1065,7 +1104,7 @@ func (opts WebSearchToolOptions) providerByName(name string) (SearchProvider, in
 			client: client,
 		}, maxResults, nil
 	case "perplexity":
-		if !opts.PerplexityEnabled || len(opts.PerplexityAPIKeys) == 0 {
+		if !opts.PerplexityEnabled {
 			return nil, 0, nil
 		}
 		client, err := utils.CreateHTTPClient(opts.Proxy, perplexityTimeout)
@@ -1082,7 +1121,7 @@ func (opts WebSearchToolOptions) providerByName(name string) (SearchProvider, in
 			client:  client,
 		}, maxResults, nil
 	case "brave":
-		if !opts.BraveEnabled || len(opts.BraveAPIKeys) == 0 {
+		if !opts.BraveEnabled {
 			return nil, 0, nil
 		}
 		client, err := utils.CreateHTTPClient(opts.Proxy, searchTimeout)
@@ -1099,7 +1138,7 @@ func (opts WebSearchToolOptions) providerByName(name string) (SearchProvider, in
 			client:  client,
 		}, maxResults, nil
 	case "searxng":
-		if !opts.SearXNGEnabled || opts.SearXNGBaseURL == "" {
+		if !opts.SearXNGEnabled {
 			return nil, 0, nil
 		}
 		maxResults := 10
@@ -1110,7 +1149,7 @@ func (opts WebSearchToolOptions) providerByName(name string) (SearchProvider, in
 			baseURL: opts.SearXNGBaseURL,
 		}, maxResults, nil
 	case "tavily":
-		if !opts.TavilyEnabled || len(opts.TavilyAPIKeys) == 0 {
+		if !opts.TavilyEnabled {
 			return nil, 0, nil
 		}
 		client, err := utils.CreateHTTPClient(opts.Proxy, searchTimeout)
@@ -1144,7 +1183,7 @@ func (opts WebSearchToolOptions) providerByName(name string) (SearchProvider, in
 			client: client,
 		}, maxResults, nil
 	case "baidu_search":
-		if !opts.BaiduSearchEnabled || opts.BaiduSearchAPIKey == "" {
+		if !opts.BaiduSearchEnabled {
 			return nil, 0, nil
 		}
 		client, err := utils.CreateHTTPClient(opts.Proxy, perplexityTimeout)
@@ -1162,7 +1201,7 @@ func (opts WebSearchToolOptions) providerByName(name string) (SearchProvider, in
 			client:  client,
 		}, maxResults, nil
 	case "glm_search":
-		if !opts.GLMSearchEnabled || opts.GLMSearchAPIKey == "" {
+		if !opts.GLMSearchEnabled {
 			return nil, 0, nil
 		}
 		client, err := utils.CreateHTTPClient(opts.Proxy, searchTimeout)
@@ -1196,7 +1235,7 @@ func NewWebSearchTool(opts WebSearchToolOptions) (*WebSearchTool, error) {
 	}
 
 	if provider == nil {
-		for _, name := range []string{"sogou", "perplexity", "brave", "searxng", "tavily", "duckduckgo", "baidu_search", "glm_search"} {
+		for _, name := range []string{"perplexity", "brave", "searxng", "tavily", "sogou", "duckduckgo", "baidu_search", "glm_search"} {
 			provider, maxResults, err = opts.providerByName(name)
 			if err != nil {
 				return nil, err

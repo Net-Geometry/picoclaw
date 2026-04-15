@@ -760,6 +760,13 @@ func TestDefaultConfig_WebPreferNativeEnabled(t *testing.T) {
 	}
 }
 
+func TestDefaultConfig_WebProviderIsAuto(t *testing.T) {
+	cfg := DefaultConfig()
+	if cfg.Tools.Web.Provider != "auto" {
+		t.Fatalf("DefaultConfig().Tools.Web.Provider = %q, want auto", cfg.Tools.Web.Provider)
+	}
+}
+
 func TestDefaultConfig_ToolFeedbackDisabled(t *testing.T) {
 	cfg := DefaultConfig()
 	if cfg.Agents.Defaults.ToolFeedback.Enabled {
