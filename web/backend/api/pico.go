@@ -5,11 +5,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
 	"net/http/httputil"
-	"net/url"
-	"strings"
 	"time"
 
 	"github.com/sipeed/picoclaw/pkg/config"
@@ -58,52 +55,6 @@ func (h *Handler) createWsProxy(origProtocol string, upstreamProtocol string) *h
 	return wsProxy
 }
 
-func canonicalOrigin(raw string) (string, bool) {
-	u, err := url.Parse(strings.TrimSpace(raw))
-	if err != nil || u == nil {
-		return "", false
-	}
-
-	scheme := strings.ToLower(strings.TrimSpace(u.Scheme))
-	if scheme != "http" && scheme != "https" {
-		return "", false
-	}
-
-	host := strings.TrimSpace(u.Hostname())
-	if host == "" {
-		return "", false
-	}
-
-	port := u.Port()
-	if port == "" {
-		if scheme == "https" {
-			port = "443"
-		} else {
-			port = "80"
-		}
-	}
-
-	return scheme + "://" + net.JoinHostPort(host, port), true
-}
-
-func (h *Handler) expectedPicoProxyOrigin(r *http.Request) string {
-	return requestHTTPScheme(r) + "://" + h.picoWebUIAddr(r)
-}
-
-func (h *Handler) validPicoProxyOrigin(r *http.Request) bool {
-	want, ok := canonicalOrigin(h.expectedPicoProxyOrigin(r))
-	if !ok {
-		return false
-	}
-
-	got, ok := canonicalOrigin(r.Header.Get("Origin"))
-	if !ok {
-		return false
-	}
-
-	return got == want
-}
-
 func decodePicoSettings(cfg *config.Config) (config.PicoSettings, bool) {
 	if cfg == nil {
 		return config.PicoSettings{}, false
@@ -146,16 +97,10 @@ func (h *Handler) writePicoInfoResponse(
 }
 
 // handleWebSocketProxy wraps a reverse proxy to handle WebSocket connections.
-// It relies on launcher dashboard auth and same-origin browser access, then
-// injects the raw pico token only on the upstream gateway request.
+// It relies on launcher dashboard auth, then injects the raw pico token only
+// on the upstream gateway request.
 func (h *Handler) handleWebSocketProxy() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !h.validPicoProxyOrigin(r) {
-			logger.Warnf("Invalid Pico WebSocket origin: %q", r.Header.Get("Origin"))
-			http.Error(w, "Forbidden", http.StatusForbidden)
-			return
-		}
-
 		gateway.mu.Lock()
 		ensurePicoTokenCachedLocked(h.configPath)
 		cachedPID := gateway.pidData
@@ -252,12 +197,7 @@ func (h *Handler) handleRegenPicoToken(w http.ResponseWriter, r *http.Request) {
 
 // EnsurePicoChannel enables the Pico channel with sane defaults if it isn't
 // already configured. Returns true when the config was modified.
-//
-// callerOrigin is the Origin header from the setup request. If non-empty and
-// no origins are configured yet, it's written as the allowed origin so the
-// WebSocket handshake works for whatever host the caller is on (LAN, custom
-// port, etc.). Pass "" when there's no request context.
-func (h *Handler) EnsurePicoChannel(callerOrigin string) (bool, error) {
+func (h *Handler) EnsurePicoChannel() (bool, error) {
 	cfg, err := config.LoadConfig(h.configPath)
 	if err != nil {
 		return false, fmt.Errorf("failed to load config: %w", err)
@@ -282,12 +222,6 @@ func (h *Handler) EnsurePicoChannel(callerOrigin string) (bool, error) {
 				picoCfg.Token = *config.NewSecureString(generateSecureToken())
 				changed = true
 			}
-
-			// Seed origins from the request instead of hardcoding ports.
-			if len(picoCfg.AllowOrigins) == 0 && callerOrigin != "" {
-				picoCfg.AllowOrigins = []string{callerOrigin}
-				changed = true
-			}
 		}
 	}
 
@@ -304,7 +238,7 @@ func (h *Handler) EnsurePicoChannel(callerOrigin string) (bool, error) {
 //
 //	POST /api/pico/setup
 func (h *Handler) handlePicoSetup(w http.ResponseWriter, r *http.Request) {
-	changed, err := h.EnsurePicoChannel(r.Header.Get("Origin"))
+	changed, err := h.EnsurePicoChannel()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

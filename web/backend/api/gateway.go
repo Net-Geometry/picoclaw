@@ -732,7 +732,7 @@ func (h *Handler) startGatewayLocked(initialStatus string, existingPid int) (int
 	gateway.logs.Reset()
 
 	// Ensure Pico Channel is configured before starting gateway
-	changed, err := h.EnsurePicoChannel("")
+	changed, err := h.EnsurePicoChannel()
 	if err != nil {
 		logger.ErrorC("gateway", fmt.Sprintf("Warning: failed to ensure pico channel: %v", err))
 		// Non-fatal: gateway can still start without pico channel
