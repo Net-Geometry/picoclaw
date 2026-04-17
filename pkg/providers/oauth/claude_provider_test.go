@@ -1,4 +1,4 @@
-package providers
+package oauthprovider
 
 import (
 	"encoding/json"

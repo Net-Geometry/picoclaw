@@ -1,4 +1,4 @@
-package providers
+package cliprovider
 
 import (
 	"encoding/json"

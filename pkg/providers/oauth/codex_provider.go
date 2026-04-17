@@ -1,4 +1,4 @@
-package providers
+package oauthprovider
 
 import (
 	"context"
@@ -240,7 +240,7 @@ func buildCodexParams(
 	return params
 }
 
-func createCodexTokenSource() func() (string, string, error) {
+func CreateCodexTokenSource() func() (string, string, error) {
 	return func() (string, string, error) {
 		cred, err := auth.GetCredential("openai")
 		if err != nil {

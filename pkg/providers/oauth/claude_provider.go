@@ -1,9 +1,10 @@
-package providers
+package oauthprovider
 
 import (
 	"context"
 	"fmt"
 
+	"github.com/sipeed/picoclaw/pkg/auth"
 	anthropicprovider "github.com/sipeed/picoclaw/pkg/providers/anthropic"
 )
 
@@ -55,7 +56,7 @@ func (p *ClaudeProvider) GetDefaultModel() string {
 	return p.delegate.GetDefaultModel()
 }
 
-func createClaudeTokenSource() func() (string, error) {
+func CreateClaudeTokenSource(getCredential func(string) (*auth.AuthCredential, error)) func() (string, error) {
 	return func() (string, error) {
 		cred, err := getCredential("anthropic")
 		if err != nil {

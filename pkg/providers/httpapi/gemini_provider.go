@@ -1,4 +1,4 @@
-package providers
+package httpapi
 
 import (
 	"bufio"
@@ -303,7 +303,7 @@ func normalizeGeminiModel(model string) string {
 	model = strings.TrimSpace(model)
 	model = strings.TrimPrefix(model, "models/")
 	if strings.Contains(model, "/") {
-		_, modelID := ExtractProtocol(model)
+		_, modelID := extractProtocol(model)
 		if modelID != "" {
 			return modelID
 		}

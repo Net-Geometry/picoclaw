@@ -3,7 +3,7 @@
 //
 // Copyright (c) 2026 PicoClaw contributors
 
-package providers
+package cliprovider
 
 import (
 	"encoding/json"
