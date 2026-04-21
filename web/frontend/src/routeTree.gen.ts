@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SchedulerRouteImport } from './routes/scheduler'
+import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as ModelsRouteImport } from './routes/models'
 import { Route as LogsRouteImport } from './routes/logs'
 import { Route as LauncherSetupRouteImport } from './routes/launcher-setup'
@@ -30,6 +31,11 @@ import { Route as AgentConfigureRouteImport } from './routes/agent/configure'
 const SchedulerRoute = SchedulerRouteImport.update({
   id: '/scheduler',
   path: '/scheduler',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectsRoute = ProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ModelsRoute = ModelsRouteImport.update({
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/launcher-setup': typeof LauncherSetupRoute
   '/logs': typeof LogsRoute
   '/models': typeof ModelsRoute
+  '/projects': typeof ProjectsRoute
   '/scheduler': typeof SchedulerRoute
   '/agent/configure': typeof AgentConfigureRoute
   '/agent/hub': typeof AgentHubRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   '/launcher-setup': typeof LauncherSetupRoute
   '/logs': typeof LogsRoute
   '/models': typeof ModelsRoute
+  '/projects': typeof ProjectsRoute
   '/scheduler': typeof SchedulerRoute
   '/agent/configure': typeof AgentConfigureRoute
   '/agent/hub': typeof AgentHubRoute
@@ -163,6 +171,7 @@ export interface FileRoutesById {
   '/launcher-setup': typeof LauncherSetupRoute
   '/logs': typeof LogsRoute
   '/models': typeof ModelsRoute
+  '/projects': typeof ProjectsRoute
   '/scheduler': typeof SchedulerRoute
   '/agent/configure': typeof AgentConfigureRoute
   '/agent/hub': typeof AgentHubRoute
@@ -184,6 +193,7 @@ export interface FileRouteTypes {
     | '/launcher-setup'
     | '/logs'
     | '/models'
+    | '/projects'
     | '/scheduler'
     | '/agent/configure'
     | '/agent/hub'
@@ -203,6 +213,7 @@ export interface FileRouteTypes {
     | '/launcher-setup'
     | '/logs'
     | '/models'
+    | '/projects'
     | '/scheduler'
     | '/agent/configure'
     | '/agent/hub'
@@ -222,6 +233,7 @@ export interface FileRouteTypes {
     | '/launcher-setup'
     | '/logs'
     | '/models'
+    | '/projects'
     | '/scheduler'
     | '/agent/configure'
     | '/agent/hub'
@@ -242,6 +254,7 @@ export interface RootRouteChildren {
   LauncherSetupRoute: typeof LauncherSetupRoute
   LogsRoute: typeof LogsRoute
   ModelsRoute: typeof ModelsRoute
+  ProjectsRoute: typeof ProjectsRoute
   SchedulerRoute: typeof SchedulerRoute
 }
 
@@ -252,6 +265,13 @@ declare module '@tanstack/react-router' {
       path: '/scheduler'
       fullPath: '/scheduler'
       preLoaderRoute: typeof SchedulerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects': {
+      id: '/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof ProjectsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/models': {
@@ -419,6 +439,7 @@ const rootRouteChildren: RootRouteChildren = {
   LauncherSetupRoute: LauncherSetupRoute,
   LogsRoute: LogsRoute,
   ModelsRoute: ModelsRoute,
+  ProjectsRoute: ProjectsRoute,
   SchedulerRoute: SchedulerRoute,
 }
 export const routeTree = rootRouteImport

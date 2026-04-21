@@ -289,14 +289,15 @@ func TestParseInlineMedia_ValidDocumentAndAudio(t *testing.T) {
 	media, err := parseInlineMedia(map[string]any{
 		"media": []any{
 			"data:application/pdf;base64,UEZERGF0YQ==",
+			"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,UEsDBAoAAAAA",
 			"data:audio/webm;base64,UklGRlIAAABXQVZFZm10",
 		},
 	})
 	if err != nil {
 		t.Fatalf("parseInlineMedia() error = %v", err)
 	}
-	if len(media) != 2 {
-		t.Fatalf("len(media) = %d, want 2", len(media))
+	if len(media) != 3 {
+		t.Fatalf("len(media) = %d, want 3", len(media))
 	}
 }
 

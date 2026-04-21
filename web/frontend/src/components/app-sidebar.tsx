@@ -4,6 +4,7 @@ import {
   IconCalendar,
   IconChevronsDown,
   IconChevronsUp,
+  IconFolder,
   IconKey,
   IconListDetails,
   IconMessageCircle,
@@ -152,12 +153,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             icon: IconTools,
             translateTitle: true,
           },
-            {
-              title: "navigation.configure",
-              url: "/agent/configure",
-              icon: IconUserCog,
-              translateTitle: true,
-            },
+          {
+            title: "navigation.configure",
+            url: "/agent/configure",
+            icon: IconUserCog,
+            translateTitle: true,
+          },
         ],
       },
       {
@@ -179,6 +180,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: "navigation.scheduler",
             url: "/scheduler",
             icon: IconCalendar,
+            translateTitle: true,
+          },
+          {
+            title: "navigation.projects",
+            url: "/projects",
+            icon: IconFolder,
             translateTitle: true,
           },
           {

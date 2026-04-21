@@ -15,7 +15,8 @@
     "show_less_channels": "Less",
     "config": "Config",
     "logs": "Logs",
-    "scheduler": "Scheduler"
+    "scheduler": "Scheduler",
+    "projects": "Projects"
       ,"configure": "Configure"
   },
   "launcherLogin": {
@@ -784,6 +785,11 @@
       },
       "agentConfigure": {
       "title": "Configure Agents",
+      "addAgent": "Add Agent",
+      "agentId": "Agent ID",
+      "agentName": "Agent Name",
+      "agentIdRequired": "Agent ID is required",
+      "create": "Create",
       "mode": "Mode",
       "primaryModel": "Primary Model",
       "primaryModelHint": "Leave as default ({{defaultValue}}) or pick a specific model.",
@@ -795,6 +801,21 @@
       "save": "Save",
       "saved": "Saved",
       "selectAgent": "Select an agent from the list"
+    },
+    "projects": {
+      "projectList": "Project List",
+      "noProjects": "No projects found",
+      "name": "Name",
+      "type": "Type",
+      "size": "Size",
+      "folder": "Folder",
+      "file": "File",
+      "emptyFolder": "This folder is empty",
+      "editor": "Editor",
+      "selectFileToEdit": "Select a file to view and edit",
+      "save": "Save File",
+      "reload": "Reload",
+      "saved": "File saved"
     }
   },
   "tour": {

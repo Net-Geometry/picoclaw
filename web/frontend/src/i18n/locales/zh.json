@@ -16,6 +16,7 @@
     "config": "配置",
     "logs": "日志",
       "scheduler": "调度器",
+      "projects": "项目",
       "configure": "配置"
   },
   "launcherLogin": {
@@ -781,6 +782,11 @@
       },
       "agentConfigure": {
         "title": "配置智能体",
+        "addAgent": "新增智能体",
+        "agentId": "智能体 ID",
+        "agentName": "智能体名称",
+        "agentIdRequired": "必须填写智能体 ID",
+        "create": "创建",
         "mode": "模式",
         "primaryModel": "主模型",
         "primaryModelHint": "可保持默认（{{defaultValue}}）或指定模型。",
@@ -792,6 +798,21 @@
         "save": "保存",
         "saved": "已保存",
         "selectAgent": "请先从左侧选择一个智能体"
+      },
+      "projects": {
+        "projectList": "项目列表",
+        "noProjects": "暂无项目",
+        "name": "名称",
+        "type": "类型",
+        "size": "大小",
+        "folder": "文件夹",
+        "file": "文件",
+        "emptyFolder": "该文件夹为空",
+        "editor": "编辑器",
+        "selectFileToEdit": "请选择要查看和编辑的文件",
+        "save": "保存文件",
+        "reload": "重新加载",
+        "saved": "文件已保存"
       }
     }
   },

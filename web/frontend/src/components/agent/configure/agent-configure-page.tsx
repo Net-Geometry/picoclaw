@@ -2,6 +2,14 @@ import { IconCheck, IconLoader2, IconUserCog } from "@tabler/icons-react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 
+import {
+  type Agent,
+  type AgentListResponse,
+  type AgentModel,
+  createAgent,
+  fetchAgents,
+  updateAgent,
+} from "@/api/agents"
 import { PageHeader } from "@/components/page-header"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -12,56 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-interface AgentModel {
-  primary: string
-  fallbacks?: string[]
-}
-
-interface Agent {
-  id: string
-  name: string
-  mode: string
-  model?: AgentModel
-  skills?: string[]
-  allow_agents?: string[]
-  is_default?: boolean
-}
-
-interface AgentListResponse {
-  agents: Agent[]
-  available_models: string[]
-  available_skills: string[]
-  default_model_name: string
-}
-
-// ─── Fetch helpers ────────────────────────────────────────────────────────────
-
-async function fetchAgents(): Promise<AgentListResponse> {
-  const res = await fetch("/api/agents")
-  if (!res.ok) throw new Error(await res.text())
-  return res.json()
-}
-
-async function putAgent(
-  id: string,
-  payload: {
-    mode?: string
-    model?: AgentModel | null
-    skills?: string[]
-    allow_agents?: string[]
-  },
-): Promise<Agent> {
-  const res = await fetch(`/api/agents/${encodeURIComponent(id)}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  })
-  if (!res.ok) throw new Error(await res.text())
-  return res.json()
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -82,6 +40,11 @@ export function AgentConfigurePage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [newId, setNewId] = useState("")
+  const [newName, setNewName] = useState("")
+  const [newMode, setNewMode] = useState("active")
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchAgents()
@@ -130,7 +93,7 @@ export function AgentConfigurePage() {
       const model: AgentModel = editPrimary
         ? { primary: editPrimary, fallbacks: fallbackList }
         : { primary: "" }
-      const updated = await putAgent(selectedId, {
+      const updated = await updateAgent(selectedId, {
         mode: editMode,
         model,
         skills: Array.from(editSkills),
@@ -151,6 +114,38 @@ export function AgentConfigurePage() {
     }
   }
 
+  async function handleCreateAgent() {
+    const id = newId.trim()
+    if (!id) {
+      setCreateError(t("pages.agentConfigure.agentIdRequired"))
+      return
+    }
+    setCreating(true)
+    setCreateError(null)
+    try {
+      const created = await createAgent({
+        id,
+        name: newName.trim() || id,
+        mode: newMode,
+      })
+      setData((prev) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          agents: [...prev.agents, created],
+        }
+      })
+      selectAgent(created)
+      setNewId("")
+      setNewName("")
+      setNewMode("active")
+    } catch (e: unknown) {
+      setCreateError(e instanceof Error ? e.message : "Create failed")
+    } finally {
+      setCreating(false)
+    }
+  }
+
   const selectedAgent = data?.agents.find((a) => a.id === selectedId)
 
   if (loading) {
@@ -158,7 +153,7 @@ export function AgentConfigurePage() {
       <div className="flex h-full flex-col">
         <PageHeader title={t("navigation.configure")} />
         <div className="flex flex-1 items-center justify-center">
-          <IconLoader2 className="size-6 animate-spin text-muted-foreground" />
+          <IconLoader2 className="text-muted-foreground size-6 animate-spin" />
         </div>
       </div>
     )
@@ -168,7 +163,7 @@ export function AgentConfigurePage() {
     return (
       <div className="flex h-full flex-col">
         <PageHeader title={t("navigation.configure")} />
-        <div className="p-6 text-destructive">{error}</div>
+        <div className="text-destructive p-6">{error}</div>
       </div>
     )
   }
@@ -178,13 +173,54 @@ export function AgentConfigurePage() {
       <PageHeader title={t("navigation.configure")} />
       <div className="flex flex-1 overflow-hidden">
         {/* ── Agent list sidebar ── */}
-        <div className="w-56 shrink-0 overflow-y-auto border-r bg-muted/30 p-2">
+        <div className="bg-muted/30 w-56 shrink-0 overflow-y-auto border-r p-2">
+          <div className="bg-background mb-3 space-y-2 rounded-md border p-2">
+            <p className="text-muted-foreground text-xs font-medium">
+              {t("pages.agentConfigure.addAgent")}
+            </p>
+            <input
+              className="border-input placeholder:text-muted-foreground focus-visible:ring-ring flex h-8 w-full rounded-md border bg-transparent px-2 text-xs shadow-sm focus-visible:ring-1 focus-visible:outline-none"
+              placeholder={t("pages.agentConfigure.agentId")}
+              value={newId}
+              onChange={(e) => setNewId(e.target.value)}
+            />
+            <input
+              className="border-input placeholder:text-muted-foreground focus-visible:ring-ring flex h-8 w-full rounded-md border bg-transparent px-2 text-xs shadow-sm focus-visible:ring-1 focus-visible:outline-none"
+              placeholder={t("pages.agentConfigure.agentName")}
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+            />
+            <Select value={newMode} onValueChange={setNewMode}>
+              <SelectTrigger className="h-8 w-full text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">active</SelectItem>
+                <SelectItem value="passive">passive</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              size="sm"
+              className="w-full"
+              onClick={handleCreateAgent}
+              disabled={creating}
+            >
+              {creating ? (
+                <IconLoader2 className="mr-2 size-3 animate-spin" />
+              ) : null}
+              {t("pages.agentConfigure.create")}
+            </Button>
+            {createError && (
+              <p className="text-destructive text-xs">{createError}</p>
+            )}
+          </div>
+
           {data?.agents.map((agent) => (
             <button
               key={agent.id}
               onClick={() => selectAgent(agent)}
               className={[
-                "w-full rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-muted",
+                "hover:bg-muted w-full rounded-md px-3 py-2 text-left text-sm transition-colors",
                 selectedId === agent.id ? "bg-muted font-medium" : "",
               ].join(" ")}
             >
@@ -206,7 +242,7 @@ export function AgentConfigurePage() {
                 <h2 className="text-base font-semibold">
                   {selectedAgent.name || selectedAgent.id}
                 </h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   {selectedAgent.id}
                 </p>
               </div>
@@ -232,7 +268,7 @@ export function AgentConfigurePage() {
                 <label className="text-sm font-medium">
                   {t("pages.agentConfigure.primaryModel")}
                 </label>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   {t("pages.agentConfigure.primaryModelHint", {
                     defaultValue: data?.default_model_name,
                   })}
@@ -262,7 +298,7 @@ export function AgentConfigurePage() {
                   {t("pages.agentConfigure.fallbackModels")}
                 </label>
                 <input
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className="border-input placeholder:text-muted-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
                   placeholder="model-a, model-b"
                   value={editFallbacks}
                   onChange={(e) => setEditFallbacks(e.target.value)}
@@ -276,14 +312,14 @@ export function AgentConfigurePage() {
                 </label>
                 <div className="max-h-48 overflow-y-auto rounded-md border p-2">
                   {data?.available_skills.length === 0 && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-muted-foreground text-xs">
                       {t("pages.agentConfigure.noSkills")}
                     </p>
                   )}
                   {data?.available_skills.map((skill) => (
                     <label
                       key={skill}
-                      className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm hover:bg-muted"
+                      className="hover:bg-muted flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm"
                     >
                       <input
                         type="checkbox"
@@ -310,7 +346,7 @@ export function AgentConfigurePage() {
                     .map((a) => (
                       <label
                         key={a.id}
-                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm hover:bg-muted"
+                        className="hover:bg-muted flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm"
                       >
                         <input
                           type="checkbox"
@@ -341,13 +377,13 @@ export function AgentConfigurePage() {
                   </span>
                 )}
                 {saveError && (
-                  <span className="text-sm text-destructive">{saveError}</span>
+                  <span className="text-destructive text-sm">{saveError}</span>
                 )}
               </div>
             </div>
           </div>
         ) : (
-          <div className="flex flex-1 items-center justify-center text-muted-foreground">
+          <div className="text-muted-foreground flex flex-1 items-center justify-center">
             <div className="text-center">
               <IconUserCog className="mx-auto mb-2 size-10 opacity-30" />
               <p className="text-sm">{t("pages.agentConfigure.selectAgent")}</p>
