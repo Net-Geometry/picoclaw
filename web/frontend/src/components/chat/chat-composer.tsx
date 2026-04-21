@@ -1,4 +1,10 @@
-import { IconArrowUp, IconPhotoPlus, IconX } from "@tabler/icons-react"
+import {
+  IconArrowUp,
+  IconFilePlus,
+  IconMicrophone,
+  IconPlayerStop,
+  IconX,
+} from "@tabler/icons-react"
 import type { KeyboardEvent } from "react"
 import { useTranslation } from "react-i18next"
 import TextareaAutosize from "react-textarea-autosize"
@@ -6,6 +12,14 @@ import TextareaAutosize from "react-textarea-autosize"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { ChatAttachment } from "@/store/chat"
+
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return "0 B"
+  const k = 1024
+  const sizes = ["B", "KB", "MB", "GB"]
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`
+}
 
 export type ChatInputDisabledReason =
   | "gatewayUnknown"
@@ -23,22 +37,28 @@ interface ChatComposerProps {
   input: string
   attachments: ChatAttachment[]
   onInputChange: (value: string) => void
-  onAddImages: () => void
+  onAddFiles: () => void
+  onToggleRecording: () => void
   onRemoveAttachment: (index: number) => void
   onSend: () => void
   inputDisabledReason: ChatInputDisabledReason | null
   canSend: boolean
+  isRecording: boolean
+  recordingTranscript?: string
 }
 
 export function ChatComposer({
   input,
   attachments,
   onInputChange,
-  onAddImages,
+  onAddFiles,
+  onToggleRecording,
   onRemoveAttachment,
   onSend,
   inputDisabledReason,
   canSend,
+  isRecording,
+  recordingTranscript,
 }: ChatComposerProps) {
   const { t } = useTranslation()
   const canInput = inputDisabledReason === null
@@ -64,19 +84,40 @@ export function ChatComposer({
             {attachments.map((attachment, index) => (
               <div
                 key={`${attachment.url}-${index}`}
-                className="bg-background relative h-20 w-20 overflow-hidden rounded-xl border"
+                className="bg-background relative flex min-h-20 min-w-20 flex-col gap-1 overflow-hidden rounded-xl border px-3 py-2"
               >
-                <img
-                  src={attachment.url}
-                  alt={attachment.filename || t("chat.uploadedImage")}
-                  className="h-full w-full object-cover"
-                />
+                {attachment.type === "image" ? (
+                  <img
+                    src={attachment.url}
+                    alt={attachment.filename || t("chat.uploadedImage")}
+                    className="h-12 w-12 rounded object-cover"
+                  />
+                ) : (
+                  <div className="bg-muted text-muted-foreground flex h-12 w-12 items-center justify-center rounded text-xs font-semibold uppercase">
+                    {attachment.type === "audio" ? "AUD" : "DOC"}
+                  </div>
+                )}
+                <div className="flex max-w-40 flex-col pr-5 text-xs">
+                  <div className="truncate font-medium">
+                    {attachment.filename || t("chat.uploadedFile")}
+                  </div>
+                  {attachment.size && (
+                    <div className="text-muted-foreground text-xs">
+                      {formatFileSize(attachment.size)}
+                    </div>
+                  )}
+                  {attachment.type === "audio" && attachment.transcript && (
+                    <div className="text-muted-foreground mt-1 line-clamp-2 text-xs italic">
+                      "{attachment.transcript}"
+                    </div>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={() => onRemoveAttachment(index)}
                   className="bg-background/85 text-foreground absolute top-1 right-1 inline-flex h-6 w-6 items-center justify-center rounded-full border shadow-sm transition hover:bg-white"
-                  aria-label={t("chat.removeImage")}
-                  title={t("chat.removeImage")}
+                  aria-label={t("chat.removeAttachment")}
+                  title={t("chat.removeAttachment")}
                 >
                   <IconX className="h-3.5 w-3.5" />
                 </button>
@@ -99,6 +140,18 @@ export function ChatComposer({
           minRows={1}
           maxRows={8}
         />
+
+        {isRecording && recordingTranscript && (
+          <div className="bg-muted/30 border-muted mx-2 rounded-lg border px-3 py-2 text-xs">
+            <div className="text-muted-foreground mb-1 text-xs font-medium">
+              {t("chat.transcriptPreview")}
+            </div>
+            <div className="text-foreground line-clamp-3">
+              {recordingTranscript}
+            </div>
+          </div>
+        )}
+
         {!canInput && disabledMessage && (
           <div className="text-muted-foreground px-3 py-1 text-xs">
             {disabledMessage}
@@ -112,12 +165,36 @@ export function ChatComposer({
               variant="ghost"
               size="icon"
               className="text-muted-foreground hover:text-foreground h-8 w-8 rounded-full"
-              onClick={onAddImages}
+              onClick={onAddFiles}
               disabled={!canInput}
-              aria-label={t("chat.attachImage")}
-              title={t("chat.attachImage")}
+              aria-label={t("chat.attachFile")}
+              title={t("chat.attachFile")}
             >
-              <IconPhotoPlus className="size-4" />
+              <IconFilePlus className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              variant={isRecording ? "default" : "ghost"}
+              size="icon"
+              className="text-muted-foreground hover:text-foreground h-8 w-8 rounded-full"
+              onClick={onToggleRecording}
+              disabled={!canInput}
+              aria-label={
+                isRecording
+                  ? t("chat.stopVoiceRecording")
+                  : t("chat.recordVoice")
+              }
+              title={
+                isRecording
+                  ? t("chat.stopVoiceRecording")
+                  : t("chat.recordVoice")
+              }
+            >
+              {isRecording ? (
+                <IconPlayerStop className="size-4" />
+              ) : (
+                <IconMicrophone className="size-4" />
+              )}
             </Button>
           </div>
 

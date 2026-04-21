@@ -200,6 +200,8 @@ func TestExecutor_SubCommand_NoArg_RepliesUsage(t *testing.T) {
 			SubCommands: []SubCommand{
 				{Name: "model"},
 				{Name: "channel"},
+				{Name: "agent"},
+				{Name: "project"},
 			},
 		},
 	}
@@ -213,7 +215,7 @@ func TestExecutor_SubCommand_NoArg_RepliesUsage(t *testing.T) {
 	if res.Outcome != OutcomeHandled {
 		t.Fatalf("outcome=%v, want=%v", res.Outcome, OutcomeHandled)
 	}
-	if reply != "Usage: /show [model|channel]" {
+	if reply != "Usage: /show [model|channel|agent|project]" {
 		t.Fatalf("reply=%q, want usage message", reply)
 	}
 }

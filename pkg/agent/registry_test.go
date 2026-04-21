@@ -161,6 +161,52 @@ func TestAgentRegistry_CanSpawnSubagent_Wildcard(t *testing.T) {
 	}
 }
 
+func TestAgentRegistry_IsPassiveAgent(t *testing.T) {
+	cfg := testCfg([]config.AgentConfig{
+		{ID: "pm", Mode: "active"},
+		{ID: "pm-risk-manager", Mode: "passive"},
+	})
+	registry := NewAgentRegistry(cfg, &mockRegistryProvider{})
+
+	if registry.IsPassiveAgent("pm") {
+		t.Fatal("expected pm to be active")
+	}
+	if !registry.IsPassiveAgent("pm-risk-manager") {
+		t.Fatal("expected pm-risk-manager to be passive")
+	}
+}
+
+func TestAgentRegistry_CanSpawnSubagent_StrictPMDirection(t *testing.T) {
+	cfg := testCfg([]config.AgentConfig{
+		{
+			ID:   "pm",
+			Mode: "active",
+			Subagents: &config.SubagentsConfig{
+				AllowAgents: []string{"pm-plan-manager", "pm-delivery-manager"},
+			},
+		},
+		{ID: "pm-plan-manager", Mode: "passive"},
+		{
+			ID:   "pm-delivery-manager",
+			Mode: "active",
+			Subagents: &config.SubagentsConfig{
+				AllowAgents: []string{"pm"},
+			},
+		},
+	})
+	registry := NewAgentRegistry(cfg, &mockRegistryProvider{})
+
+	if !registry.CanSpawnSubagent("pm", "pm-plan-manager") {
+		t.Fatal("expected active PM agent to spawn passive PM agent")
+	}
+	if registry.CanSpawnSubagent("pm", "pm-delivery-manager") {
+		t.Fatal("expected active PM agent to NOT spawn another active PM agent")
+	}
+	if registry.CanSpawnSubagent("pm-plan-manager", "pm") {
+		t.Fatal("expected passive PM agent to NOT spawn active PM agent")
+	}
+}
+
 func TestAgentInstance_Model(t *testing.T) {
 	model := &config.AgentModelConfig{Primary: "claude-opus"}
 	cfg := testCfg([]config.AgentConfig{

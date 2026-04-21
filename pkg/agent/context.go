@@ -57,6 +57,13 @@ func (cb *ContextBuilder) WithSplitOnMarker(enabled bool) *ContextBuilder {
 	return cb
 }
 
+func (cb *ContextBuilder) WithMemoryCore(cfg config.MemoryCoreConfig) *ContextBuilder {
+	if cb.memory != nil {
+		cb.memory.WithMemoryCore(cfg)
+	}
+	return cb
+}
+
 func getGlobalConfigDir() string {
 	return config.GetHome()
 }

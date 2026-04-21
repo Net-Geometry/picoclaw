@@ -10,9 +10,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
+	"github.com/sipeed/picoclaw/pkg/config"
 	"github.com/sipeed/picoclaw/pkg/fileutil"
 )
 
@@ -23,6 +25,7 @@ type MemoryStore struct {
 	workspace  string
 	memoryDir  string
 	memoryFile string
+	coreConfig config.MemoryCoreConfig
 }
 
 // NewMemoryStore creates a new MemoryStore with the given workspace path.
@@ -39,6 +42,15 @@ func NewMemoryStore(workspace string) *MemoryStore {
 		memoryDir:  memoryDir,
 		memoryFile: memoryFile,
 	}
+}
+
+// WithMemoryCore enables optional integration with Project-AI-MemoryCore.
+func (ms *MemoryStore) WithMemoryCore(cfg config.MemoryCoreConfig) *MemoryStore {
+	ms.coreConfig = cfg
+	if ms.coreConfig.MaxDiaryFiles <= 0 {
+		ms.coreConfig.MaxDiaryFiles = 2
+	}
+	return ms
 }
 
 // getTodayFile returns the path to today's daily note file (memory/YYYYMM/YYYYMMDD.md).
@@ -134,8 +146,9 @@ func (ms *MemoryStore) GetRecentDailyNotes(days int) string {
 func (ms *MemoryStore) GetMemoryContext() string {
 	longTerm := ms.ReadLongTerm()
 	recentNotes := ms.GetRecentDailyNotes(3)
+	coreContext := ms.GetMemoryCoreContext()
 
-	if longTerm == "" && recentNotes == "" {
+	if longTerm == "" && recentNotes == "" && coreContext == "" {
 		return ""
 	}
 
@@ -154,5 +167,117 @@ func (ms *MemoryStore) GetMemoryContext() string {
 		sb.WriteString(recentNotes)
 	}
 
+	if coreContext != "" {
+		if longTerm != "" || recentNotes != "" {
+			sb.WriteString("\n\n---\n\n")
+		}
+		sb.WriteString(coreContext)
+	}
+
 	return sb.String()
+}
+
+func (ms *MemoryStore) GetMemoryCoreContext() string {
+	if !ms.coreConfig.Enabled {
+		return ""
+	}
+
+	corePath := strings.TrimSpace(ms.coreConfig.Path)
+	if corePath == "" {
+		corePath = filepath.Join(ms.workspace, "ai-memorycore")
+	}
+
+	readCore := func(rel string) string {
+		path := filepath.Join(corePath, rel)
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return ""
+		}
+		content := strings.TrimSpace(string(data))
+		if content == "" {
+			return ""
+		}
+		const maxBytes = 16 * 1024
+		if len(content) > maxBytes {
+			content = content[:maxBytes] + "\n\n[truncated]"
+		}
+		return content
+	}
+
+	var sections []string
+	for _, file := range []struct {
+		Title string
+		Path  string
+	}{
+		{Title: "MemoryCore Master", Path: "master-memory.md"},
+		{Title: "MemoryCore Identity", Path: filepath.Join("main", "identity-core.md")},
+		{Title: "MemoryCore Relationship", Path: filepath.Join("main", "relationship-memory.md")},
+		{Title: "MemoryCore Current Session", Path: filepath.Join("main", "current-session.md")},
+	} {
+		if content := readCore(file.Path); content != "" {
+			sections = append(sections, "### "+file.Title+"\n\n"+content)
+		}
+	}
+
+	if diary := ms.readRecentMemoryCoreDiaries(corePath); diary != "" {
+		sections = append(sections, "### MemoryCore Daily Diary\n\n"+diary)
+	}
+
+	if len(sections) == 0 {
+		return ""
+	}
+
+	return "## MemoryCore Context\n\n" + strings.Join(sections, "\n\n---\n\n")
+}
+
+func (ms *MemoryStore) readRecentMemoryCoreDiaries(corePath string) string {
+	diaryDir := filepath.Join(corePath, "daily-diary")
+	entries, err := os.ReadDir(diaryDir)
+	if err != nil {
+		return ""
+	}
+
+	var names []string
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if strings.HasSuffix(strings.ToLower(name), ".md") {
+			names = append(names, name)
+		}
+	}
+
+	if len(names) == 0 {
+		return ""
+	}
+
+	sort.Strings(names)
+	maxFiles := ms.coreConfig.MaxDiaryFiles
+	if maxFiles <= 0 {
+		maxFiles = 2
+	}
+	if len(names) > maxFiles {
+		names = names[len(names)-maxFiles:]
+	}
+
+	var chunks []string
+	for _, name := range names {
+		path := filepath.Join(diaryDir, name)
+		data, err := os.ReadFile(path)
+		if err != nil {
+			continue
+		}
+		content := strings.TrimSpace(string(data))
+		if content == "" {
+			continue
+		}
+		const maxBytes = 8 * 1024
+		if len(content) > maxBytes {
+			content = content[:maxBytes] + "\n\n[truncated]"
+		}
+		chunks = append(chunks, "#### "+name+"\n\n"+content)
+	}
+
+	return strings.Join(chunks, "\n\n")
 }

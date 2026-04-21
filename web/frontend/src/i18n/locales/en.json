@@ -9,11 +9,14 @@
     "skills": "Skills",
     "tools": "Tools",
     "services": "Services",
+    "activity": "Activity",
     "channels_group": "Channels",
     "show_more_channels": "More",
     "show_less_channels": "Less",
     "config": "Config",
-    "logs": "Logs"
+    "logs": "Logs",
+    "scheduler": "Scheduler"
+      ,"configure": "Configure"
   },
   "launcherLogin": {
     "title": "Sign in",
@@ -73,11 +76,25 @@
       "noModel": "No default model configured. Go to Models page to set one."
     },
     "attachImage": "Add images",
+    "attachFile": "Attach file",
+    "recordVoice": "Record voice",
+    "stopVoiceRecording": "Stop recording",
     "removeImage": "Remove image",
+    "removeAttachment": "Remove attachment",
     "uploadedImage": "Uploaded image",
+    "uploadedFile": "Uploaded file",
+    "voiceMessage": "Voice message",
     "invalidImage": "\"{{name}}\" is not a supported image file.",
     "imageTooLarge": "\"{{name}}\" exceeds the {{size}} limit.",
     "imageReadFailed": "Failed to read \"{{name}}\".",
+    "invalidAttachment": "\"{{name}}\" is not a supported attachment type.",
+    "attachmentTooLarge": "\"{{name}}\" exceeds the {{size}} limit.",
+    "attachmentReadFailed": "Failed to read \"{{name}}\".",
+    "voiceUnsupported": "Voice recording is not supported in this browser.",
+    "voicePermissionDenied": "Microphone permission was denied.",
+    "voiceRecordFailed": "Voice recording failed. Please try again.",
+    "dropFilesHere": "Drop files here to upload",
+    "transcriptPreview": "Transcript:",
     "empty": {
       "noConfiguredModel": "No Model Configured",
       "noConfiguredModelDescription": "You need to configure at least one AI model with an API key before you can start chatting.",
@@ -172,7 +189,8 @@
     "labels": {
       "account": "Account",
       "email": "Email",
-      "project": "Project"
+      "project": "Project",
+      "credentialCount": "{{count}} credentials stored for this provider"
     },
     "errors": {
       "loadFailed": "Failed to load credentials",
@@ -254,11 +272,18 @@
     "advanced": {
       "toggle": "Advanced options"
     },
+    "card": {
+      "apiKeysConfigured": "{{count}} keys configured"
+    },
     "field": {
       "apiBase": "API Base URL",
       "apiKey": "API Key",
       "apiKeyPlaceholder": "Enter your API key",
       "apiKeyPlaceholderSet": "Leave blank to keep existing key",
+      "apiKeys": "API Keys",
+      "apiKeysHint": "One per line, or comma-separated.",
+      "apiKeysPlaceholder": "sk-key-1\nsk-key-2",
+      "apiKeysPlaceholderSet": "Leave blank to keep existing keys ({{count}} configured)",
       "proxy": "HTTP Proxy",
       "proxyHint": "Optional. e.g. http://127.0.0.1:7890",
       "authMethod": "Auth Method",
@@ -283,6 +308,7 @@
     "edit": {
       "title": "Configure {{name}}",
       "apiKeyHint": "A key is already set. Leave blank to keep it unchanged.",
+      "apiKeysHint": "{{count}} keys are already set. Leave blank to keep them unchanged.",
       "oauthNote": "This provider uses OAuth — no API key required.",
       "saveError": "Failed to save"
     }
@@ -688,11 +714,91 @@
     "logs": {
       "log_level_error": "Failed to update log level.",
       "clear": "Clear logs",
-      "empty": "Waiting for logs..."
+      "empty": "Waiting for logs...",
+      "filter": {
+        "all": "All",
+        "agent": "Agent",
+        "subagents": "Subagents"
+      }
+    },
+    "activity": {
+      "cards": {
+        "totalEvents": "Total Events",
+        "subagentEvents": "Subagent Events",
+        "agentsSeen": "Agents Seen",
+        "activeSubagents": "Active Subagents"
+      },
+      "mode": {
+        "live": "Live",
+        "simulated": "Simulated",
+        "mixed": "Mixed"
+      },
+      "spawnGraphTitle": "Spawn Graph",
+      "simulationTitle": "Agent Simulation",
+      "timelineTitle": "Live Activity Timeline",
+      "emptySpawnGraph": "No spawn relationships observed yet.",
+      "emptyTimeline": "No activity events yet. Trigger a task to start streaming.",
+      "simulationMode": "Simulation mode (no live spawn events captured yet)",
+      "liveMode": "Live mode (real gateway events)",
+      "mixedMode": "Mixed mode (prefer live, fallback to simulation)",
+      "liveEvents": "Live events",
+      "simulatedEvents": "Simulated events",
+      "simulationNoAgents": "No agents discovered from runtime config."
+    },
+    "scheduler": {
+      "title": "Scheduler",
+      "description": "Schedule agents to run automatically on a recurring or one-time basis.",
+      "jobs": "scheduled jobs",
+      "newJob": "New Job",
+      "createJob": "Create Scheduled Job",
+      "editJob": "Edit Scheduled Job",
+      "loading": "Loading...",
+      "noJobs": "No scheduled jobs yet. Click \"New Job\" to create one.",
+      "disabled": "Disabled",
+      "col": {
+        "name": "Name",
+        "schedule": "Schedule",
+        "message": "Message",
+        "lastRun": "Last Run",
+        "nextRun": "Next Run",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "scheduleKind": {
+        "cron": "Cron expression",
+        "every": "Repeat every N minutes",
+        "at": "Run once at"
+      },
+      "field": {
+        "name": "Job name",
+        "scheduleKind": "Schedule type",
+        "cronExpr": "Cron expression",
+        "cronExprHint": "Standard 5-field cron. E.g. \"0 9 * * 1-5\" = every weekday at 9am.",
+        "everyMinutes": "Interval (minutes)",
+        "atDatetime": "Run at",
+        "message": "Prompt / message",
+        "messagePlaceholder": "What should the agent do when this runs?",
+        "channel": "Channel (leave blank for default)",
+        "to": "Target agent (e.g. pm)"
+      }
+      },
+      "agentConfigure": {
+      "title": "Configure Agents",
+      "mode": "Mode",
+      "primaryModel": "Primary Model",
+      "primaryModelHint": "Leave as default ({{defaultValue}}) or pick a specific model.",
+      "fallbackModels": "Fallback Models",
+      "fallbackModelsHint": "Comma-separated model names used when the primary fails.",
+      "skills": "Skills",
+      "noSkills": "No skills installed.",
+      "allowedSubagents": "Allowed Subagents",
+      "save": "Save",
+      "saved": "Saved",
+      "selectAgent": "Select an agent from the list"
     }
   },
   "tour": {
-    "skip": "Skip tour",
+      "skip": "Skip tour",
     "prev": "Previous",
     "next": "Next",
     "finish": "Finish",

@@ -24,13 +24,15 @@ func (h *Handler) registerModelRoutes(mux *http.ServeMux) {
 // modelResponse is the JSON structure returned for each model in the list.
 // All ModelConfig fields are included so the frontend can display and edit them.
 type modelResponse struct {
-	Index      int    `json:"index"`
-	ModelName  string `json:"model_name"`
-	Model      string `json:"model"`
-	APIBase    string `json:"api_base,omitempty"`
-	APIKey     string `json:"api_key"`
-	Proxy      string `json:"proxy,omitempty"`
-	AuthMethod string `json:"auth_method,omitempty"`
+	Index        int      `json:"index"`
+	ModelName    string   `json:"model_name"`
+	Model        string   `json:"model"`
+	APIBase      string   `json:"api_base,omitempty"`
+	APIKey       string   `json:"api_key"`
+	APIKeys      []string `json:"api_keys,omitempty"`
+	APIKeysCount int      `json:"api_keys_count,omitempty"`
+	Proxy        string   `json:"proxy,omitempty"`
+	AuthMethod   string   `json:"auth_method,omitempty"`
 	// Advanced fields
 	ConnectMode    string            `json:"connect_mode,omitempty"`
 	Workspace      string            `json:"workspace,omitempty"`
@@ -73,12 +75,15 @@ func (h *Handler) handleListModels(w http.ResponseWriter, r *http.Request) {
 
 	models := make([]modelResponse, 0, len(cfg.ModelList))
 	for i, m := range cfg.ModelList {
+		keys := m.APIKeys.Values()
 		models = append(models, modelResponse{
 			Index:          i,
 			ModelName:      m.ModelName,
 			Model:          m.Model,
 			APIBase:        m.APIBase,
 			APIKey:         maskAPIKey(m.APIKey()),
+			APIKeys:        maskAPIKeys(keys),
+			APIKeysCount:   len(keys),
 			Proxy:          m.Proxy,
 			AuthMethod:     m.AuthMethod,
 			ConnectMode:    m.ConnectMode,
@@ -127,12 +132,25 @@ func (h *Handler) handleAddModel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var raw map[string]json.RawMessage
+	if err = json.Unmarshal(body, &raw); err != nil {
+		http.Error(w, fmt.Sprintf("Invalid JSON: %v", err), http.StatusBadRequest)
+		return
+	}
+
 	if err = mc.Validate(); err != nil {
 		http.Error(w, fmt.Sprintf("Validation error: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	if mc.APIKey != "" {
+	if hasAPIKeys(raw) {
+		keys, err := parseAPIKeys(raw["api_keys"])
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Invalid api_keys: %v", err), http.StatusBadRequest)
+			return
+		}
+		mc.ModelConfig.APIKeys = config.SimpleSecureStrings(keys...)
+	} else if mc.APIKey != "" {
 		mc.ModelConfig.SetAPIKey(mc.APIKey)
 	}
 
@@ -187,6 +205,12 @@ func (h *Handler) handleUpdateModel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var raw map[string]json.RawMessage
+	if err = json.Unmarshal(body, &raw); err != nil {
+		http.Error(w, fmt.Sprintf("Invalid JSON: %v", err), http.StatusBadRequest)
+		return
+	}
+
 	if err = mc.Validate(); err != nil {
 		http.Error(w, fmt.Sprintf("Validation error: %v", err), http.StatusBadRequest)
 		return
@@ -203,12 +227,25 @@ func (h *Handler) handleUpdateModel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Preserve the existing API key when the caller omits it (empty string).
-	// This lets the UI update api_base / proxy without clearing the stored secret.
-	if mc.APIKey == "" {
-		mc.ModelConfig.SetAPIKey(cfg.ModelList[idx].APIKey())
+	// Credential update semantics:
+	// - api_keys provided: replace the full key list (empty list clears keys)
+	// - api_key provided: update first key when non-empty; empty keeps existing
+	// - omitted: keep existing key list
+	if hasAPIKeys(raw) {
+		keys, err := parseAPIKeys(raw["api_keys"])
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Invalid api_keys: %v", err), http.StatusBadRequest)
+			return
+		}
+		mc.ModelConfig.APIKeys = config.SimpleSecureStrings(keys...)
+	} else if _, ok := raw["api_key"]; ok {
+		if mc.APIKey == "" {
+			mc.ModelConfig.APIKeys = cfg.ModelList[idx].APIKeys
+		} else {
+			mc.ModelConfig.SetAPIKey(mc.APIKey)
+		}
 	} else {
-		mc.ModelConfig.SetAPIKey(mc.APIKey)
+		mc.ModelConfig.APIKeys = cfg.ModelList[idx].APIKeys
 	}
 	// Preserve existing ExtraBody when omitted (nil), but clear it when
 	// the frontend sends an empty object {} to indicate the field should
@@ -364,4 +401,31 @@ func maskAPIKey(key string) string {
 
 	// Show first 3 chars and last 4 chars
 	return key[:3] + "****" + key[len(key)-4:]
+}
+
+func maskAPIKeys(keys []string) []string {
+	if len(keys) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(keys))
+	for _, key := range keys {
+		out = append(out, maskAPIKey(key))
+	}
+	return out
+}
+
+func hasAPIKeys(raw map[string]json.RawMessage) bool {
+	_, ok := raw["api_keys"]
+	return ok
+}
+
+func parseAPIKeys(raw json.RawMessage) ([]string, error) {
+	if len(raw) == 0 {
+		return nil, nil
+	}
+	var keys []string
+	if err := json.Unmarshal(raw, &keys); err != nil {
+		return nil, err
+	}
+	return keys, nil
 }

@@ -18,9 +18,11 @@ func TestDefinition_EffectiveUsage_WithSubCommands(t *testing.T) {
 			{Name: "model"},
 			{Name: "channel"},
 			{Name: "agents"},
+			{Name: "agent"},
+			{Name: "project"},
 		},
 	}
-	want := "/show [model|channel|agents]"
+	want := "/show [model|channel|agents|agent|project]"
 	if got := d.EffectiveUsage(); got != want {
 		t.Fatalf("EffectiveUsage()=%q, want %q", got, want)
 	}

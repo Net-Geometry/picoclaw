@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SchedulerRouteImport } from './routes/scheduler'
 import { Route as ModelsRouteImport } from './routes/models'
 import { Route as LogsRouteImport } from './routes/logs'
 import { Route as LauncherSetupRouteImport } from './routes/launcher-setup'
@@ -16,6 +17,7 @@ import { Route as LauncherLoginRouteImport } from './routes/launcher-login'
 import { Route as CredentialsRouteImport } from './routes/credentials'
 import { Route as ConfigRouteImport } from './routes/config'
 import { Route as AgentRouteImport } from './routes/agent'
+import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as ChannelsRouteRouteImport } from './routes/channels/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ConfigRawRouteImport } from './routes/config.raw'
@@ -23,7 +25,13 @@ import { Route as ChannelsNameRouteImport } from './routes/channels/$name'
 import { Route as AgentToolsRouteImport } from './routes/agent/tools'
 import { Route as AgentSkillsRouteImport } from './routes/agent/skills'
 import { Route as AgentHubRouteImport } from './routes/agent/hub'
+import { Route as AgentConfigureRouteImport } from './routes/agent/configure'
 
+const SchedulerRoute = SchedulerRouteImport.update({
+  id: '/scheduler',
+  path: '/scheduler',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ModelsRoute = ModelsRouteImport.update({
   id: '/models',
   path: '/models',
@@ -57,6 +65,11 @@ const ConfigRoute = ConfigRouteImport.update({
 const AgentRoute = AgentRouteImport.update({
   id: '/agent',
   path: '/agent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivityRoute = ActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChannelsRouteRoute = ChannelsRouteRouteImport.update({
@@ -94,10 +107,16 @@ const AgentHubRoute = AgentHubRouteImport.update({
   path: '/hub',
   getParentRoute: () => AgentRoute,
 } as any)
+const AgentConfigureRoute = AgentConfigureRouteImport.update({
+  id: '/configure',
+  path: '/configure',
+  getParentRoute: () => AgentRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/channels': typeof ChannelsRouteRouteWithChildren
+  '/activity': typeof ActivityRoute
   '/agent': typeof AgentRouteWithChildren
   '/config': typeof ConfigRouteWithChildren
   '/credentials': typeof CredentialsRoute
@@ -105,6 +124,8 @@ export interface FileRoutesByFullPath {
   '/launcher-setup': typeof LauncherSetupRoute
   '/logs': typeof LogsRoute
   '/models': typeof ModelsRoute
+  '/scheduler': typeof SchedulerRoute
+  '/agent/configure': typeof AgentConfigureRoute
   '/agent/hub': typeof AgentHubRoute
   '/agent/skills': typeof AgentSkillsRoute
   '/agent/tools': typeof AgentToolsRoute
@@ -114,6 +135,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/channels': typeof ChannelsRouteRouteWithChildren
+  '/activity': typeof ActivityRoute
   '/agent': typeof AgentRouteWithChildren
   '/config': typeof ConfigRouteWithChildren
   '/credentials': typeof CredentialsRoute
@@ -121,6 +143,8 @@ export interface FileRoutesByTo {
   '/launcher-setup': typeof LauncherSetupRoute
   '/logs': typeof LogsRoute
   '/models': typeof ModelsRoute
+  '/scheduler': typeof SchedulerRoute
+  '/agent/configure': typeof AgentConfigureRoute
   '/agent/hub': typeof AgentHubRoute
   '/agent/skills': typeof AgentSkillsRoute
   '/agent/tools': typeof AgentToolsRoute
@@ -131,6 +155,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/channels': typeof ChannelsRouteRouteWithChildren
+  '/activity': typeof ActivityRoute
   '/agent': typeof AgentRouteWithChildren
   '/config': typeof ConfigRouteWithChildren
   '/credentials': typeof CredentialsRoute
@@ -138,6 +163,8 @@ export interface FileRoutesById {
   '/launcher-setup': typeof LauncherSetupRoute
   '/logs': typeof LogsRoute
   '/models': typeof ModelsRoute
+  '/scheduler': typeof SchedulerRoute
+  '/agent/configure': typeof AgentConfigureRoute
   '/agent/hub': typeof AgentHubRoute
   '/agent/skills': typeof AgentSkillsRoute
   '/agent/tools': typeof AgentToolsRoute
@@ -149,6 +176,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/channels'
+    | '/activity'
     | '/agent'
     | '/config'
     | '/credentials'
@@ -156,6 +184,8 @@ export interface FileRouteTypes {
     | '/launcher-setup'
     | '/logs'
     | '/models'
+    | '/scheduler'
+    | '/agent/configure'
     | '/agent/hub'
     | '/agent/skills'
     | '/agent/tools'
@@ -165,6 +195,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/channels'
+    | '/activity'
     | '/agent'
     | '/config'
     | '/credentials'
@@ -172,6 +203,8 @@ export interface FileRouteTypes {
     | '/launcher-setup'
     | '/logs'
     | '/models'
+    | '/scheduler'
+    | '/agent/configure'
     | '/agent/hub'
     | '/agent/skills'
     | '/agent/tools'
@@ -181,6 +214,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/channels'
+    | '/activity'
     | '/agent'
     | '/config'
     | '/credentials'
@@ -188,6 +222,8 @@ export interface FileRouteTypes {
     | '/launcher-setup'
     | '/logs'
     | '/models'
+    | '/scheduler'
+    | '/agent/configure'
     | '/agent/hub'
     | '/agent/skills'
     | '/agent/tools'
@@ -198,6 +234,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ChannelsRouteRoute: typeof ChannelsRouteRouteWithChildren
+  ActivityRoute: typeof ActivityRoute
   AgentRoute: typeof AgentRouteWithChildren
   ConfigRoute: typeof ConfigRouteWithChildren
   CredentialsRoute: typeof CredentialsRoute
@@ -205,10 +242,18 @@ export interface RootRouteChildren {
   LauncherSetupRoute: typeof LauncherSetupRoute
   LogsRoute: typeof LogsRoute
   ModelsRoute: typeof ModelsRoute
+  SchedulerRoute: typeof SchedulerRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/scheduler': {
+      id: '/scheduler'
+      path: '/scheduler'
+      fullPath: '/scheduler'
+      preLoaderRoute: typeof SchedulerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/models': {
       id: '/models'
       path: '/models'
@@ -256,6 +301,13 @@ declare module '@tanstack/react-router' {
       path: '/agent'
       fullPath: '/agent'
       preLoaderRoute: typeof AgentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/activity': {
+      id: '/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof ActivityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/channels': {
@@ -307,6 +359,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgentHubRouteImport
       parentRoute: typeof AgentRoute
     }
+    '/agent/configure': {
+      id: '/agent/configure'
+      path: '/configure'
+      fullPath: '/agent/configure'
+      preLoaderRoute: typeof AgentConfigureRouteImport
+      parentRoute: typeof AgentRoute
+    }
   }
 }
 
@@ -323,12 +382,14 @@ const ChannelsRouteRouteWithChildren = ChannelsRouteRoute._addFileChildren(
 )
 
 interface AgentRouteChildren {
+  AgentConfigureRoute: typeof AgentConfigureRoute
   AgentHubRoute: typeof AgentHubRoute
   AgentSkillsRoute: typeof AgentSkillsRoute
   AgentToolsRoute: typeof AgentToolsRoute
 }
 
 const AgentRouteChildren: AgentRouteChildren = {
+  AgentConfigureRoute: AgentConfigureRoute,
   AgentHubRoute: AgentHubRoute,
   AgentSkillsRoute: AgentSkillsRoute,
   AgentToolsRoute: AgentToolsRoute,
@@ -350,6 +411,7 @@ const ConfigRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ChannelsRouteRoute: ChannelsRouteRouteWithChildren,
+  ActivityRoute: ActivityRoute,
   AgentRoute: AgentRouteWithChildren,
   ConfigRoute: ConfigRouteWithChildren,
   CredentialsRoute: CredentialsRoute,
@@ -357,6 +419,7 @@ const rootRouteChildren: RootRouteChildren = {
   LauncherSetupRoute: LauncherSetupRoute,
   LogsRoute: LogsRoute,
   ModelsRoute: ModelsRoute,
+  SchedulerRoute: SchedulerRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

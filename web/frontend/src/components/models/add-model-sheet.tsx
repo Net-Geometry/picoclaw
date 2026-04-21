@@ -3,11 +3,9 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { addModel, setDefaultModel } from "@/api/models"
-import { maskedSecretPlaceholder } from "@/components/secret-placeholder"
 import {
   AdvancedSection,
   Field,
-  KeyInput,
   SwitchCardField,
 } from "@/components/shared-form"
 import { Button } from "@/components/ui/button"
@@ -26,7 +24,7 @@ interface AddForm {
   modelName: string
   model: string
   apiBase: string
-  apiKey: string
+  apiKeys: string
   proxy: string
   authMethod: string
   connectMode: string
@@ -43,7 +41,7 @@ const EMPTY_ADD_FORM: AddForm = {
   modelName: "",
   model: "",
   apiBase: "",
-  apiKey: "",
+  apiKeys: "",
   proxy: "",
   authMethod: "",
   connectMode: "",
@@ -77,10 +75,14 @@ export function AddModelSheet({
     Partial<Record<keyof AddForm, string>>
   >({})
   const [serverError, setServerError] = useState("")
-  const apiKeyPlaceholder = maskedSecretPlaceholder(
-    form.apiKey,
-    t("models.field.apiKeyPlaceholder"),
-  )
+  const apiKeysPlaceholder = t("models.field.apiKeysPlaceholder")
+
+  const parseAPIKeysInput = (value: string): string[] => {
+    return value
+      .split(/[,\n]/)
+      .map((k) => k.trim())
+      .filter(Boolean)
+  }
 
   useEffect(() => {
     if (open) {
@@ -120,11 +122,12 @@ export function AddModelSheet({
     try {
       const modelName = form.modelName.trim()
       const modelId = form.model.trim()
+      const parsedKeys = parseAPIKeysInput(form.apiKeys)
       await addModel({
         model_name: modelName,
         model: modelId,
         api_base: form.apiBase.trim() || undefined,
-        api_key: form.apiKey.trim() || undefined,
+        api_keys: parsedKeys.length > 0 ? parsedKeys : undefined,
         proxy: form.proxy.trim() || undefined,
         auth_method: form.authMethod.trim() || undefined,
         connect_mode: form.connectMode.trim() || undefined,
@@ -202,11 +205,15 @@ export function AddModelSheet({
               )}
             </Field>
 
-            <Field label={t("models.field.apiKey")}>
-              <KeyInput
-                value={form.apiKey}
-                onChange={(v) => setForm((f) => ({ ...f, apiKey: v }))}
-                placeholder={apiKeyPlaceholder}
+            <Field
+              label={t("models.field.apiKeys")}
+              hint={t("models.field.apiKeysHint")}
+            >
+              <Textarea
+                value={form.apiKeys}
+                onChange={setField("apiKeys")}
+                placeholder={apiKeysPlaceholder}
+                rows={3}
               />
             </Field>
 

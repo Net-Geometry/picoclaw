@@ -2,14 +2,37 @@ import { getSessionHistory } from "@/api/sessions"
 import { normalizeUnixTimestamp } from "@/features/chat/state"
 import type { ChatAttachment, ChatMessage } from "@/store/chat"
 
+function mimeTypeFromDataUrl(value: string): string | null {
+  if (!value.startsWith("data:")) {
+    return null
+  }
+
+  const payload = value.slice("data:".length)
+  const [header] = payload.split(",", 1)
+  const [mimeType] = header.split(";", 1)
+  const normalized = mimeType.trim().toLowerCase()
+
+  return normalized || null
+}
+
 function toChatAttachments(media?: string[]): ChatAttachment[] | undefined {
   if (!media || media.length === 0) {
     return undefined
   }
 
   const attachments = media
-    .filter((item) => item.startsWith("data:image/"))
-    .map((url) => ({ type: "image" as const, url }))
+    .filter((item) => item.startsWith("data:"))
+    .map((url) => {
+      const mimeType = mimeTypeFromDataUrl(url)
+      let type: ChatAttachment["type"] = "file"
+      if (mimeType?.startsWith("image/")) {
+        type = "image"
+      } else if (mimeType?.startsWith("audio/")) {
+        type = "audio"
+      }
+
+      return { type, url, mimeType: mimeType || undefined }
+    })
 
   return attachments.length > 0 ? attachments : undefined
 }

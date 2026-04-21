@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/sipeed/picoclaw/pkg/config"
@@ -22,7 +23,10 @@ type AuthCredential struct {
 }
 
 type AuthStore struct {
-	Credentials map[string]*AuthCredential `json:"credentials"`
+	// Credentials is the legacy single-credential map (kept for backward compatibility).
+	Credentials map[string]*AuthCredential `json:"credentials,omitempty"`
+	// CredentialList stores multiple credentials per provider.
+	CredentialList map[string][]*AuthCredential `json:"credential_list,omitempty"`
 }
 
 func (c *AuthCredential) IsExpired() bool {
@@ -48,7 +52,10 @@ func LoadStore() (*AuthStore, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return &AuthStore{Credentials: make(map[string]*AuthCredential)}, nil
+			return &AuthStore{
+				Credentials:    make(map[string]*AuthCredential),
+				CredentialList: make(map[string][]*AuthCredential),
+			}, nil
 		}
 		return nil, err
 	}
@@ -59,6 +66,18 @@ func LoadStore() (*AuthStore, error) {
 	}
 	if store.Credentials == nil {
 		store.Credentials = make(map[string]*AuthCredential)
+	}
+	if store.CredentialList == nil {
+		store.CredentialList = make(map[string][]*AuthCredential)
+	}
+	// Migrate legacy single-credential entries into multi-credential buckets.
+	for provider, cred := range store.Credentials {
+		if cred == nil {
+			continue
+		}
+		if len(store.CredentialList[provider]) == 0 {
+			store.CredentialList[provider] = []*AuthCredential{cred}
+		}
 	}
 	return &store, nil
 }
@@ -79,6 +98,13 @@ func GetCredential(provider string) (*AuthCredential, error) {
 	if err != nil {
 		return nil, err
 	}
+	if creds := store.CredentialList[provider]; len(creds) > 0 {
+		for i := len(creds) - 1; i >= 0; i-- {
+			if creds[i] != nil {
+				return creds[i], nil
+			}
+		}
+	}
 	cred, ok := store.Credentials[provider]
 	if !ok {
 		return nil, nil
@@ -91,8 +117,31 @@ func SetCredential(provider string, cred *AuthCredential) error {
 	if err != nil {
 		return err
 	}
+	store.CredentialList[provider] = upsertCredential(store.CredentialList[provider], cred)
 	store.Credentials[provider] = cred
 	return SaveStore(store)
+}
+
+// ListCredentials returns all stored credentials for a provider.
+func ListCredentials(provider string) ([]*AuthCredential, error) {
+	store, err := LoadStore()
+	if err != nil {
+		return nil, err
+	}
+	creds := store.CredentialList[provider]
+	if len(creds) == 0 {
+		if legacy, ok := store.Credentials[provider]; ok && legacy != nil {
+			return []*AuthCredential{legacy}, nil
+		}
+		return nil, nil
+	}
+	out := make([]*AuthCredential, 0, len(creds))
+	for _, c := range creds {
+		if c != nil {
+			out = append(out, c)
+		}
+	}
+	return out, nil
 }
 
 func DeleteCredential(provider string) error {
@@ -101,6 +150,7 @@ func DeleteCredential(provider string) error {
 		return err
 	}
 	delete(store.Credentials, provider)
+	delete(store.CredentialList, provider)
 	return SaveStore(store)
 }
 
@@ -110,4 +160,40 @@ func DeleteAllCredentials() error {
 		return err
 	}
 	return nil
+}
+
+func upsertCredential(existing []*AuthCredential, next *AuthCredential) []*AuthCredential {
+	if next == nil {
+		return existing
+	}
+	id := credentialIdentity(next)
+	for i, c := range existing {
+		if c == nil {
+			continue
+		}
+		if credentialIdentity(c) == id {
+			existing[i] = next
+			return existing
+		}
+	}
+	return append(existing, next)
+}
+
+func credentialIdentity(c *AuthCredential) string {
+	if c == nil {
+		return ""
+	}
+	if v := strings.TrimSpace(c.AccountID); v != "" {
+		return "account:" + v
+	}
+	if v := strings.TrimSpace(c.Email); v != "" {
+		return "email:" + strings.ToLower(v)
+	}
+	if v := strings.TrimSpace(c.AccessToken); v != "" {
+		if len(v) > 24 {
+			v = v[:24]
+		}
+		return "token:" + v
+	}
+	return ""
 }

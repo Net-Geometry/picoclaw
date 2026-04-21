@@ -271,17 +271,41 @@ func TestSend_ClosedConnection(t *testing.T) {
 	ch.Stop(ctx)
 }
 
-func TestParseInlineImageMedia_Valid(t *testing.T) {
-	media, err := parseInlineImageMedia(map[string]any{
+func TestParseInlineMedia_ValidImage(t *testing.T) {
+	media, err := parseInlineMedia(map[string]any{
 		"media": []any{
 			"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X2ioAAAAASUVORK5CYII=",
 		},
 	})
 	if err != nil {
-		t.Fatalf("parseInlineImageMedia() error = %v", err)
+		t.Fatalf("parseInlineMedia() error = %v", err)
 	}
 	if len(media) != 1 {
 		t.Fatalf("len(media) = %d, want 1", len(media))
+	}
+}
+
+func TestParseInlineMedia_ValidDocumentAndAudio(t *testing.T) {
+	media, err := parseInlineMedia(map[string]any{
+		"media": []any{
+			"data:application/pdf;base64,UEZERGF0YQ==",
+			"data:audio/webm;base64,UklGRlIAAABXQVZFZm10",
+		},
+	})
+	if err != nil {
+		t.Fatalf("parseInlineMedia() error = %v", err)
+	}
+	if len(media) != 2 {
+		t.Fatalf("len(media) = %d, want 2", len(media))
+	}
+}
+
+func TestParseInlineMedia_RejectsUnsupportedType(t *testing.T) {
+	_, err := parseInlineMedia(map[string]any{
+		"media": []any{"data:application/zip;base64,UEsDBAoAAAAA"},
+	})
+	if err == nil {
+		t.Fatal("parseInlineMedia() error = nil, want unsupported type error")
 	}
 }
 

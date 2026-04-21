@@ -53,6 +53,8 @@ type AgentLoop struct {
 	hookRuntime    hookRuntime
 	steering       *steeringQueue
 	pendingSkills  sync.Map
+	manualAgents   sync.Map
+	manualProjects sync.Map
 	mu             sync.RWMutex
 
 	// workerSem limits concurrent turn processing workers.

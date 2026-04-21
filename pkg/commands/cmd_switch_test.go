@@ -142,6 +142,148 @@ func TestSwitchChannel_Redirect(t *testing.T) {
 	}
 }
 
+func TestSwitchAgent_Success(t *testing.T) {
+	rt := &Runtime{
+		SwitchAgent: func(value string) (string, error) {
+			return "pm", nil
+		},
+	}
+	ex := NewExecutor(NewRegistry(BuiltinDefinitions()), rt)
+
+	var reply string
+	res := ex.Execute(context.Background(), Request{
+		Text: "/switch agent to pm-delivery-manager",
+		Reply: func(text string) error {
+			reply = text
+			return nil
+		},
+	})
+	if res.Outcome != OutcomeHandled {
+		t.Fatalf("outcome=%v, want=%v", res.Outcome, OutcomeHandled)
+	}
+	want := "Switched agent from pm to pm-delivery-manager"
+	if reply != want {
+		t.Fatalf("reply=%q, want=%q", reply, want)
+	}
+}
+
+func TestSwitchAgent_ClearOverride(t *testing.T) {
+	rt := &Runtime{
+		SwitchAgent: func(value string) (string, error) {
+			return "pm-delivery-manager", nil
+		},
+	}
+	ex := NewExecutor(NewRegistry(BuiltinDefinitions()), rt)
+
+	var reply string
+	res := ex.Execute(context.Background(), Request{
+		Text: "/switch agent to none",
+		Reply: func(text string) error {
+			reply = text
+			return nil
+		},
+	})
+	if res.Outcome != OutcomeHandled {
+		t.Fatalf("outcome=%v, want=%v", res.Outcome, OutcomeHandled)
+	}
+	want := "Cleared manual agent override (was pm-delivery-manager)"
+	if reply != want {
+		t.Fatalf("reply=%q, want=%q", reply, want)
+	}
+}
+
+func TestSwitchAgent_NilDep(t *testing.T) {
+	ex := NewExecutor(NewRegistry(BuiltinDefinitions()), &Runtime{})
+
+	var reply string
+	res := ex.Execute(context.Background(), Request{
+		Text: "/switch agent to pm",
+		Reply: func(text string) error {
+			reply = text
+			return nil
+		},
+	})
+	if res.Outcome != OutcomeHandled {
+		t.Fatalf("outcome=%v, want=%v", res.Outcome, OutcomeHandled)
+	}
+	if reply != "Command unavailable in current context." {
+		t.Fatalf("reply=%q, want unavailable message", reply)
+	}
+}
+
+func TestSwitchProject_Success(t *testing.T) {
+	rt := &Runtime{
+		SwitchProject: func(value string) (string, error) {
+			return "none", nil
+		},
+	}
+	ex := NewExecutor(NewRegistry(BuiltinDefinitions()), rt)
+
+	var reply string
+	res := ex.Execute(context.Background(), Request{
+		Text: "/switch project to alpha",
+		Reply: func(text string) error {
+			reply = text
+			return nil
+		},
+	})
+	if res.Outcome != OutcomeHandled {
+		t.Fatalf("outcome=%v, want=%v", res.Outcome, OutcomeHandled)
+	}
+	want := "Switched project from none to alpha"
+	if reply != want {
+		t.Fatalf("reply=%q, want=%q", reply, want)
+	}
+}
+
+func TestShowAgent_Success(t *testing.T) {
+	rt := &Runtime{
+		GetCurrentAgent: func() string {
+			return "pm-delivery-manager"
+		},
+	}
+	ex := NewExecutor(NewRegistry(BuiltinDefinitions()), rt)
+
+	var reply string
+	res := ex.Execute(context.Background(), Request{
+		Text: "/show agent",
+		Reply: func(text string) error {
+			reply = text
+			return nil
+		},
+	})
+	if res.Outcome != OutcomeHandled {
+		t.Fatalf("outcome=%v, want=%v", res.Outcome, OutcomeHandled)
+	}
+	if reply != "Current Agent: pm-delivery-manager" {
+		t.Fatalf("reply=%q, want current agent message", reply)
+	}
+}
+
+func TestShowProject_DefaultNone(t *testing.T) {
+	rt := &Runtime{
+		GetCurrentProject: func() string {
+			return ""
+		},
+	}
+	ex := NewExecutor(NewRegistry(BuiltinDefinitions()), rt)
+
+	var reply string
+	res := ex.Execute(context.Background(), Request{
+		Text: "/show project",
+		Reply: func(text string) error {
+			reply = text
+			return nil
+		},
+	})
+	if res.Outcome != OutcomeHandled {
+		t.Fatalf("outcome=%v, want=%v", res.Outcome, OutcomeHandled)
+	}
+	if reply != "Current Project: none" {
+		t.Fatalf("reply=%q, want default project message", reply)
+	}
+}
+
 func TestCheckChannel_Success(t *testing.T) {
 	rt := &Runtime{
 		SwitchChannel: func(value string) error {

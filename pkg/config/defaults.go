@@ -44,6 +44,11 @@ func DefaultConfig() *Config {
 		Session: SessionConfig{
 			Dimensions: []string{"chat"},
 		},
+		MemoryCore: MemoryCoreConfig{
+			Enabled:       false,
+			Path:          "",
+			MaxDiaryFiles: 2,
+		},
 		Channels: defaultChannels(),
 		Hooks: HooksConfig{
 			Enabled: true,

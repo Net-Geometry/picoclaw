@@ -191,6 +191,13 @@ func (al *AgentLoop) processMessage(ctx context.Context, msg bus.InboundMessage)
 		return response, nil
 	}
 
+	manualScopeKey := manualSelectionScopeKey(opts.Dispatch.InboundContext, msg.SessionKey)
+	if projectName, ok := al.getManualProject(manualScopeKey); ok {
+		projectMessage := applyProjectContext(opts.Dispatch.UserMessage, agent.Workspace, projectName)
+		opts.Dispatch.UserMessage = projectMessage
+		opts.UserMessage = projectMessage
+	}
+
 	if pending := al.takePendingSkills(opts.Dispatch.SessionKey); len(pending) > 0 {
 		opts.ForcedSkills = append(opts.ForcedSkills, pending...)
 		logger.InfoCF("agent", "Applying pending skill override",
@@ -207,6 +214,14 @@ func (al *AgentLoop) resolveMessageRoute(msg bus.InboundMessage) (routing.Resolv
 	registry := al.GetRegistry()
 	inboundCtx := normalizedInboundContext(msg)
 	route := registry.ResolveRoute(inboundCtx)
+
+	manualScopeKey := manualSelectionScopeKey(&inboundCtx, msg.SessionKey)
+	if manualAgentID, ok := al.getManualAgent(manualScopeKey); ok {
+		if !registry.IsPassiveAgent(manualAgentID) {
+			route.AgentID = manualAgentID
+			route.MatchedBy = "manual.switch"
+		}
+	}
 
 	agent, ok := registry.GetAgent(route.AgentID)
 	if !ok {

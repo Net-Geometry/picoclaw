@@ -18,7 +18,11 @@ type Runtime struct {
 	ListSkillNames     func() []string
 	GetEnabledChannels func() []string
 	GetActiveTurn      func() any // Returning any to avoid circular dependency with agent package
+	GetCurrentAgent    func() string
+	GetCurrentProject  func() string
 	SwitchModel        func(value string) (oldModel string, err error)
+	SwitchAgent        func(value string) (oldAgent string, err error)
+	SwitchProject      func(value string) (oldProject string, err error)
 	SwitchChannel      func(value string) error
 	ClearHistory       func() error
 	ReloadConfig       func() error

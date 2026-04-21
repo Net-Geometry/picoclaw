@@ -65,6 +65,7 @@ var (
 	oauthPollDeviceCodeOnce       = auth.PollDeviceCodeOnce
 	oauthExchangeCodeForTokens    = auth.ExchangeCodeForTokens
 	oauthGetCredential            = auth.GetCredential
+	oauthListCredentials          = auth.ListCredentials
 	oauthSetCredential            = auth.SetCredential
 	oauthDeleteCredential         = auth.DeleteCredential
 	oauthLoadConfig               = config.LoadConfig
@@ -92,16 +93,17 @@ type oauthFlow struct {
 }
 
 type oauthProviderStatus struct {
-	Provider    string   `json:"provider"`
-	DisplayName string   `json:"display_name"`
-	Methods     []string `json:"methods"`
-	LoggedIn    bool     `json:"logged_in"`
-	Status      string   `json:"status"`
-	AuthMethod  string   `json:"auth_method,omitempty"`
-	ExpiresAt   string   `json:"expires_at,omitempty"`
-	AccountID   string   `json:"account_id,omitempty"`
-	Email       string   `json:"email,omitempty"`
-	ProjectID   string   `json:"project_id,omitempty"`
+	Provider        string   `json:"provider"`
+	DisplayName     string   `json:"display_name"`
+	Methods         []string `json:"methods"`
+	LoggedIn        bool     `json:"logged_in"`
+	CredentialCount int      `json:"credential_count,omitempty"`
+	Status          string   `json:"status"`
+	AuthMethod      string   `json:"auth_method,omitempty"`
+	ExpiresAt       string   `json:"expires_at,omitempty"`
+	AccountID       string   `json:"account_id,omitempty"`
+	Email           string   `json:"email,omitempty"`
+	ProjectID       string   `json:"project_id,omitempty"`
 }
 
 type oauthFlowResponse struct {
@@ -130,6 +132,11 @@ func (h *Handler) handleListOAuthProviders(w http.ResponseWriter, r *http.Reques
 	providersResp := make([]oauthProviderStatus, 0, len(oauthProviderOrder))
 
 	for _, provider := range oauthProviderOrder {
+		creds, err := oauthListCredentials(provider)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("failed to load credentials: %v", err), http.StatusInternalServerError)
+			return
+		}
 		cred, err := oauthGetCredential(provider)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("failed to load credentials: %v", err), http.StatusInternalServerError)
@@ -137,10 +144,11 @@ func (h *Handler) handleListOAuthProviders(w http.ResponseWriter, r *http.Reques
 		}
 
 		item := oauthProviderStatus{
-			Provider:    provider,
-			DisplayName: oauthProviderLabels[provider],
-			Methods:     oauthProviderMethods[provider],
-			Status:      "not_logged_in",
+			Provider:        provider,
+			DisplayName:     oauthProviderLabels[provider],
+			Methods:         oauthProviderMethods[provider],
+			CredentialCount: len(creds),
+			Status:          "not_logged_in",
 		}
 		if cred != nil {
 			item.LoggedIn = true

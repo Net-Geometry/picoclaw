@@ -231,3 +231,43 @@ func TestResolveRoute_NoDefaultUsesFirst(t *testing.T) {
 		t.Errorf("AgentID = %q, want 'alpha' (first in list)", route.AgentID)
 	}
 }
+
+func TestResolveRoute_SkipsPassiveDefaultAgent(t *testing.T) {
+	agents := []config.AgentConfig{
+		{ID: "alpha", Default: true, Mode: "passive"},
+		{ID: "beta", Mode: "active"},
+	}
+	cfg := testConfig(agents)
+	r := NewRouteResolver(cfg)
+
+	route := r.ResolveRoute(bus.InboundContext{Channel: "cli"})
+
+	if route.AgentID != "beta" {
+		t.Errorf("AgentID = %q, want 'beta' (first active agent)", route.AgentID)
+	}
+}
+
+func TestResolveRoute_DispatchToPassiveAgentFallsBackToActiveDefault(t *testing.T) {
+	cfg := testConfig([]config.AgentConfig{
+		{ID: "main", Default: true, Mode: "active"},
+		{ID: "observer", Mode: "passive"},
+	})
+	cfg.Agents.Dispatch = &config.DispatchConfig{
+		Rules: []config.DispatchRule{
+			{
+				Name:  "passive-target",
+				Agent: "observer",
+				When: config.DispatchSelector{
+					Channel: "telegram",
+				},
+			},
+		},
+	}
+	r := NewRouteResolver(cfg)
+
+	route := r.ResolveRoute(bus.InboundContext{Channel: "telegram"})
+
+	if route.AgentID != "main" {
+		t.Errorf("AgentID = %q, want 'main' (passive dispatch target should fallback)", route.AgentID)
+	}
+}

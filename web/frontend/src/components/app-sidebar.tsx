@@ -1,6 +1,7 @@
 import { IconChevronRight } from "@tabler/icons-react"
 import {
   IconAtom,
+  IconCalendar,
   IconChevronsDown,
   IconChevronsUp,
   IconKey,
@@ -10,6 +11,7 @@ import {
   IconSettings,
   IconSparkles,
   IconTools,
+  IconUserCog,
 } from "@tabler/icons-react"
 import { Link, useRouterState } from "@tanstack/react-router"
 import * as React from "react"
@@ -150,6 +152,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             icon: IconTools,
             translateTitle: true,
           },
+            {
+              title: "navigation.configure",
+              url: "/agent/configure",
+              icon: IconUserCog,
+              translateTitle: true,
+            },
         ],
       },
       {
@@ -159,6 +167,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: "navigation.config",
             url: "/config",
             icon: IconSettings,
+            translateTitle: true,
+          },
+          {
+            title: "navigation.activity",
+            url: "/activity",
+            icon: IconListDetails,
+            translateTitle: true,
+          },
+          {
+            title: "navigation.scheduler",
+            url: "/scheduler",
+            icon: IconCalendar,
             translateTitle: true,
           },
           {

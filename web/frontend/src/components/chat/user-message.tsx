@@ -10,6 +10,9 @@ export function UserMessage({ content, attachments = [] }: UserMessageProps) {
   const imageAttachments = attachments.filter(
     (attachment) => attachment.type === "image",
   )
+  const otherAttachments = attachments.filter(
+    (attachment) => attachment.type !== "image",
+  )
 
   return (
     <div className="flex w-full flex-col items-end gap-1.5">
@@ -22,6 +25,24 @@ export function UserMessage({ content, attachments = [] }: UserMessageProps) {
               alt={attachment.filename || "Uploaded image"}
               className="max-h-72 max-w-full object-cover"
             />
+          ))}
+        </div>
+      )}
+
+      {otherAttachments.length > 0 && (
+        <div className="flex max-w-[70%] flex-col items-end gap-2">
+          {otherAttachments.map((attachment, index) => (
+            <div
+              key={`${attachment.url}-${index}`}
+              className="bg-background border-border text-foreground flex max-w-full items-center gap-2 rounded-xl border px-3 py-2 text-xs"
+            >
+              <span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 uppercase">
+                {attachment.type === "audio" ? "audio" : "file"}
+              </span>
+              <span className="max-w-72 truncate">
+                {attachment.filename || "attachment"}
+              </span>
+            </div>
           ))}
         </div>
       )}

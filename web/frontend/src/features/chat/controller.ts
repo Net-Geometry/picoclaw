@@ -331,7 +331,7 @@ export function sendChatMessage({
 
   const normalizedContent = content.trim()
   const normalizedAttachments = attachments
-    .filter((attachment) => attachment.type === "image" && attachment.url)
+    .filter((attachment) => Boolean(attachment.url))
     .map((attachment) => ({ ...attachment }))
 
   if (!normalizedContent && normalizedAttachments.length === 0) {

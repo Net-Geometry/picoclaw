@@ -49,6 +49,7 @@ export function AnthropicCredentialCard({
       description={t("credentials.providers.anthropic.description")}
       status={status?.status ?? "not_logged_in"}
       authMethod={status?.auth_method}
+      credentialCount={status?.credential_count}
       actions={
         <div className="border-muted flex h-[120px] flex-col justify-center rounded-lg border p-3">
           <div className="flex h-full flex-col gap-3">

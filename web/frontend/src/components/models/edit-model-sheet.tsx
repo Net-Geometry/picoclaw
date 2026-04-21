@@ -3,11 +3,9 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { type ModelInfo, setDefaultModel, updateModel } from "@/api/models"
-import { maskedSecretPlaceholder } from "@/components/secret-placeholder"
 import {
   AdvancedSection,
   Field,
-  KeyInput,
   SwitchCardField,
 } from "@/components/shared-form"
 import { Button } from "@/components/ui/button"
@@ -23,7 +21,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 
 interface EditForm {
-  apiKey: string
+  apiKeys: string
   apiBase: string
   proxy: string
   authMethod: string
@@ -52,7 +50,7 @@ export function EditModelSheet({
 }: EditModelSheetProps) {
   const { t } = useTranslation()
   const [form, setForm] = useState<EditForm>({
-    apiKey: "",
+    apiKeys: "",
     apiBase: "",
     proxy: "",
     authMethod: "",
@@ -72,7 +70,7 @@ export function EditModelSheet({
   useEffect(() => {
     if (model) {
       setForm({
-        apiKey: "",
+        apiKeys: "",
         apiBase: model.api_base ?? "",
         proxy: model.proxy ?? "",
         authMethod: model.auth_method ?? "",
@@ -101,16 +99,24 @@ export function EditModelSheet({
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setForm((f) => ({ ...f, [key]: e.target.value }))
 
+  const parseAPIKeysInput = (value: string): string[] => {
+    return value
+      .split(/[,\n]/)
+      .map((k) => k.trim())
+      .filter(Boolean)
+  }
+
   const handleSave = async () => {
     if (!model) return
     setSaving(true)
     setError("")
     try {
+      const parsedKeys = parseAPIKeysInput(form.apiKeys)
       await updateModel(model.index, {
         model_name: model.model_name,
         model: model.model,
         api_base: form.apiBase || undefined,
-        api_key: form.apiKey || undefined,
+        api_keys: parsedKeys.length > 0 ? parsedKeys : undefined,
         proxy: form.proxy || undefined,
         auth_method: form.authMethod || undefined,
         connect_mode: form.connectMode || undefined,
@@ -141,13 +147,12 @@ export function EditModelSheet({
   }
 
   const isOAuth = model?.auth_method === "oauth"
-  const hasSavedAPIKey = Boolean(model?.api_key)
-  const apiKeyPlaceholder = hasSavedAPIKey
-    ? maskedSecretPlaceholder(
-        model?.api_key ?? "",
-        t("models.field.apiKeyPlaceholderSet"),
-      )
-    : t("models.field.apiKeyPlaceholder")
+  const hasSavedAPIKeys = (model?.api_keys_count ?? 0) > 0
+  const apiKeysPlaceholder = hasSavedAPIKeys
+    ? t("models.field.apiKeysPlaceholderSet", {
+        count: model?.api_keys_count ?? 0,
+      })
+    : t("models.field.apiKeysPlaceholder")
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
@@ -168,13 +173,20 @@ export function EditModelSheet({
           <div className="space-y-5 px-6 py-5">
             {!isOAuth && (
               <Field
-                label={t("models.field.apiKey")}
-                hint={hasSavedAPIKey ? t("models.edit.apiKeyHint") : undefined}
+                label={t("models.field.apiKeys")}
+                hint={
+                  hasSavedAPIKeys
+                    ? t("models.edit.apiKeysHint", {
+                        count: model?.api_keys_count ?? 0,
+                      })
+                    : t("models.field.apiKeysHint")
+                }
               >
-                <KeyInput
-                  value={form.apiKey}
-                  onChange={(v) => setForm((f) => ({ ...f, apiKey: v }))}
-                  placeholder={apiKeyPlaceholder}
+                <Textarea
+                  value={form.apiKeys}
+                  onChange={setField("apiKeys")}
+                  placeholder={apiKeysPlaceholder}
+                  rows={3}
                 />
               </Field>
             )}

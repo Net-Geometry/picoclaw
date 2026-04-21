@@ -9,6 +9,8 @@ export interface ModelInfo {
   model: string
   api_base?: string
   api_key: string
+  api_keys?: string[]
+  api_keys_count?: number
   proxy?: string
   auth_method?: string
   // Advanced fields

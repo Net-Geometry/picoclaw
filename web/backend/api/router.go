@@ -91,6 +91,10 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	h.registerToolRoutes(mux)
 	h.registerUIRoutes(mux)
 
+	// Cron/Scheduler job management
+	h.registerCronRoutes(mux)
+	h.registerAgentRoutes(mux)
+
 	// OS startup / launch-at-login
 	h.registerStartupRoutes(mux)
 

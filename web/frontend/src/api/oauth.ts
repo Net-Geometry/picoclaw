@@ -8,6 +8,7 @@ export interface OAuthProviderStatus {
   display_name: string
   methods: OAuthMethod[]
   logged_in: boolean
+  credential_count?: number
   status: "connected" | "expired" | "needs_refresh" | "not_logged_in"
   auth_method?: string
   expires_at?: string

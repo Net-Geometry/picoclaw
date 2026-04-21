@@ -32,18 +32,19 @@ func init() {
 // Config is the current config structure with version support.
 type Config struct {
 	// Config schema version for migration.
-	Version   int             `json:"version"             yaml:"-"`
-	Isolation IsolationConfig `json:"isolation,omitempty" yaml:"-"`
-	Agents    AgentsConfig    `json:"agents"              yaml:"-"`
-	Session   SessionConfig   `json:"session,omitempty"   yaml:"-"`
-	Channels  ChannelsConfig  `json:"channel_list"        yaml:"channel_list"`
-	ModelList SecureModelList `json:"model_list"          yaml:"model_list"` // New model-centric provider configuration
-	Gateway   GatewayConfig   `json:"gateway"             yaml:"-"`
-	Hooks     HooksConfig     `json:"hooks,omitempty"     yaml:"-"`
-	Tools     ToolsConfig     `json:"tools"               yaml:",inline"`
-	Heartbeat HeartbeatConfig `json:"heartbeat"           yaml:"-"`
-	Devices   DevicesConfig   `json:"devices"             yaml:"-"`
-	Voice     VoiceConfig     `json:"voice"               yaml:"-"`
+	Version    int              `json:"version"             yaml:"-"`
+	Isolation  IsolationConfig  `json:"isolation,omitempty" yaml:"-"`
+	Agents     AgentsConfig     `json:"agents"              yaml:"-"`
+	Session    SessionConfig    `json:"session,omitempty"   yaml:"-"`
+	MemoryCore MemoryCoreConfig `json:"memory_core,omitempty" yaml:"-"`
+	Channels   ChannelsConfig   `json:"channel_list"        yaml:"channel_list"`
+	ModelList  SecureModelList  `json:"model_list"          yaml:"model_list"` // New model-centric provider configuration
+	Gateway    GatewayConfig    `json:"gateway"             yaml:"-"`
+	Hooks      HooksConfig      `json:"hooks,omitempty"     yaml:"-"`
+	Tools      ToolsConfig      `json:"tools"               yaml:",inline"`
+	Heartbeat  HeartbeatConfig  `json:"heartbeat"           yaml:"-"`
+	Devices    DevicesConfig    `json:"devices"             yaml:"-"`
+	Voice      VoiceConfig      `json:"voice"               yaml:"-"`
 	// BuildInfo contains build-time version information
 	BuildInfo BuildInfo `json:"build_info,omitempty" yaml:"-"`
 
@@ -188,10 +189,18 @@ type AgentConfig struct {
 	ID        string            `json:"id"`
 	Default   bool              `json:"default,omitempty"`
 	Name      string            `json:"name,omitempty"`
+	Mode      string            `json:"mode,omitempty"`
 	Workspace string            `json:"workspace,omitempty"`
 	Model     *AgentModelConfig `json:"model,omitempty"`
 	Skills    []string          `json:"skills,omitempty"`
 	Subagents *SubagentsConfig  `json:"subagents,omitempty"`
+}
+
+// IsPassive reports whether this agent is marked as passive.
+// Passive agents are excluded from direct inbound routing, but can still
+// be used as explicit subagent targets.
+func (a AgentConfig) IsPassive() bool {
+	return strings.EqualFold(strings.TrimSpace(a.Mode), "passive")
 }
 
 type SubagentsConfig struct {
@@ -223,6 +232,14 @@ type DispatchSelector struct {
 type SessionConfig struct {
 	Dimensions    []string            `json:"dimensions,omitempty"`
 	IdentityLinks map[string][]string `json:"identity_links,omitempty"`
+}
+
+// MemoryCoreConfig configures optional integration with external markdown-based
+// memory systems such as Project-AI-MemoryCore.
+type MemoryCoreConfig struct {
+	Enabled       bool   `json:"enabled,omitempty"`
+	Path          string `json:"path,omitempty"`
+	MaxDiaryFiles int    `json:"max_diary_files,omitempty"`
 }
 
 // RoutingConfig controls the intelligent model routing feature.

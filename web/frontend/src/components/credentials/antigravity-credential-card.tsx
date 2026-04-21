@@ -43,6 +43,7 @@ export function AntigravityCredentialCard({
       description={t("credentials.providers.antigravity.description")}
       status={status?.status ?? "not_logged_in"}
       authMethod={status?.auth_method}
+      credentialCount={status?.credential_count}
       details={
         <div className="space-y-1">
           {status?.email && (
