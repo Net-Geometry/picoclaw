@@ -198,7 +198,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        arch: [amd64, arm64]
+        arch: [ amd64, arm64 ]
     permissions:
       contents: write
     steps:
@@ -268,7 +268,7 @@ jobs:
 
   upload-tos:
     name: Upload to TOS
-    needs: [release, windows-installer, macos-installer]
+    needs: [ release, windows-installer, macos-installer ]
     if: ${{ inputs.upload_tos }}
     uses: ./.github/workflows/upload-tos.yml
     with:
