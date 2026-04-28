@@ -2,6 +2,7 @@ import type { ChannelConfig } from "@/api/channels"
 
 export const SECRET_FIELD_MAP = {
   token: "_token",
+  api_key: "_api_key",
   app_secret: "_app_secret",
   client_secret: "_client_secret",
   corp_secret: "_corp_secret",
@@ -23,6 +24,7 @@ const CHANNEL_SECRET_FIELDS: Record<string, string[]> = {
   weixin: ["token"],
   telegram: ["token"],
   discord: ["token"],
+  manus: ["api_key"],
   slack: ["bot_token", "app_token"],
   feishu: ["app_secret", "encrypt_key", "verification_token"],
   dingtalk: ["client_secret"],

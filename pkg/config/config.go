@@ -509,6 +509,15 @@ func (c *VKSettings) SetToken(token string) {
 	c.Token = *NewSecureString(token)
 }
 
+// ManusSettings configures the Manus AI agent channel.
+// Manus API documentation: https://open.manus.im/docs
+type ManusSettings struct {
+	APIKey       SecureString `json:"api_key,omitzero" yaml:"api_key,omitempty" env:"PICOCLAW_CHANNELS_MANUS_API_KEY"`
+	APIBase      string       `json:"api_base"         yaml:"-"                  env:"PICOCLAW_CHANNELS_MANUS_API_BASE"`
+	PollInterval int          `json:"poll_interval"    yaml:"-"                  env:"PICOCLAW_CHANNELS_MANUS_POLL_INTERVAL"`
+	TaskTimeout  int          `json:"task_timeout"     yaml:"-"                  env:"PICOCLAW_CHANNELS_MANUS_TASK_TIMEOUT"`
+}
+
 // TeamsWebhookSettings configures the output-only Microsoft Teams webhook channel.
 // Multiple webhook targets can be configured and selected via ChatID at send time.
 type TeamsWebhookSettings struct {

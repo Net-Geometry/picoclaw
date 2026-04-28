@@ -527,6 +527,13 @@ func defaultChannels() ChannelsConfig {
 				"channels": []string{},
 			},
 		},
+		"manus": map[string]any{
+			"settings": map[string]any{
+				"api_base":      "https://api.manus.ai",
+				"poll_interval": 2000,
+				"task_timeout":  300,
+			},
+		},
 	}
 
 	channels := make(ChannelsConfig, len(defs))
