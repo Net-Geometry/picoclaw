@@ -207,6 +207,14 @@
       "allow_from": [],
       "reasoning_channel_id": ""
     },
+    "manus": {
+      "enabled": false,
+      "api_key": "sk-YOUR_MANUS_API_KEY",
+      "api_base": "https://api.manus.ai",
+      "poll_interval": 2000,
+      "task_timeout": 300,
+      "allow_from": ["*"]
+    },
     "pico": {
       "enabled": false,
       "token": "YOUR_PICO_TOKEN",

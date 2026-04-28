@@ -9,7 +9,16 @@ import type { KeyboardEvent } from "react"
 import { useTranslation } from "react-i18next"
 import TextareaAutosize from "react-textarea-autosize"
 
+import type { ModelInfo } from "@/api/models"
+import { ModelSelector } from "@/components/chat/model-selector"
 import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import type { ChatAttachment } from "@/store/chat"
 
@@ -33,9 +42,19 @@ export type ChatInputDisabledReason =
   | "websocketError"
   | "noDefaultModel"
 
+export type ChatChannel = "pico" | "manus"
+
 interface ChatComposerProps {
   input: string
   attachments: ChatAttachment[]
+  selectedChannel: ChatChannel
+  onChannelChange: (channel: ChatChannel) => void
+  defaultModelName: string
+  apiKeyModels: ModelInfo[]
+  oauthModels: ModelInfo[]
+  localModels: ModelInfo[]
+  hasAvailableModels: boolean
+  onModelChange: (modelName: string) => void
   onInputChange: (value: string) => void
   onAddFiles: () => void
   onToggleRecording: () => void
@@ -50,6 +69,14 @@ interface ChatComposerProps {
 export function ChatComposer({
   input,
   attachments,
+  selectedChannel,
+  onChannelChange,
+  defaultModelName,
+  apiKeyModels,
+  oauthModels,
+  localModels,
+  hasAvailableModels,
+  onModelChange,
   onInputChange,
   onAddFiles,
   onToggleRecording,
@@ -160,6 +187,37 @@ export function ChatComposer({
 
         <div className="mt-2 flex items-center justify-between px-1">
           <div className="flex items-center gap-1">
+            <Select
+              value={selectedChannel}
+              onValueChange={(v) => onChannelChange(v as ChatChannel)}
+            >
+              <SelectTrigger
+                size="sm"
+                className="text-muted-foreground hover:text-foreground focus-visible:border-input h-8 w-auto min-w-[70px] bg-transparent shadow-none focus-visible:ring-0"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper" align="start">
+                <SelectItem value="pico">Pico</SelectItem>
+                <SelectItem value="manus">Manus</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {selectedChannel === "pico" && hasAvailableModels && (
+              <>
+                <div className="bg-border h-4 w-px" />
+                <ModelSelector
+                  defaultModelName={defaultModelName}
+                  apiKeyModels={apiKeyModels}
+                  oauthModels={oauthModels}
+                  localModels={localModels}
+                  onValueChange={onModelChange}
+                />
+              </>
+            )}
+
+            <div className="bg-border h-4 w-px" />
+
             <Button
               type="button"
               variant="ghost"

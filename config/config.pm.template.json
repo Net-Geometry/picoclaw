@@ -239,6 +239,14 @@
     }
   ],
   "channels": {
+    "manus": {
+      "enabled": false,
+      "api_key": "sk-YOUR_MANUS_API_KEY",
+      "api_base": "https://api.manus.ai",
+      "poll_interval": 2000,
+      "task_timeout": 300,
+      "allow_from": ["*"]
+    },
     "pico": {
       "enabled": true,
       "token": "CHANGE_ME_PICO_TOKEN",

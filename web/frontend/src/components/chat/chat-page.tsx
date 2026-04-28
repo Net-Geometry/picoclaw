@@ -5,11 +5,11 @@ import { toast } from "sonner"
 
 import { AssistantMessage } from "@/components/chat/assistant-message"
 import {
+  type ChatChannel,
   ChatComposer,
   type ChatInputDisabledReason,
 } from "@/components/chat/chat-composer"
 import { ChatEmptyState } from "@/components/chat/chat-empty-state"
-import { ModelSelector } from "@/components/chat/model-selector"
 import { SessionHistoryMenu } from "@/components/chat/session-history-menu"
 import { TypingIndicator } from "@/components/chat/typing-indicator"
 import { UserMessage } from "@/components/chat/user-message"
@@ -149,11 +149,17 @@ function resolveChatInputDisabledReason({
   hasDefaultModel,
   connectionState,
   gatewayState,
+  selectedChannel,
 }: {
   hasDefaultModel: boolean
   connectionState: ConnectionState
   gatewayState: GatewayState
+  selectedChannel: ChatChannel
 }): ChatInputDisabledReason | null {
+  if (selectedChannel === "manus") {
+    return null
+  }
+
   if (gatewayState === "unknown") {
     return "gatewayUnknown"
   }
@@ -207,6 +213,7 @@ export function ChatPage() {
   const [isAtBottom, setIsAtBottom] = useState(true)
   const [hasScrolled, setHasScrolled] = useState(false)
   const [input, setInput] = useState("")
+  const [selectedChannel, setSelectedChannel] = useState<ChatChannel>("pico")
   const [attachments, setAttachments] = useState<ChatAttachment[]>([])
   const [isRecording, setIsRecording] = useState(false)
   const [isDraggingFiles, setIsDraggingFiles] = useState(false)
@@ -238,6 +245,7 @@ export function ChatPage() {
     hasDefaultModel,
     connectionState,
     gatewayState: gwState,
+    selectedChannel,
   })
   const canInput = inputDisabledReason === null
 
@@ -279,6 +287,7 @@ export function ChatPage() {
       sendMessage({
         content: input,
         attachments,
+        channel: selectedChannel,
       })
     ) {
       setInput("")
@@ -643,17 +652,6 @@ export function ChatPage() {
         className={`transition-shadow ${
           hasScrolled ? "shadow-xs" : "shadow-none"
         }`}
-        titleExtra={
-          hasAvailableModels && (
-            <ModelSelector
-              defaultModelName={defaultModelName}
-              apiKeyModels={apiKeyModels}
-              oauthModels={oauthModels}
-              localModels={localModels}
-              onValueChange={handleSetDefault}
-            />
-          )
-        }
       >
         <Button
           variant="secondary"
@@ -743,6 +741,14 @@ export function ChatPage() {
       <ChatComposer
         input={input}
         attachments={attachments}
+        selectedChannel={selectedChannel}
+        onChannelChange={setSelectedChannel}
+        defaultModelName={defaultModelName}
+        apiKeyModels={apiKeyModels}
+        oauthModels={oauthModels}
+        localModels={localModels}
+        hasAvailableModels={hasAvailableModels}
+        onModelChange={handleSetDefault}
         onInputChange={setInput}
         onAddFiles={handleAddFiles}
         onToggleRecording={handleToggleRecording}

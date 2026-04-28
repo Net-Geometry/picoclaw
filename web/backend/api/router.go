@@ -85,6 +85,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 
 	// Channel catalog (for frontend navigation/config pages)
 	h.registerChannelRoutes(mux)
+	h.registerChatRoutes(mux)
 
 	// Skills and tools support/actions
 	h.registerSkillRoutes(mux)

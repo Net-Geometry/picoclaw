@@ -1,6 +1,7 @@
 import { getDefaultStore } from "jotai"
 import { toast } from "sonner"
 
+import { launcherFetch } from "@/api/http"
 import {
   loadSessionMessages,
   mergeHistoryMessages,
@@ -318,13 +319,15 @@ export async function hydrateActiveSession() {
 interface SendChatMessageInput {
   content: string
   attachments?: ChatAttachment[]
+  channel?: "pico" | "manus"
 }
 
 export function sendChatMessage({
   content,
   attachments = [],
+  channel = "pico",
 }: SendChatMessageInput) {
-  if (!wsRef || wsRef.readyState !== WebSocket.OPEN) {
+  if (channel === "pico" && (!wsRef || wsRef.readyState !== WebSocket.OPEN)) {
     console.warn("WebSocket not connected")
     return false
   }
@@ -338,7 +341,6 @@ export function sendChatMessage({
     return false
   }
 
-  const socket = wsRef
   const id = `msg-${++msgIdCounter}-${Date.now()}`
 
   updateChatStore((prev) => ({
@@ -357,6 +359,16 @@ export function sendChatMessage({
   }))
 
   try {
+    if (channel === "manus") {
+      void sendManusMessage(id, normalizedContent)
+      return true
+    }
+
+    const socket = wsRef
+    if (!socket) {
+      return false
+    }
+
     socket.send(
       JSON.stringify({
         type: "message.send",
@@ -364,6 +376,7 @@ export function sendChatMessage({
         payload: {
           content: normalizedContent,
           media: normalizedAttachments.map((attachment) => attachment.url),
+          channel,
         },
       }),
     )
@@ -375,6 +388,54 @@ export function sendChatMessage({
       isTyping: false,
     }))
     return false
+  }
+}
+
+async function sendManusMessage(requestID: string, content: string) {
+  try {
+    const res = await launcherFetch("/api/chat/manus/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    })
+
+    if (!res.ok) {
+      let reason = `HTTP ${res.status}`
+      try {
+        const text = (await res.text()).trim()
+        if (text !== "") {
+          reason = text
+        }
+      } catch {
+        // Keep fallback HTTP status.
+      }
+      throw new Error(reason)
+    }
+
+    const body = (await res.json()) as { content?: string; task_id?: string }
+    const assistantContent =
+      (body.content || "").trim() || `(Manus task ${body.task_id || "created"})`
+
+    updateChatStore((prev) => ({
+      messages: [
+        ...prev.messages,
+        {
+          id: `manus-${Date.now()}`,
+          role: "assistant",
+          content: assistantContent,
+          timestamp: Date.now(),
+        },
+      ],
+      isTyping: false,
+    }))
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : i18n.t("chat.sendFailed")
+    toast.error(message)
+    updateChatStore((prev) => ({
+      messages: prev.messages.filter((msg) => msg.id !== requestID),
+      isTyping: false,
+    }))
   }
 }
 

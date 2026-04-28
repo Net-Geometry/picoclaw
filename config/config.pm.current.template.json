@@ -272,6 +272,22 @@
         "token": "YOUR_DISCORD_BOT_TOKEN"
       }
     },
+    "manus": {
+      "enabled": false,
+      "type": "manus",
+      "reasoning_channel_id": "",
+      "group_trigger": {},
+      "typing": {},
+      "placeholder": {
+        "enabled": false
+      },
+      "settings": {
+        "api_key": "sk-YOUR_MANUS_API_KEY",
+        "api_base": "https://api.manus.ai",
+        "poll_interval": 2000,
+        "task_timeout": 300
+      }
+    },
     "pico": {
       "enabled": false,
       "type": "pico",

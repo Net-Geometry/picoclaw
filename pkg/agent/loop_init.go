@@ -198,6 +198,22 @@ func registerSharedTools(
 				return err
 			})
 			agent.Tools.Register(reactionTool)
+
+			// Manus task delegation tool — enabled when the manus channel is
+			// configured with a non-empty api_key.
+			if cfg.Tools.IsToolEnabled("manus_task") {
+				if manusCh := cfg.Channels.GetByType("manus"); manusCh != nil {
+					var manusCfg config.ManusSettings
+					if err := manusCh.Decode(&manusCfg); err == nil && manusCfg.APIKey.String() != "" {
+						agent.Tools.Register(tools.NewManusTool(
+							manusCfg.APIKey.String(),
+							manusCfg.APIBase,
+							manusCfg.PollInterval,
+							manusCfg.TaskTimeout,
+						))
+					}
+				}
+			}
 		}
 
 		// Send file tool (outbound media via MediaStore — store injected later by SetMediaStore)
