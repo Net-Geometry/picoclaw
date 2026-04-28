@@ -1,0 +1,394 @@
+{
+  "version": 3,
+  "session": {
+    "dimensions": ["chat"]
+  },
+  "isolation": {},
+  "agents": {
+    "defaults": {
+      "workspace": "~/.picoclaw/workspace",
+      "restrict_to_workspace": true,
+      "allow_read_outside_workspace": false,
+      "provider": "",
+      "model_name": "codex-cli",
+      "model_fallbacks": ["copilot-gpt-5.2", "gpt-5.2"],
+      "max_tokens": 8192,
+      "temperature": 1,
+      "max_tool_iterations": 20,
+      "summarize_message_threshold": 20,
+      "summarize_token_percent": 75,
+      "steering_mode": "one-at-a-time",
+      "subturn": {
+        "max_depth": 0,
+        "max_concurrent": 0,
+        "default_timeout_minutes": 0,
+        "default_token_budget": 0,
+        "concurrency_timeout_sec": 0
+      },
+      "tool_feedback": {
+        "enabled": false,
+        "max_args_length": 300
+      },
+      "split_on_marker": false
+    },
+    "list": [
+      {
+        "id": "pm",
+        "default": true,
+        "name": "Mariam (PM Lead)",
+        "mode": "active",
+        "workspace": "~/.picoclaw/workspace",
+        "model": {
+          "primary": "copilot-gpt-5.2",
+          "fallbacks": ["openrouter-gpt-5.2", "claude-sonnet-4.6"]
+        },
+        "skills": [
+          "tavily-search",
+          "github",
+          "summarize",
+          "find-skills",
+          "self-improving-agent",
+          "proactive-agent",
+          "task-status",
+          "prd",
+          "planning-with-files",
+          "plansuite",
+          "wbs-planner",
+          "tensorpm",
+          "project-documentation",
+          "pre-mortem-analyst"
+        ],
+        "subagents": {
+          "allow_agents": [
+            "pm-scope-manager",
+            "pm-plan-manager",
+            "pm-delivery-manager",
+            "pm-risk-manager",
+            "pm-cross-team-liaison"
+          ]
+        }
+      },
+      {
+        "id": "pm-scope-manager",
+        "name": "Ira",
+        "mode": "active",
+        "workspace": "~/.picoclaw/workspace",
+        "model": {
+          "primary": "claude-sonnet-4.6",
+          "fallbacks": ["gpt-5.2", "deepseek-chat"]
+        },
+        "skills": [
+          "tavily-search",
+          "summarize",
+          "find-skills",
+          "task-status",
+          "prd",
+          "planning-with-files",
+          "project-documentation",
+          "market-research"
+        ],
+        "subagents": {
+          "allow_agents": ["pm-plan-manager", "pm-risk-manager"]
+        }
+      },
+      {
+        "id": "pm-plan-manager",
+        "name": "Nia",
+        "mode": "passive",
+        "workspace": "~/.picoclaw/workspace",
+        "model": {
+          "primary": "gpt-5.2",
+          "fallbacks": ["qwen-plus", "deepseek-v3.2"]
+        },
+        "skills": [
+          "summarize",
+          "find-skills",
+          "task-status",
+          "planning-with-files",
+          "plansuite",
+          "wbs-planner",
+          "tensorpm",
+          "project-documentation"
+        ]
+      },
+      {
+        "id": "pm-delivery-manager",
+        "name": "Rafiq",
+        "mode": "active",
+        "workspace": "~/.picoclaw/workspace",
+        "model": {
+          "primary": "deepseek-chat",
+          "fallbacks": ["gpt-5-nano", "qwen-plus"]
+        },
+        "skills": [
+          "summarize",
+          "github",
+          "find-skills",
+          "task-status",
+          "planning-with-files",
+          "project-documentation",
+          "monitoring"
+        ],
+        "subagents": {
+          "allow_agents": ["pm-status-analyst"]
+        }
+      },
+      {
+        "id": "pm-status-analyst",
+        "name": "Huda",
+        "mode": "passive",
+        "workspace": "~/.picoclaw/workspace",
+        "model": {
+          "primary": "gpt-5-nano",
+          "fallbacks": ["deepseek-chat", "gemini-2.0-flash"]
+        },
+        "skills": [
+          "summarize",
+          "find-skills",
+          "task-status",
+          "monitoring",
+          "github",
+          "project-documentation"
+        ]
+      },
+      {
+        "id": "pm-risk-manager",
+        "name": "Aisha",
+        "mode": "passive",
+        "workspace": "~/.picoclaw/workspace",
+        "model": {
+          "primary": "gemini-2.0-flash",
+          "fallbacks": ["claude-sonnet-4.6", "gpt-5.2"]
+        },
+        "skills": [
+          "summarize",
+          "find-skills",
+          "task-status",
+          "pre-mortem-analyst",
+          "monitoring",
+          "project-documentation",
+          "planning-with-files"
+        ]
+      },
+      {
+        "id": "pm-cross-team-liaison",
+        "name": "Iman",
+        "mode": "active",
+        "workspace": "~/.picoclaw/workspace",
+        "model": {
+          "primary": "openrouter-auto",
+          "fallbacks": ["copilot-gpt-5.2", "deepseek-v3"]
+        },
+        "skills": [
+          "summarize",
+          "github",
+          "find-skills",
+          "task-status",
+          "project-documentation",
+          "planning-with-files",
+          "network",
+          "dns-networking"
+        ],
+        "subagents": {
+          "allow_agents": [
+            "pm-requirements-bridge",
+            "pm-development-bridge",
+            "pm"
+          ]
+        }
+      },
+      {
+        "id": "pm-requirements-bridge",
+        "name": "Rania",
+        "mode": "passive",
+        "workspace": "~/.picoclaw/workspace",
+        "model": {
+          "primary": "qwen-plus",
+          "fallbacks": ["gemini-flash", "gpt-5.2"]
+        },
+        "skills": [
+          "summarize",
+          "find-skills",
+          "task-status",
+          "prd",
+          "planning-with-files",
+          "project-documentation",
+          "market-research"
+        ]
+      },
+      {
+        "id": "pm-development-bridge",
+        "name": "Arif",
+        "mode": "passive",
+        "workspace": "~/.picoclaw/workspace",
+        "model": {
+          "primary": "codex-cli",
+          "fallbacks": ["copilot-gpt-5.2", "gpt-5.2"]
+        },
+        "skills": [
+          "summarize",
+          "find-skills",
+          "task-status",
+          "planning-with-files",
+          "project-documentation",
+          "github",
+          "monitoring",
+          "code-review"
+        ]
+      }
+    ],
+    "dispatch": {
+      "rules": [
+        {
+          "name": "remote-picoclaw-pm-bridge",
+          "agent": "pm-cross-team-liaison",
+          "when": {
+            "channel": "pico_client"
+          },
+          "session_dimensions": ["chat", "sender"]
+        }
+      ]
+    }
+  },
+  "memory_core": {
+    "path": "~/.picoclaw/workspace/ai-memorycore",
+    "max_diary_files": 2
+  },
+  "channel_list": {
+    "discord": {
+      "enabled": true,
+      "type": "discord",
+      "allow_from": ["YOUR_DISCORD_USER_ID"],
+      "reasoning_channel_id": "",
+      "group_trigger": {
+        "mention_only": true
+      },
+      "typing": {},
+      "placeholder": {
+        "enabled": false
+      },
+      "settings": {
+        "proxy": "",
+        "token": "YOUR_DISCORD_BOT_TOKEN"
+      }
+    },
+    "pico": {
+      "enabled": false,
+      "type": "pico",
+      "reasoning_channel_id": "",
+      "group_trigger": {},
+      "typing": {},
+      "placeholder": {
+        "enabled": false
+      },
+      "settings": {
+        "max_connections": 100,
+        "ping_interval": 30,
+        "read_timeout": 60,
+        "token": "",
+        "write_timeout": 10
+      }
+    },
+    "pico_client": {
+      "enabled": false,
+      "type": "pico_client",
+      "reasoning_channel_id": "",
+      "group_trigger": {},
+      "typing": {},
+      "placeholder": {
+        "enabled": false
+      },
+      "settings": {
+        "ping_interval": 30,
+        "read_timeout": 60,
+        "session_id": "pm-bridge",
+        "token": "",
+        "url": "wss://remote-pico-server/pico/ws"
+      }
+    }
+  },
+  "model_list": [
+    {
+      "model_name": "copilot-gpt-5.2",
+      "model": "github-copilot/gpt-5.2",
+      "api_base": "http://localhost:4321",
+      "auth_method": "oauth"
+    },
+    {
+      "model_name": "codex-cli",
+      "model": "codex-cli/codex-cli",
+      "workspace": "~/.picoclaw/workspace"
+    },
+    {
+      "model_name": "gpt-5.2",
+      "model": "openai/gpt-5.2",
+      "api_base": "https://api.openai.com/v1",
+      "api_key": "YOUR_OPENAI_API_KEY"
+    },
+    {
+      "model_name": "gpt-5-nano",
+      "model": "openai/gpt-5-nano",
+      "api_base": "https://api.openai.com/v1",
+      "api_key": "YOUR_OPENAI_API_KEY"
+    },
+    {
+      "model_name": "claude-sonnet-4.6",
+      "model": "anthropic/claude-sonnet-4.6",
+      "api_base": "https://api.anthropic.com/v1",
+      "api_key": "YOUR_ANTHROPIC_API_KEY"
+    },
+    {
+      "model_name": "deepseek-chat",
+      "model": "deepseek/deepseek-chat",
+      "api_base": "https://api.deepseek.com/v1",
+      "api_key": "YOUR_DEEPSEEK_API_KEY"
+    },
+    {
+      "model_name": "deepseek-v3",
+      "model": "shengsuanyun/deepseek-v3",
+      "api_base": "https://api.shengsuanyun.com/v1",
+      "api_key": "YOUR_SHENGSUANYUN_API_KEY"
+    },
+    {
+      "model_name": "deepseek-v3.2",
+      "model": "avian/deepseek/deepseek-v3.2",
+      "api_base": "https://api.avian.io/v1",
+      "api_key": "YOUR_AVIAN_API_KEY"
+    },
+    {
+      "model_name": "qwen-plus",
+      "model": "qwen/qwen-plus",
+      "api_base": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      "api_key": "YOUR_DASHSCOPE_API_KEY"
+    },
+    {
+      "model_name": "gemini-2.0-flash",
+      "model": "gemini/gemini-2.0-flash-exp",
+      "api_base": "https://generativelanguage.googleapis.com/v1beta",
+      "api_key": "YOUR_GEMINI_API_KEY"
+    },
+    {
+      "model_name": "gemini-flash",
+      "model": "antigravity/gemini-3-flash",
+      "auth_method": "oauth"
+    },
+    {
+      "model_name": "openrouter-auto",
+      "model": "openrouter/auto",
+      "api_base": "https://openrouter.ai/api/v1",
+      "api_key": "YOUR_OPENROUTER_API_KEY"
+    },
+    {
+      "model_name": "openrouter-gpt-5.2",
+      "model": "openrouter/openai/gpt-5.2",
+      "api_base": "https://openrouter.ai/api/v1",
+      "api_key": "YOUR_OPENROUTER_API_KEY"
+    }
+  ],
+  "gateway": {
+    "host": "127.0.0.1",
+    "port": 18790,
+    "hot_reload": false,
+    "log_level": "warn"
+  }
+}

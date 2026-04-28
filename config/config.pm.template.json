@@ -1,0 +1,276 @@
+{
+  "version": 3,
+  "session": {
+    "dimensions": ["chat"]
+  },
+  "agents": {
+    "defaults": {
+      "workspace": "~/.picoclaw/workspace",
+      "restrict_to_workspace": true,
+      "allow_read_outside_workspace": false,
+      "model_name": "pm-primary",
+      "model_fallbacks": ["pm-fallback-fast", "pm-fallback-reasoning"],
+      "max_tokens": 8192,
+      "temperature": 0.7,
+      "max_tool_iterations": 20,
+      "summarize_message_threshold": 20,
+      "summarize_token_percent": 75,
+      "steering_mode": "one-at-a-time",
+      "tool_feedback": {
+        "enabled": false,
+        "max_args_length": 300
+      },
+      "split_on_marker": false
+    },
+    "list": [
+      {
+        "id": "pm",
+        "default": true,
+        "name": "PM Lead",
+        "mode": "active",
+        "workspace": "~/.picoclaw/workspace",
+        "model": {
+          "primary": "pm-primary",
+          "fallbacks": ["pm-fallback-reasoning", "pm-fallback-fast"]
+        },
+        "skills": [
+          "summarize",
+          "task-status",
+          "planning-with-files",
+          "project-documentation",
+          "prd",
+          "wbs-planner",
+          "pre-mortem-analyst",
+          "github"
+        ],
+        "subagents": {
+          "allow_agents": [
+            "pm-scope-manager",
+            "pm-plan-manager",
+            "pm-delivery-manager",
+            "pm-risk-manager",
+            "pm-cross-team-liaison"
+          ]
+        }
+      },
+      {
+        "id": "pm-scope-manager",
+        "name": "PM Scope Manager",
+        "mode": "active",
+        "workspace": "~/.picoclaw/workspace",
+        "model": {
+          "primary": "pm-fallback-reasoning",
+          "fallbacks": ["pm-primary", "pm-fallback-fast"]
+        },
+        "skills": [
+          "summarize",
+          "task-status",
+          "planning-with-files",
+          "prd",
+          "project-documentation"
+        ],
+        "subagents": {
+          "allow_agents": ["pm-plan-manager", "pm-risk-manager"]
+        }
+      },
+      {
+        "id": "pm-plan-manager",
+        "name": "PM Plan Manager",
+        "mode": "passive",
+        "workspace": "~/.picoclaw/workspace",
+        "model": {
+          "primary": "pm-primary",
+          "fallbacks": ["pm-fallback-fast"]
+        },
+        "skills": [
+          "summarize",
+          "task-status",
+          "planning-with-files",
+          "wbs-planner",
+          "project-documentation"
+        ]
+      },
+      {
+        "id": "pm-delivery-manager",
+        "name": "PM Delivery Manager",
+        "mode": "active",
+        "workspace": "~/.picoclaw/workspace",
+        "model": {
+          "primary": "pm-fallback-fast",
+          "fallbacks": ["pm-primary"]
+        },
+        "skills": [
+          "summarize",
+          "task-status",
+          "project-documentation",
+          "monitoring",
+          "github"
+        ],
+        "subagents": {
+          "allow_agents": ["pm-status-analyst"]
+        }
+      },
+      {
+        "id": "pm-status-analyst",
+        "name": "PM Status Analyst",
+        "mode": "passive",
+        "workspace": "~/.picoclaw/workspace",
+        "model": {
+          "primary": "pm-fallback-fast",
+          "fallbacks": ["pm-primary"]
+        },
+        "skills": [
+          "summarize",
+          "task-status",
+          "monitoring",
+          "project-documentation"
+        ]
+      },
+      {
+        "id": "pm-risk-manager",
+        "name": "PM Risk Manager",
+        "mode": "passive",
+        "workspace": "~/.picoclaw/workspace",
+        "model": {
+          "primary": "pm-fallback-reasoning",
+          "fallbacks": ["pm-primary", "pm-fallback-fast"]
+        },
+        "skills": [
+          "summarize",
+          "task-status",
+          "pre-mortem-analyst",
+          "monitoring",
+          "project-documentation"
+        ]
+      },
+      {
+        "id": "pm-cross-team-liaison",
+        "name": "PM Cross-Team Liaison",
+        "mode": "active",
+        "workspace": "~/.picoclaw/workspace",
+        "model": {
+          "primary": "pm-fallback-reasoning",
+          "fallbacks": ["pm-primary", "pm-fallback-fast"]
+        },
+        "skills": [
+          "summarize",
+          "task-status",
+          "project-documentation",
+          "planning-with-files",
+          "github"
+        ],
+        "subagents": {
+          "allow_agents": [
+            "pm-requirements-bridge",
+            "pm-development-bridge",
+            "pm"
+          ]
+        }
+      },
+      {
+        "id": "pm-requirements-bridge",
+        "name": "PM Requirements Bridge",
+        "mode": "passive",
+        "workspace": "~/.picoclaw/workspace",
+        "model": {
+          "primary": "pm-fallback-reasoning",
+          "fallbacks": ["pm-primary"]
+        },
+        "skills": [
+          "summarize",
+          "task-status",
+          "prd",
+          "planning-with-files",
+          "project-documentation"
+        ]
+      },
+      {
+        "id": "pm-development-bridge",
+        "name": "PM Development Bridge",
+        "mode": "passive",
+        "workspace": "~/.picoclaw/workspace",
+        "model": {
+          "primary": "pm-primary",
+          "fallbacks": ["pm-fallback-fast"]
+        },
+        "skills": [
+          "summarize",
+          "task-status",
+          "planning-with-files",
+          "project-documentation",
+          "github",
+          "code-review"
+        ]
+      }
+    ],
+    "dispatch": {
+      "rules": [
+        {
+          "name": "pm-pico-client-bridge",
+          "agent": "pm-cross-team-liaison",
+          "when": {
+            "channel": "pico_client"
+          },
+          "session_dimensions": ["chat", "sender"]
+        }
+      ]
+    }
+  },
+  "model_list": [
+    {
+      "_comment": "Replace with your main model/provider",
+      "model_name": "pm-primary",
+      "model": "openai/gpt-5.2",
+      "api_key": "YOUR_MAIN_MODEL_API_KEY",
+      "api_base": "https://api.openai.com/v1"
+    },
+    {
+      "_comment": "Fast/cheap fallback",
+      "model_name": "pm-fallback-fast",
+      "model": "deepseek/deepseek-chat",
+      "api_key": "YOUR_FALLBACK_FAST_API_KEY"
+    },
+    {
+      "_comment": "Reasoning fallback",
+      "model_name": "pm-fallback-reasoning",
+      "model": "anthropic/claude-sonnet-4.6",
+      "api_key": "YOUR_FALLBACK_REASONING_API_KEY",
+      "api_base": "https://api.anthropic.com/v1"
+    }
+  ],
+  "channels": {
+    "pico": {
+      "enabled": true,
+      "token": "CHANGE_ME_PICO_TOKEN",
+      "allow_token_query": false,
+      "allow_origins": [],
+      "ping_interval": 30,
+      "read_timeout": 60,
+      "max_connections": 100,
+      "allow_from": []
+    },
+    "pico_client": {
+      "enabled": false,
+      "url": "wss://remote-pico-server/pico/ws",
+      "token": "CHANGE_ME_REMOTE_PICO_TOKEN",
+      "session_id": "",
+      "ping_interval": 30,
+      "read_timeout": 60,
+      "allow_from": []
+    }
+  },
+  "tools": {
+    "web": {
+      "enabled": true,
+      "prefer_native": true,
+      "provider": "auto"
+    },
+    "cron": {
+      "enabled": true,
+      "exec_timeout_minutes": 5
+    },
+    "mcp": {
+      "enabled": true
+    }
+  }
+}
