@@ -448,6 +448,9 @@
       "enabled": false
     },
     "spawn": {
+          "manus_task": {
+            "enabled": true
+          },
       "enabled": true
     },
     "spi": {

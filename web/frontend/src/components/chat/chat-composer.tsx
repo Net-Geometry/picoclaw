@@ -12,13 +12,6 @@ import TextareaAutosize from "react-textarea-autosize"
 import type { ModelInfo } from "@/api/models"
 import { ModelSelector } from "@/components/chat/model-selector"
 import { Button } from "@/components/ui/button"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import type { ChatAttachment } from "@/store/chat"
 
@@ -88,6 +81,7 @@ export function ChatComposer({
   recordingTranscript,
 }: ChatComposerProps) {
   const { t } = useTranslation()
+  const showModelSelector = selectedChannel === "pico" && hasAvailableModels
   const canInput = inputDisabledReason === null
   const disabledMessage =
     inputDisabledReason === null
@@ -153,6 +147,55 @@ export function ChatComposer({
           </div>
         )}
 
+        <div className="border-border/70 bg-muted/30 mb-3 rounded-xl border p-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-muted-foreground px-1 text-[11px] font-semibold tracking-wide uppercase">
+              Chat Target
+            </span>
+
+            <div className="bg-background border-border/80 inline-flex rounded-lg border p-0.5">
+              <Button
+                type="button"
+                size="sm"
+                variant={selectedChannel === "pico" ? "default" : "ghost"}
+                className="h-7 rounded-md px-3 text-xs"
+                onClick={() => onChannelChange("pico")}
+                aria-pressed={selectedChannel === "pico"}
+              >
+                Pico
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={selectedChannel === "manus" ? "default" : "ghost"}
+                className="h-7 rounded-md px-3 text-xs"
+                onClick={() => onChannelChange("manus")}
+                aria-pressed={selectedChannel === "manus"}
+              >
+                Manus
+              </Button>
+            </div>
+
+            {showModelSelector && (
+              <div className="min-w-0 flex-1 sm:flex-none">
+                <ModelSelector
+                  defaultModelName={defaultModelName}
+                  apiKeyModels={apiKeyModels}
+                  oauthModels={oauthModels}
+                  localModels={localModels}
+                  onValueChange={onModelChange}
+                />
+              </div>
+            )}
+
+            {selectedChannel === "manus" && (
+              <span className="text-muted-foreground border-border/70 rounded-md border px-2 py-1 text-xs">
+                Direct Manus task mode
+              </span>
+            )}
+          </div>
+        </div>
+
         <TextareaAutosize
           value={input}
           onChange={(e) => onInputChange(e.target.value)}
@@ -187,37 +230,6 @@ export function ChatComposer({
 
         <div className="mt-2 flex items-center justify-between px-1">
           <div className="flex items-center gap-1">
-            <Select
-              value={selectedChannel}
-              onValueChange={(v) => onChannelChange(v as ChatChannel)}
-            >
-              <SelectTrigger
-                size="sm"
-                className="text-muted-foreground hover:text-foreground focus-visible:border-input h-8 w-auto min-w-[70px] bg-transparent shadow-none focus-visible:ring-0"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent position="popper" align="start">
-                <SelectItem value="pico">Pico</SelectItem>
-                <SelectItem value="manus">Manus</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {selectedChannel === "pico" && hasAvailableModels && (
-              <>
-                <div className="bg-border h-4 w-px" />
-                <ModelSelector
-                  defaultModelName={defaultModelName}
-                  apiKeyModels={apiKeyModels}
-                  oauthModels={oauthModels}
-                  localModels={localModels}
-                  onValueChange={onModelChange}
-                />
-              </>
-            )}
-
-            <div className="bg-border h-4 w-px" />
-
             <Button
               type="button"
               variant="ghost"
