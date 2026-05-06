@@ -9,10 +9,14 @@
     "skills": "Skills",
     "tools": "Ferramentas",
     "services": "Serviços",
+    "configure": "Configurar",
     "channels_group": "Canais",
     "show_more_channels": "Mais",
     "show_less_channels": "Menos",
     "config": "Configuração",
+    "activity": "Atividade",
+    "scheduler": "Agendador",
+    "projects": "Projetos",
     "logs": "Logs"
   },
   "launcherLogin": {
@@ -100,6 +104,16 @@
       "apikey": "API Key",
       "oauth": "OAuth",
       "local": "Local"
+    },
+    "channel": {
+      "title": "Canal de Chat",
+      "auto": "Automático",
+      "pico": "ChatGPT (Pico)",
+      "manus": "Manus",
+      "hintAuto": "O modo automático envia tarefas de pesquisa e design de documentos para o Manus, e usa seu modelo padrão do ChatGPT para tarefas gerais.",
+      "hintPico": "O modo Pico usa seu modelo padrão (por exemplo ChatGPT/GPT) no fluxo normal do gateway.",
+      "hintManus": "O modo Manus é otimizado para fluxos de pesquisa e design de documentação.",
+      "manusNoImage": "No momento, o modo Manus suporta apenas texto."
     }
   },
   "header": {
@@ -312,6 +326,7 @@
     "name": {
       "telegram": "Telegram",
       "discord": "Discord",
+      "manus": "Manus",
       "slack": "Slack",
       "feishu": "Feishu",
       "dingtalk": "DingTalk",
@@ -457,7 +472,38 @@
       "requiredField": "Este campo é obrigatório."
     }
   },
+  "autoRouting": {
+    "title": "Roteamento Inteligente de Modelos",
+    "tooltip": "Selecionar modelos automaticamente com base na complexidade da tarefa",
+    "description": "Escolha automaticamente o melhor modelo disponível para sua tarefa",
+    "enabled": "Ativado",
+    "disabled": "Desativado",
+    "complexity": {
+      "simple": "Tarefa Simples",
+      "medium": "Complexidade Média",
+      "complex": "Tarefa Complexa"
+    },
+    "selectedModel": "Usando modelo {{tier}}: {{model}}"
+  },
   "pages": {
+    "agentConfigure": {
+      "title": "Configurar Agente",
+      "addAgent": "Adicionar Agente",
+      "agentId": "ID do Agente",
+      "agentIdRequired": "ID do agente é obrigatório.",
+      "agentName": "Nome do Agente",
+      "create": "Criar Agente",
+      "mode": "Modo",
+      "primaryModel": "Modelo Primário",
+      "primaryModelHint": "Padrão atual: {{model}}",
+      "fallbackModels": "Modelos de Fallback",
+      "skills": "Skills",
+      "noSkills": "Nenhuma skill disponível.",
+      "allowedSubagents": "Subagentes Permitidos",
+      "save": "Salvar",
+      "saved": "Salvo",
+      "selectAgent": "Selecione um agente para configurar."
+    },
     "agent": {
       "load_error": "Falha ao carregar informações de suporte do agente.",
       "skills": {
@@ -610,6 +656,83 @@
           "requires_web_search_provider": "Configure ao menos um provedor externo de pesquisa web pronto para uso."
         }
       }
+    },
+    "activity": {
+      "title": "Atividade",
+      "liveMode": "Ao vivo",
+      "simulationMode": "Simulação",
+      "mixedMode": "Misto",
+      "liveEvents": "Eventos ao vivo",
+      "simulatedEvents": "Eventos simulados",
+      "spawnGraphTitle": "Grafo de Spawn",
+      "emptySpawnGraph": "Nenhum dado de spawn disponível.",
+      "simulationTitle": "Simulação",
+      "simulationNoAgents": "Nenhum agente disponível para simulação.",
+      "timelineTitle": "Linha do Tempo",
+      "emptyTimeline": "Ainda não há eventos de atividade.",
+      "mode": {
+        "live": "Ao vivo",
+        "simulated": "Simulado",
+        "mixed": "Misto"
+      },
+      "cards": {
+        "totalEvents": "Eventos Totais",
+        "subagentEvents": "Eventos de Subagentes",
+        "agentsSeen": "Agentes Vistos",
+        "activeSubagents": "Subagentes Ativos"
+      }
+    },
+    "scheduler": {
+      "title": "Agendador",
+      "jobs": "tarefas",
+      "newJob": "Nova Tarefa",
+      "loading": "Carregando tarefas...",
+      "noJobs": "Nenhuma tarefa agendada.",
+      "disabled": "Desabilitado",
+      "editJob": "Editar Tarefa",
+      "createJob": "Criar Tarefa",
+      "col": {
+        "name": "Nome",
+        "schedule": "Agendamento",
+        "message": "Mensagem",
+        "lastRun": "Última Execução",
+        "nextRun": "Próxima Execução",
+        "status": "Status",
+        "actions": "Ações"
+      },
+      "field": {
+        "name": "Nome",
+        "scheduleKind": "Tipo de Agendamento",
+        "cronExpr": "Expressão Cron",
+        "cronExprHint": "Use a sintaxe cron padrão.",
+        "everyMinutes": "A cada N Minutos",
+        "atDatetime": "Executar Em",
+        "message": "Mensagem",
+        "messagePlaceholder": "O que esta tarefa deve enviar?",
+        "channel": "Canal",
+        "to": "Destinatário"
+      },
+      "scheduleKind": {
+        "cron": "Cron",
+        "every": "A cada",
+        "at": "Em"
+      }
+    },
+    "projects": {
+      "title": "Projetos",
+      "saved": "Arquivo salvo.",
+      "projectList": "Arquivos do Projeto",
+      "noProjects": "Nenhum projeto disponível.",
+      "name": "Nome",
+      "type": "Tipo",
+      "size": "Tamanho",
+      "emptyFolder": "Pasta vazia",
+      "folder": "Pasta",
+      "file": "Arquivo",
+      "editor": "Editor",
+      "reload": "Recarregar",
+      "save": "Salvar",
+      "selectFileToEdit": "Selecione um arquivo para editar"
     },
     "config": {
       "load_error": "Falha ao carregar configuração. Atualize a página e tente novamente.",

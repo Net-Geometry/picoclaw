@@ -76,6 +76,13 @@ func DefaultConfig() *Config {
 
 			// OpenAI - https://platform.openai.com/api-keys
 			{
+				ModelName: "gpt-5.5",
+				Provider:  "openai",
+				Model:     "gpt-5.5",
+				APIBase:   "https://api.openai.com/v1",
+			},
+
+			{
 				ModelName: "gpt-5.4",
 				Provider:  "openai",
 				Model:     "gpt-5.4",
@@ -91,6 +98,13 @@ func DefaultConfig() *Config {
 			},
 
 			// DeepSeek - https://platform.deepseek.com/
+			{
+				ModelName: "deepseek-v4",
+				Provider:  "deepseek",
+				Model:     "deepseek-v4",
+				APIBase:   "https://api.deepseek.com/v1",
+			},
+
 			{
 				ModelName: "deepseek-chat",
 				Provider:  "deepseek",

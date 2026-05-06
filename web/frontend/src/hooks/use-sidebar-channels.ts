@@ -29,6 +29,7 @@ import { gatewayAtom } from "@/store/gateway"
 
 const DEFAULT_VISIBLE_CHANNELS = 4
 const CHANNEL_IMPORTANCE_TAIL = [
+  "manus",
   "slack",
   "line",
   "wecom",
@@ -82,6 +83,7 @@ const CHANNEL_ICON_MAP: Record<
   maixcam: IconCamera,
   onebot: IconRobot,
   pico: IconBrandChrome,
+  manus: IconRobot,
   irc: IconMessages,
 }
 

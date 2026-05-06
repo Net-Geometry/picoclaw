@@ -26,13 +26,40 @@ export function useChatModels({ isConnected }: UseChatModelsOptions) {
   const [modelList, setModelList] = useState<ModelInfo[]>([])
   const [defaultModelName, setDefaultModelName] = useState("")
   const setDefaultRequestIdRef = useRef(0)
+  const autoFixingDefaultRef = useRef(false)
 
   const loadModels = useCallback(async () => {
     try {
       const data = await getModels()
       setModelList(data.models)
-      if (data.models.some((m) => m.model_name === data.default_model)) {
+
+      const availableModels = data.models.filter((m) => m.available)
+      const hasAvailableDefault = availableModels.some(
+        (m) => m.model_name === data.default_model,
+      )
+
+      if (hasAvailableDefault) {
         setDefaultModelName(data.default_model)
+        autoFixingDefaultRef.current = false
+        return
+      }
+
+      if (availableModels.length > 0) {
+        const fallbackModelName = availableModels[0].model_name
+        setDefaultModelName(fallbackModelName)
+
+        // Keep backend default aligned to an actually available model.
+        if (!autoFixingDefaultRef.current) {
+          autoFixingDefaultRef.current = true
+          try {
+            await setDefaultModel(fallbackModelName)
+            autoFixingDefaultRef.current = false
+          } catch {
+            autoFixingDefaultRef.current = false
+          }
+        }
+      } else {
+        setDefaultModelName("")
       }
     } catch {
       // silently fail
@@ -50,6 +77,13 @@ export function useChatModels({ isConnected }: UseChatModelsOptions) {
   const handleSetDefault = useCallback(
     async (modelName: string) => {
       if (modelName === defaultModelName) return
+
+      const selectedModel = modelList.find((m) => m.model_name === modelName)
+      if (!selectedModel || !selectedModel.available) {
+        toast.error(t("models.action.setDefaultDisabled.unavailable"))
+        return
+      }
+
       const requestId = ++setDefaultRequestIdRef.current
 
       try {
@@ -75,7 +109,7 @@ export function useChatModels({ isConnected }: UseChatModelsOptions) {
         toast.error(err instanceof Error ? err.message : t("models.loadError"))
       }
     },
-    [defaultModelName, t],
+    [defaultModelName, modelList, t],
   )
 
   const hasAvailableModels = useMemo(

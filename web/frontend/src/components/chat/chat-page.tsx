@@ -6,6 +6,7 @@ import { toast } from "sonner"
 
 import { AssistantMessage } from "@/components/chat/assistant-message"
 import {
+  type ChatChannelMode,
   ChatComposer,
   type ChatInputDisabledReason,
 } from "@/components/chat/chat-composer"
@@ -21,6 +22,7 @@ import { useChatModels } from "@/hooks/use-chat-models"
 import { useGateway } from "@/hooks/use-gateway"
 import { usePicoChat } from "@/hooks/use-pico-chat"
 import { useSessionHistory } from "@/hooks/use-session-history"
+import { useTaskBasedModelRouting } from "@/hooks/use-task-based-model-routing"
 import type { ConnectionState } from "@/store/chat"
 import type { ChatAttachment } from "@/store/chat"
 import { showAssistantDetailsAtom } from "@/store/chat"
@@ -56,11 +58,17 @@ function resolveChatInputDisabledReason({
   hasDefaultModel,
   connectionState,
   gatewayState,
+  channelMode,
 }: {
   hasDefaultModel: boolean
   connectionState: ConnectionState
   gatewayState: GatewayState
+  channelMode: ChatChannelMode
 }): ChatInputDisabledReason | null {
+  if (channelMode === "manus") {
+    return null
+  }
+
   if (gatewayState === "unknown") {
     return "gatewayUnknown"
   }
@@ -104,6 +112,24 @@ function resolveChatInputDisabledReason({
   return null
 }
 
+function routeTaskToChannel(input: string): "pico" | "manus" {
+  const normalized = input.toLowerCase().trim()
+  if (normalized === "") {
+    return "pico"
+  }
+
+  const manusRolePattern =
+    /(researcher|research analyst|technical writer|document designer|doc designer|product writer|requirements writer)/
+  const manusTaskPattern =
+    /(research|investigate|literature|market scan|benchmark|compare options|competitive analysis|whitepaper|prd|spec|specification|design doc|architecture doc|proposal|brief|report|documentation)/
+
+  if (manusRolePattern.test(normalized) || manusTaskPattern.test(normalized)) {
+    return "manus"
+  }
+
+  return "pico"
+}
+
 export function ChatPage() {
   const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -112,6 +138,8 @@ export function ChatPage() {
   const [hasScrolled, setHasScrolled] = useState(false)
   const [input, setInput] = useState("")
   const [attachments, setAttachments] = useState<ChatAttachment[]>([])
+  const [channelMode, setChannelMode] = useState<ChatChannelMode>("auto")
+  const [autoRouteModel, setAutoRouteModel] = useState(true)
   const [showAssistantDetails, setShowAssistantDetails] = useAtom(
     showAssistantDetailsAtom,
   )
@@ -139,12 +167,23 @@ export function ChatPage() {
     handleSetDefault,
   } = useChatModels({ isConnected: isGatewayRunning })
   const hasDefaultModel = Boolean(defaultModelName)
+
+  // Task-based model routing
+  const { routeTask } = useTaskBasedModelRouting({
+    availableModels: [...apiKeyModels, ...oauthModels, ...localModels],
+    defaultModelName: defaultModelName || "",
+  })
+
+  // Calculate current task complexity for display
+  const currentTaskRouting = routeTask(input, attachments.length > 0)
   const inputDisabledReason = resolveChatInputDisabledReason({
     hasDefaultModel,
     connectionState,
     gatewayState: gwState,
+    channelMode,
   })
   const canInput = inputDisabledReason === null
+  const canAttachImages = channelMode !== "manus"
 
   const {
     sessions,
@@ -180,10 +219,27 @@ export function ChatPage() {
 
   const handleSend = () => {
     if ((!input.trim() && attachments.length === 0) || !canInput) return
+
+    // Auto-route to best available model if enabled
+    if (autoRouteModel && currentTaskRouting.selectedModelName) {
+      void handleSetDefault(currentTaskRouting.selectedModelName)
+    }
+
+    const runtimeChannel: "pico" | "manus" =
+      channelMode === "auto"
+        ? routeTaskToChannel(input)
+        : channelMode === "manus"
+          ? "manus"
+          : "pico"
+
+    // Manus endpoint currently accepts text payload only.
+    const runtimeAttachments = runtimeChannel === "manus" ? [] : attachments
+
     if (
       sendMessage({
         content: input,
-        attachments,
+        attachments: runtimeAttachments,
+        channel: runtimeChannel,
       })
     ) {
       setInput("")
@@ -192,7 +248,7 @@ export function ChatPage() {
   }
 
   const handleAddImages = () => {
-    if (!canInput) return
+    if (!canInput || !canAttachImages) return
     fileInputRef.current?.click()
   }
 
@@ -251,6 +307,13 @@ export function ChatPage() {
 
   const canSubmit =
     canInput && (Boolean(input.trim()) || attachments.length > 0)
+
+  const channelHint =
+    channelMode === "auto"
+      ? t("chat.channel.hintAuto")
+      : channelMode === "manus"
+        ? t("chat.channel.hintManus")
+        : t("chat.channel.hintPico")
 
   return (
     <div className="bg-background/95 flex h-full flex-col">
@@ -379,6 +442,10 @@ export function ChatPage() {
         inputDisabledReason={inputDisabledReason}
         canSend={canSubmit}
         contextUsage={contextUsage}
+        channelMode={channelMode}
+        onChannelModeChange={setChannelMode}
+        channelHint={channelHint}
+        canAttachImages={canAttachImages}
       />
     </div>
   )

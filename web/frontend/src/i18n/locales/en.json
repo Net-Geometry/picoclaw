@@ -9,10 +9,14 @@
     "skills": "Skills",
     "tools": "Tools",
     "services": "Services",
+    "configure": "Configure",
     "channels_group": "Channels",
     "show_more_channels": "More",
     "show_less_channels": "Less",
     "config": "Config",
+    "activity": "Activity",
+    "scheduler": "Scheduler",
+    "projects": "Projects",
     "logs": "Logs"
   },
   "launcherLogin": {
@@ -100,6 +104,29 @@
       "apikey": "API Key",
       "oauth": "OAuth",
       "local": "Local"
+    },
+    "channel": {
+      "title": "Chat Channel",
+      "auto": "Auto",
+      "pico": "ChatGPT (Pico)",
+      "manus": "Manus",
+      "hintAuto": "Auto mode routes research and document-design tasks to Manus, and uses your default ChatGPT model for general tasks.",
+      "hintPico": "Pico mode uses your default model (for example ChatGPT/GPT) through the normal gateway flow.",
+      "hintManus": "Manus mode is optimized for research and document design workflows.",
+      "manusNoImage": "Manus mode currently supports text input only."
+    },
+    "autoRouting": {
+      "title": "Intelligent Model Routing",
+      "tooltip": "Autonomously select models based on task complexity",
+      "description": "Automatically choose the best available model for your task",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "complexity": {
+        "simple": "Simple Task",
+        "medium": "Medium Complexity",
+        "complex": "Complex Task"
+      },
+      "selectedModel": "Using {{tier}} model: {{model}}"
     }
   },
   "header": {
@@ -314,6 +341,7 @@
     "name": {
       "telegram": "Telegram",
       "discord": "Discord",
+      "manus": "Manus",
       "slack": "Slack",
       "feishu": "Feishu",
       "dingtalk": "DingTalk",
@@ -460,6 +488,24 @@
     }
   },
   "pages": {
+    "agentConfigure": {
+      "title": "Configure Agent",
+      "addAgent": "Add Agent",
+      "agentId": "Agent ID",
+      "agentIdRequired": "Agent ID is required.",
+      "agentName": "Agent Name",
+      "create": "Create Agent",
+      "mode": "Mode",
+      "primaryModel": "Primary Model",
+      "primaryModelHint": "Current default: {{model}}",
+      "fallbackModels": "Fallback Models",
+      "skills": "Skills",
+      "noSkills": "No skills available.",
+      "allowedSubagents": "Allowed Subagents",
+      "save": "Save",
+      "saved": "Saved",
+      "selectAgent": "Select an agent to configure."
+    },
     "agent": {
       "load_error": "Failed to load agent support information.",
       "skills": {
@@ -612,6 +658,83 @@
           "requires_web_search_provider": "Configure at least one ready external web-search provider."
         }
       }
+    },
+    "activity": {
+      "title": "Activity",
+      "liveMode": "Live",
+      "simulationMode": "Simulation",
+      "mixedMode": "Mixed",
+      "liveEvents": "Live Events",
+      "simulatedEvents": "Simulated Events",
+      "spawnGraphTitle": "Spawn Graph",
+      "emptySpawnGraph": "No spawn graph data available.",
+      "simulationTitle": "Simulation",
+      "simulationNoAgents": "No agents available for simulation.",
+      "timelineTitle": "Timeline",
+      "emptyTimeline": "No activity events yet.",
+      "mode": {
+        "live": "Live",
+        "simulated": "Simulated",
+        "mixed": "Mixed"
+      },
+      "cards": {
+        "totalEvents": "Total Events",
+        "subagentEvents": "Subagent Events",
+        "agentsSeen": "Agents Seen",
+        "activeSubagents": "Active Subagents"
+      }
+    },
+    "scheduler": {
+      "title": "Scheduler",
+      "jobs": "jobs",
+      "newJob": "New Job",
+      "loading": "Loading jobs...",
+      "noJobs": "No scheduled jobs.",
+      "disabled": "Disabled",
+      "editJob": "Edit Job",
+      "createJob": "Create Job",
+      "col": {
+        "name": "Name",
+        "schedule": "Schedule",
+        "message": "Message",
+        "lastRun": "Last Run",
+        "nextRun": "Next Run",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "field": {
+        "name": "Name",
+        "scheduleKind": "Schedule Type",
+        "cronExpr": "Cron Expression",
+        "cronExprHint": "Use standard cron syntax.",
+        "everyMinutes": "Every N Minutes",
+        "atDatetime": "Run At",
+        "message": "Message",
+        "messagePlaceholder": "What should this job send?",
+        "channel": "Channel",
+        "to": "Recipient"
+      },
+      "scheduleKind": {
+        "cron": "Cron",
+        "every": "Every",
+        "at": "At"
+      }
+    },
+    "projects": {
+      "title": "Projects",
+      "saved": "File saved.",
+      "projectList": "Project Files",
+      "noProjects": "No projects available.",
+      "name": "Name",
+      "type": "Type",
+      "size": "Size",
+      "emptyFolder": "Empty folder",
+      "folder": "Folder",
+      "file": "File",
+      "editor": "Editor",
+      "reload": "Reload",
+      "save": "Save",
+      "selectFileToEdit": "Select a file to edit"
     },
     "config": {
       "load_error": "Failed to load configuration. Please refresh and try again.",

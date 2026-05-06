@@ -183,6 +183,8 @@ function isConfigured(
       return hasValue("token")
     case "discord":
       return hasValue("token")
+    case "manus":
+      return hasValue("api_key")
     case "slack":
       return hasValue("bot_token")
     case "feishu":
@@ -226,6 +228,8 @@ function getRequiredFieldKeys(channelName: string): string[] {
       return ["token"]
     case "discord":
       return ["token"]
+    case "manus":
+      return ["api_key"]
     case "slack":
       return ["bot_token"]
     case "feishu":

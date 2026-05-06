@@ -88,6 +88,22 @@ export function AddModelSheet({
     form.apiKey,
     t("models.field.apiKeyPlaceholder"),
   )
+
+  const applyOpenAIPreset = (modelID: string) => {
+    setForm((prev) => ({
+      ...prev,
+      provider: prev.provider.trim() !== "" ? prev.provider : "openai",
+      model: modelID,
+      apiBase:
+        prev.apiBase.trim() !== "" ? prev.apiBase : "https://api.openai.com/v1",
+      modelName: prev.modelName.trim() !== "" ? prev.modelName : modelID,
+    }))
+    setFieldErrors((prev) => ({
+      ...prev,
+      model: undefined,
+      modelName: undefined,
+    }))
+  }
   const isDirty =
     JSON.stringify(form) !== JSON.stringify(EMPTY_ADD_FORM) || setAsDefault
 
@@ -230,6 +246,24 @@ export function AddModelSheet({
               {fieldErrors.model && (
                 <p className="text-destructive text-xs">{fieldErrors.model}</p>
               )}
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => applyOpenAIPreset("gpt-5.5")}
+                >
+                  GPT-5.5
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => applyOpenAIPreset("gpt-5.4")}
+                >
+                  GPT-5.4
+                </Button>
+              </div>
             </Field>
 
             <Field label={t("models.field.apiKey")}>

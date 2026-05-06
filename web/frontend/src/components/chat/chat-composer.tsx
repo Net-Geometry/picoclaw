@@ -25,6 +25,8 @@ export type ChatInputDisabledReason =
   | "websocketError"
   | "noDefaultModel"
 
+export type ChatChannelMode = "auto" | "pico" | "manus"
+
 interface ChatComposerProps {
   input: string
   attachments: ChatAttachment[]
@@ -36,6 +38,10 @@ interface ChatComposerProps {
   inputDisabledReason: ChatInputDisabledReason | null
   canSend: boolean
   contextUsage?: ContextUsage
+  channelMode: ChatChannelMode
+  onChannelModeChange: (mode: ChatChannelMode) => void
+  channelHint?: string
+  canAttachImages?: boolean
 }
 
 export function ChatComposer({
@@ -49,6 +55,10 @@ export function ChatComposer({
   inputDisabledReason,
   canSend,
   contextUsage,
+  channelMode,
+  onChannelModeChange,
+  channelHint,
+  canAttachImages = true,
 }: ChatComposerProps) {
   const { t } = useTranslation()
   const canInput = inputDisabledReason === null
@@ -112,15 +122,32 @@ export function ChatComposer({
 
         <div className="mt-2 flex items-center justify-between px-1">
           <div className="flex items-center gap-1">
+            <select
+              value={channelMode}
+              onChange={(e) =>
+                onChannelModeChange(e.target.value as ChatChannelMode)
+              }
+              className="bg-background text-foreground border-border h-8 rounded-md border px-2 text-xs"
+              title={t("chat.channel.title")}
+              disabled={!canInput}
+            >
+              <option value="auto">{t("chat.channel.auto")}</option>
+              <option value="pico">{t("chat.channel.pico")}</option>
+              <option value="manus">{t("chat.channel.manus")}</option>
+            </select>
             <Button
               type="button"
               variant="ghost"
               size="icon"
               className="text-muted-foreground hover:text-foreground h-8 w-8 rounded-full"
               onClick={onAddImages}
-              disabled={!canInput}
+              disabled={!canInput || !canAttachImages}
               aria-label={t("chat.attachImage")}
-              title={t("chat.attachImage")}
+              title={
+                canAttachImages
+                  ? t("chat.attachImage")
+                  : t("chat.channel.manusNoImage")
+              }
             >
               <IconPhotoPlus className="size-4" />
             </Button>
@@ -159,6 +186,11 @@ export function ChatComposer({
             ) : null}
           </div>
         </div>
+        {channelHint ? (
+          <div className="text-muted-foreground mt-2 px-2 text-xs">
+            {channelHint}
+          </div>
+        ) : null}
       </div>
     </div>
   )

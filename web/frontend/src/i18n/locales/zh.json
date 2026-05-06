@@ -9,10 +9,14 @@
     "skills": "技能",
     "tools": "工具",
     "services": "服务",
+    "configure": "配置智能体",
     "channels_group": "频道",
     "show_more_channels": "更多",
     "show_less_channels": "收起",
     "config": "配置",
+    "activity": "活动",
+    "scheduler": "定时任务",
+    "projects": "项目",
     "logs": "日志"
   },
   "launcherLogin": {
@@ -100,6 +104,16 @@
       "apikey": "API Key",
       "oauth": "OAuth",
       "local": "本地模型"
+    },
+    "channel": {
+      "title": "聊天通道",
+      "auto": "自动",
+      "pico": "ChatGPT（Pico）",
+      "manus": "Manus",
+      "hintAuto": "自动模式会将研究和文档设计类任务路由到 Manus，普通任务使用默认 ChatGPT 模型。",
+      "hintPico": "Pico 模式会通过常规网关使用你的默认模型（例如 ChatGPT/GPT）。",
+      "hintManus": "Manus 模式更适合研究和文档设计类工作流。",
+      "manusNoImage": "Manus 模式当前仅支持文本输入。"
     }
   },
   "header": {
@@ -314,6 +328,7 @@
     "name": {
       "telegram": "Telegram",
       "discord": "Discord",
+      "manus": "Manus",
       "slack": "Slack",
       "feishu": "飞书",
       "dingtalk": "钉钉",
@@ -459,7 +474,38 @@
       "requiredField": "请填写该字段"
     }
   },
+  "autoRouting": {
+    "title": "智能模型路由",
+    "tooltip": "根据任务复杂度自动选择模型",
+    "description": "自动为您的任务选择最合适的可用模型",
+    "enabled": "已启用",
+    "disabled": "已禁用",
+    "complexity": {
+      "simple": "简单任务",
+      "medium": "中等复杂度",
+      "complex": "复杂任务"
+    },
+    "selectedModel": "使用{{tier}}模型：{{model}}"
+  },
   "pages": {
+    "agentConfigure": {
+      "title": "配置智能体",
+      "addAgent": "添加智能体",
+      "agentId": "智能体 ID",
+      "agentIdRequired": "请输入智能体 ID。",
+      "agentName": "智能体名称",
+      "create": "创建智能体",
+      "mode": "模式",
+      "primaryModel": "主模型",
+      "primaryModelHint": "当前默认模型：{{model}}",
+      "fallbackModels": "回退模型",
+      "skills": "技能",
+      "noSkills": "暂无可用技能。",
+      "allowedSubagents": "允许的子智能体",
+      "save": "保存",
+      "saved": "已保存",
+      "selectAgent": "请选择一个智能体进行配置。"
+    },
     "agent": {
       "load_error": "加载 Agent 支持信息失败。",
       "skills": {
@@ -612,6 +658,83 @@
           "requires_web_search_provider": "请至少配置一个可用的外部网络搜索 provider。"
         }
       }
+    },
+    "activity": {
+      "title": "活动",
+      "liveMode": "实时",
+      "simulationMode": "模拟",
+      "mixedMode": "混合",
+      "liveEvents": "实时事件",
+      "simulatedEvents": "模拟事件",
+      "spawnGraphTitle": "派生图",
+      "emptySpawnGraph": "暂无派生图数据。",
+      "simulationTitle": "模拟",
+      "simulationNoAgents": "暂无可用于模拟的智能体。",
+      "timelineTitle": "时间线",
+      "emptyTimeline": "暂无活动事件。",
+      "mode": {
+        "live": "实时",
+        "simulated": "模拟",
+        "mixed": "混合"
+      },
+      "cards": {
+        "totalEvents": "事件总数",
+        "subagentEvents": "子智能体事件",
+        "agentsSeen": "已见智能体",
+        "activeSubagents": "活跃子智能体"
+      }
+    },
+    "scheduler": {
+      "title": "定时任务",
+      "jobs": "个任务",
+      "newJob": "新建任务",
+      "loading": "正在加载任务...",
+      "noJobs": "暂无定时任务。",
+      "disabled": "已禁用",
+      "editJob": "编辑任务",
+      "createJob": "创建任务",
+      "col": {
+        "name": "名称",
+        "schedule": "计划",
+        "message": "消息",
+        "lastRun": "上次运行",
+        "nextRun": "下次运行",
+        "status": "状态",
+        "actions": "操作"
+      },
+      "field": {
+        "name": "名称",
+        "scheduleKind": "计划类型",
+        "cronExpr": "Cron 表达式",
+        "cronExprHint": "使用标准 Cron 语法。",
+        "everyMinutes": "每隔 N 分钟",
+        "atDatetime": "执行时间",
+        "message": "消息",
+        "messagePlaceholder": "这个任务要发送什么？",
+        "channel": "频道",
+        "to": "接收方"
+      },
+      "scheduleKind": {
+        "cron": "Cron",
+        "every": "周期",
+        "at": "定时"
+      }
+    },
+    "projects": {
+      "title": "项目",
+      "saved": "文件已保存。",
+      "projectList": "项目文件",
+      "noProjects": "暂无可用项目。",
+      "name": "名称",
+      "type": "类型",
+      "size": "大小",
+      "emptyFolder": "空文件夹",
+      "folder": "文件夹",
+      "file": "文件",
+      "editor": "编辑器",
+      "reload": "重新加载",
+      "save": "保存",
+      "selectFileToEdit": "选择要编辑的文件"
     },
     "config": {
       "load_error": "加载配置失败，请刷新后重试",
