@@ -2,7 +2,6 @@
  * Model Tier Classification
  * Groups models by capability tier for autonomous selection
  */
-
 import type { ModelInfo } from "@/api/models"
 
 export type ModelTier = "light" | "balanced" | "heavy"
@@ -77,7 +76,7 @@ export function tierModels(models: ModelInfo[]): TieredModels {
 
 export function selectModelForComplexity(
   complexity: "simple" | "medium" | "complex",
-  tieredModels: TieredModels
+  tieredModels: TieredModels,
 ): ModelInfo | null {
   switch (complexity) {
     case "simple":

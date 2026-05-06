@@ -18,7 +18,7 @@ export interface TaskComplexityFeatures {
 
 export function extractTaskFeatures(
   message: string,
-  hasAttachments: boolean
+  hasAttachments: boolean,
 ): TaskComplexityFeatures {
   // Token estimate (rough: ~4 chars per token)
   const tokenEstimate = Math.ceil(message.length / 4)
@@ -62,7 +62,7 @@ export function scoreTaskComplexity(features: TaskComplexityFeatures): number {
 
   // Code blocks — strongest indicator of coding/technical task
   if (features.codeBlockCount > 0) {
-    score += 0.40
+    score += 0.4
   }
 
   // JSON content — structured data processing
@@ -72,12 +72,12 @@ export function scoreTaskComplexity(features: TaskComplexityFeatures): number {
 
   // Math equations — scientific/technical content
   if (features.hasMathEquations) {
-    score += 0.20
+    score += 0.2
   }
 
   // Message length alone (complementary to token estimate)
   if (features.messageLength > 500) {
-    score += 0.10
+    score += 0.1
   }
 
   // Cap at 1.0
@@ -85,7 +85,7 @@ export function scoreTaskComplexity(features: TaskComplexityFeatures): number {
 }
 
 export function classifyComplexity(
-  score: number
+  score: number,
 ): "simple" | "medium" | "complex" {
   if (score < 0.35) {
     return "simple"
