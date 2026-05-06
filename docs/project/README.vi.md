@@ -101,12 +101,12 @@ _*Các bản build gần đây có thể dùng 10-20MB do merge PR nhanh. Tối 
 
 <div align="center">
 
-|                                | OpenClaw      | NanoBot                  | **PicoClaw**                           |
-| ------------------------------ | ------------- | ------------------------ | -------------------------------------- |
-| **Ngôn ngữ**                   | TypeScript    | Python                   | **Go**                                 |
-| **RAM**                        | >1GB          | >100MB                   | **< 10MB***                            |
-| **Thời gian khởi động**</br>(lõi 0.8GHz) | >500s         | >30s                     | **<1s**                                |
-| **Chi phí**                    | Mac Mini $599 | Hầu hết board Linux ~$50 | **Bất kỳ board Linux**</br>**từ $10**  |
+|                                          | OpenClaw      | NanoBot                  | **PicoClaw**                          |
+| ---------------------------------------- | ------------- | ------------------------ | ------------------------------------- |
+| **Ngôn ngữ**                             | TypeScript    | Python                   | **Go**                                |
+| **RAM**                                  | >1GB          | >100MB                   | **< 10MB***                           |
+| **Thời gian khởi động**</br>(lõi 0.8GHz) | >500s         | >30s                     | **<1s**                               |
+| **Chi phí**                              | Mac Mini $599 | Hầu hết board Linux ~$50 | **Bất kỳ board Linux**</br>**từ $10** |
 
 <img src="../../assets/compare.jpg" alt="PicoClaw" width="512">
 
@@ -289,24 +289,6 @@ Sau bước này, `picoclaw-launcher` sẽ mở bình thường trong các lần
 
 </details>
 
-### 💻 TUI Launcher (Khuyến nghị cho Headless / SSH)
-
-TUI (Terminal UI) Launcher cung cấp giao diện terminal đầy đủ tính năng để cấu hình và quản lý. Lý tưởng cho máy chủ, Raspberry Pi và các môi trường headless khác.
-
-```bash
-picoclaw-launcher-tui
-```
-
-<p align="center">
-<img src="../../assets/launcher-tui.jpg" alt="TUI Launcher" width="600">
-</p>
-
-**Bắt đầu:**
-
-Sử dụng menu TUI để: **1)** Cấu hình Provider -> **2)** Cấu hình Channel -> **3)** Khởi động Gateway -> **4)** Trò chuyện!
-
-Để biết tài liệu TUI chi tiết, xem [docs.picoclaw.io](https://docs.picoclaw.io).
-
 <a id="-run-on-old-android-phones"></a>
 ### 📱 Android
 
@@ -397,30 +379,30 @@ picoclaw gateway
 
 PicoClaw hỗ trợ 30+ Provider LLM thông qua cấu hình `model_list`. Sử dụng định dạng `protocol/model`:
 
-| Provider | Protocol | API Key | Ghi chú |
-|----------|----------|---------|---------|
-| [OpenAI](https://platform.openai.com/api-keys) | `openai/` | Bắt buộc | GPT-5.4, GPT-4o, o3, v.v. |
-| [Anthropic](https://console.anthropic.com/settings/keys) | `anthropic/` | Bắt buộc | Claude Opus 4.6, Sonnet 4.6, v.v. |
-| [Google Gemini](https://aistudio.google.com/apikey) | `gemini/` | Bắt buộc | Gemini 3 Flash, 2.5 Pro, v.v. |
-| [OpenRouter](https://openrouter.ai/keys) | `openrouter/` | Bắt buộc | 200+ mô hình, API thống nhất |
-| [Zhipu (GLM)](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) | `zhipu/` | Bắt buộc | GLM-4.7, GLM-5, v.v. |
-| [DeepSeek](https://platform.deepseek.com/api_keys) | `deepseek/` | Bắt buộc | DeepSeek-V3, DeepSeek-R1 |
-| [Volcengine](https://console.volcengine.com) | `volcengine/` | Bắt buộc | Doubao, Ark models |
-| [Qwen](https://dashscope.console.aliyun.com/apiKey) | `qwen/` | Bắt buộc | Qwen3, Qwen-Max, v.v. |
-| [Groq](https://console.groq.com/keys) | `groq/` | Bắt buộc | Suy luận nhanh (Llama, Mixtral) |
-| [Moonshot (Kimi)](https://platform.moonshot.cn/console/api-keys) | `moonshot/` | Bắt buộc | Kimi models |
-| [Minimax](https://platform.minimaxi.com/user-center/basic-information/interface-key) | `minimax/` | Bắt buộc | MiniMax models |
-| [Mistral](https://console.mistral.ai/api-keys) | `mistral/` | Bắt buộc | Mistral Large, Codestral |
-| [NVIDIA NIM](https://build.nvidia.com/) | `nvidia/` | Bắt buộc | Mô hình do NVIDIA lưu trữ |
-| [Cerebras](https://cloud.cerebras.ai/) | `cerebras/` | Bắt buộc | Suy luận nhanh |
-| [Novita AI](https://novita.ai/) | `novita/` | Bắt buộc | Nhiều mô hình mở |
-| [Xiaomi MiMo](https://platform.xiaomimimo.com/) | `mimo/` | Bắt buộc | Mô hình MiMo |
-| [Ollama](https://ollama.com/) | `ollama/` | Không cần | Mô hình cục bộ, tự lưu trữ |
-| [vLLM](https://docs.vllm.ai/) | `vllm/` | Không cần | Triển khai cục bộ, tương thích OpenAI |
-| [LiteLLM](https://docs.litellm.ai/) | `litellm/` | Tùy | Proxy cho 100+ provider |
-| [Azure OpenAI](https://portal.azure.com/) | `azure/` | Bắt buộc | Triển khai Azure doanh nghiệp |
-| [GitHub Copilot](https://github.com/features/copilot) | `github-copilot/` | OAuth | Đăng nhập bằng device code |
-| [Antigravity](https://console.cloud.google.com/) | `antigravity/` | OAuth | Google Cloud AI |
+| Provider                                                                             | Protocol          | API Key   | Ghi chú                               |
+| ------------------------------------------------------------------------------------ | ----------------- | --------- | ------------------------------------- |
+| [OpenAI](https://platform.openai.com/api-keys)                                       | `openai/`         | Bắt buộc  | GPT-5.4, GPT-4o, o3, v.v.             |
+| [Anthropic](https://console.anthropic.com/settings/keys)                             | `anthropic/`      | Bắt buộc  | Claude Opus 4.6, Sonnet 4.6, v.v.     |
+| [Google Gemini](https://aistudio.google.com/apikey)                                  | `gemini/`         | Bắt buộc  | Gemini 3 Flash, 2.5 Pro, v.v.         |
+| [OpenRouter](https://openrouter.ai/keys)                                             | `openrouter/`     | Bắt buộc  | 200+ mô hình, API thống nhất          |
+| [Zhipu (GLM)](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys)                 | `zhipu/`          | Bắt buộc  | GLM-4.7, GLM-5, v.v.                  |
+| [DeepSeek](https://platform.deepseek.com/api_keys)                                   | `deepseek/`       | Bắt buộc  | DeepSeek-V3, DeepSeek-R1              |
+| [Volcengine](https://console.volcengine.com)                                         | `volcengine/`     | Bắt buộc  | Doubao, Ark models                    |
+| [Qwen](https://dashscope.console.aliyun.com/apiKey)                                  | `qwen/`           | Bắt buộc  | Qwen3, Qwen-Max, v.v.                 |
+| [Groq](https://console.groq.com/keys)                                                | `groq/`           | Bắt buộc  | Suy luận nhanh (Llama, Mixtral)       |
+| [Moonshot (Kimi)](https://platform.moonshot.cn/console/api-keys)                     | `moonshot/`       | Bắt buộc  | Kimi models                           |
+| [Minimax](https://platform.minimaxi.com/user-center/basic-information/interface-key) | `minimax/`        | Bắt buộc  | MiniMax models                        |
+| [Mistral](https://console.mistral.ai/api-keys)                                       | `mistral/`        | Bắt buộc  | Mistral Large, Codestral              |
+| [NVIDIA NIM](https://build.nvidia.com/)                                              | `nvidia/`         | Bắt buộc  | Mô hình do NVIDIA lưu trữ             |
+| [Cerebras](https://cloud.cerebras.ai/)                                               | `cerebras/`       | Bắt buộc  | Suy luận nhanh                        |
+| [Novita AI](https://novita.ai/)                                                      | `novita/`         | Bắt buộc  | Nhiều mô hình mở                      |
+| [Xiaomi MiMo](https://platform.xiaomimimo.com/)                                      | `mimo/`           | Bắt buộc  | Mô hình MiMo                          |
+| [Ollama](https://ollama.com/)                                                        | `ollama/`         | Không cần | Mô hình cục bộ, tự lưu trữ            |
+| [vLLM](https://docs.vllm.ai/)                                                        | `vllm/`           | Không cần | Triển khai cục bộ, tương thích OpenAI |
+| [LiteLLM](https://docs.litellm.ai/)                                                  | `litellm/`        | Tùy       | Proxy cho 100+ provider               |
+| [Azure OpenAI](https://portal.azure.com/)                                            | `azure/`          | Bắt buộc  | Triển khai Azure doanh nghiệp         |
+| [GitHub Copilot](https://github.com/features/copilot)                                | `github-copilot/` | OAuth     | Đăng nhập bằng device code            |
+| [Antigravity](https://console.cloud.google.com/)                                     | `antigravity/`    | OAuth     | Google Cloud AI                       |
 
 <details>
 <summary><b>Triển khai cục bộ (Ollama, vLLM, v.v.)</b></summary>
@@ -459,24 +441,24 @@ PicoClaw hỗ trợ 30+ Provider LLM thông qua cấu hình `model_list`. Sử d
 
 Trò chuyện với PicoClaw của bạn qua 17+ nền tảng nhắn tin:
 
-| Channel | Thiết lập | Protocol | Tài liệu |
-|---------|-----------|----------|----------|
-| **Telegram** | Dễ (bot token) | Long polling | [Hướng dẫn](../channels/telegram/README.vi.md) |
-| **Discord** | Dễ (bot token + intents) | WebSocket | [Hướng dẫn](../channels/discord/README.vi.md) |
-| **WhatsApp** | Dễ (quét QR hoặc bridge URL) | Native / Bridge | [Hướng dẫn](../guides/chat-apps.vi.md#whatsapp) |
-| **Weixin** | Dễ (quét QR gốc) | iLink API | [Hướng dẫn](../guides/chat-apps.vi.md#weixin) |
-| **QQ** | Dễ (AppID + AppSecret) | WebSocket | [Hướng dẫn](../channels/qq/README.vi.md) |
-| **Slack** | Dễ (bot + app token) | Socket Mode | [Hướng dẫn](../channels/slack/README.vi.md) |
-| **Matrix** | Trung bình (homeserver + token) | Sync API | [Hướng dẫn](../channels/matrix/README.vi.md) |
-| **DingTalk** | Trung bình (client credentials) | Stream | [Hướng dẫn](../channels/dingtalk/README.vi.md) |
-| **Feishu / Lark** | Trung bình (App ID + Secret) | WebSocket/SDK | [Hướng dẫn](../channels/feishu/README.vi.md) |
-| **LINE** | Trung bình (credentials + webhook) | Webhook | [Hướng dẫn](../channels/line/README.vi.md) |
-| **WeCom** | Dễ (đăng nhập QR hoặc thủ công) | WebSocket | [Hướng dẫn](../channels/wecom/README.vi.md) |
-| **IRC** | Trung bình (server + nick) | IRC protocol | [Hướng dẫn](../guides/chat-apps.vi.md#irc) |
-| **OneBot** | Trung bình (WebSocket URL) | OneBot v11 | [Hướng dẫn](../channels/onebot/README.vi.md) |
-| **MaixCam** | Dễ (bật) | TCP socket | [Hướng dẫn](../channels/maixcam/README.vi.md) |
-| **Pico** | Dễ (bật) | Native protocol | Tích hợp sẵn |
-| **Pico Client** | Dễ (WebSocket URL) | WebSocket | Tích hợp sẵn |
+| Channel           | Thiết lập                          | Protocol        | Tài liệu                                        |
+| ----------------- | ---------------------------------- | --------------- | ----------------------------------------------- |
+| **Telegram**      | Dễ (bot token)                     | Long polling    | [Hướng dẫn](../channels/telegram/README.vi.md)  |
+| **Discord**       | Dễ (bot token + intents)           | WebSocket       | [Hướng dẫn](../channels/discord/README.vi.md)   |
+| **WhatsApp**      | Dễ (quét QR hoặc bridge URL)       | Native / Bridge | [Hướng dẫn](../guides/chat-apps.vi.md#whatsapp) |
+| **Weixin**        | Dễ (quét QR gốc)                   | iLink API       | [Hướng dẫn](../guides/chat-apps.vi.md#weixin)   |
+| **QQ**            | Dễ (AppID + AppSecret)             | WebSocket       | [Hướng dẫn](../channels/qq/README.vi.md)        |
+| **Slack**         | Dễ (bot + app token)               | Socket Mode     | [Hướng dẫn](../channels/slack/README.vi.md)     |
+| **Matrix**        | Trung bình (homeserver + token)    | Sync API        | [Hướng dẫn](../channels/matrix/README.vi.md)    |
+| **DingTalk**      | Trung bình (client credentials)    | Stream          | [Hướng dẫn](../channels/dingtalk/README.vi.md)  |
+| **Feishu / Lark** | Trung bình (App ID + Secret)       | WebSocket/SDK   | [Hướng dẫn](../channels/feishu/README.vi.md)    |
+| **LINE**          | Trung bình (credentials + webhook) | Webhook         | [Hướng dẫn](../channels/line/README.vi.md)      |
+| **WeCom**         | Dễ (đăng nhập QR hoặc thủ công)    | WebSocket       | [Hướng dẫn](../channels/wecom/README.vi.md)     |
+| **IRC**           | Trung bình (server + nick)         | IRC protocol    | [Hướng dẫn](../guides/chat-apps.vi.md#irc)      |
+| **OneBot**        | Trung bình (WebSocket URL)         | OneBot v11      | [Hướng dẫn](../channels/onebot/README.vi.md)    |
+| **MaixCam**       | Dễ (bật)                           | TCP socket      | [Hướng dẫn](../channels/maixcam/README.vi.md)   |
+| **Pico**          | Dễ (bật)                           | Native protocol | Tích hợp sẵn                                    |
+| **Pico Client**   | Dễ (WebSocket URL)                 | WebSocket       | Tích hợp sẵn                                    |
 
 > Tất cả các Channel dựa trên webhook dùng chung một Gateway HTTP server (`gateway.host`:`gateway.port`, mặc định `127.0.0.1:18790`). Feishu sử dụng chế độ WebSocket/SDK và không dùng HTTP server chung.
 
@@ -490,15 +472,15 @@ Trò chuyện với PicoClaw của bạn qua 17+ nền tảng nhắn tin:
 
 PicoClaw có thể tìm kiếm web để cung cấp thông tin cập nhật. Cấu hình trong `tools.web`:
 
-| Công cụ Tìm kiếm | API Key | Gói miễn phí | Liên kết |
-|------------------|---------|--------------|----------|
-| DuckDuckGo | Không cần | Không giới hạn | Dự phòng tích hợp sẵn |
-| [Baidu Search](https://cloud.baidu.com/doc/qianfan-api/s/Wmbq4z7e5) | Bắt buộc | 1000 truy vấn/ngày | AI, tối ưu cho tiếng Trung |
-| [Tavily](https://tavily.com) | Bắt buộc | 1000 truy vấn/tháng | Tối ưu cho AI Agent |
-| [Brave Search](https://brave.com/search/api) | Bắt buộc | 2000 truy vấn/tháng | Nhanh và riêng tư |
-| [Perplexity](https://www.perplexity.ai) | Bắt buộc | Trả phí | Tìm kiếm hỗ trợ AI |
-| [SearXNG](https://github.com/searxng/searxng) | Không cần | Tự lưu trữ | Metasearch engine miễn phí |
-| [GLM Search](https://open.bigmodel.cn/) | Bắt buộc | Tùy | Tìm kiếm web Zhipu |
+| Công cụ Tìm kiếm                                                    | API Key   | Gói miễn phí        | Liên kết                   |
+| ------------------------------------------------------------------- | --------- | ------------------- | -------------------------- |
+| DuckDuckGo                                                          | Không cần | Không giới hạn      | Dự phòng tích hợp sẵn      |
+| [Baidu Search](https://cloud.baidu.com/doc/qianfan-api/s/Wmbq4z7e5) | Bắt buộc  | 1000 truy vấn/ngày  | AI, tối ưu cho tiếng Trung |
+| [Tavily](https://tavily.com)                                        | Bắt buộc  | 1000 truy vấn/tháng | Tối ưu cho AI Agent        |
+| [Brave Search](https://brave.com/search/api)                        | Bắt buộc  | 2000 truy vấn/tháng | Nhanh và riêng tư          |
+| [Perplexity](https://www.perplexity.ai)                             | Bắt buộc  | Trả phí             | Tìm kiếm hỗ trợ AI         |
+| [SearXNG](https://github.com/searxng/searxng)                       | Không cần | Tự lưu trữ          | Metasearch engine miễn phí |
+| [GLM Search](https://open.bigmodel.cn/)                             | Bắt buộc  | Tùy                 | Tìm kiếm web Zhipu         |
 
 ### ⚙️ Các Tools Khác
 
@@ -565,24 +547,24 @@ Kết nối PicoClaw với Mạng xã hội Agent chỉ bằng cách gửi một
 
 ## 🖥️ Tham chiếu CLI
 
-| Lệnh                      | Mô tả                                    |
-| ------------------------- | ---------------------------------------- |
-| `picoclaw onboard`        | Khởi tạo cấu hình & workspace           |
-| `picoclaw auth weixin` | Kết nối tài khoản WeChat qua QR |
-| `picoclaw agent -m "..."` | Trò chuyện với agent                     |
-| `picoclaw agent`          | Chế độ trò chuyện tương tác             |
-| `picoclaw gateway`        | Khởi động gateway                        |
-| `picoclaw status`         | Hiển thị trạng thái                      |
-| `picoclaw version`        | Hiển thị thông tin phiên bản            |
-| `picoclaw model`          | Xem hoặc chuyển đổi mô hình mặc định   |
-| `picoclaw cron list`      | Liệt kê tất cả công việc đã lên lịch   |
-| `picoclaw cron add ...`   | Thêm công việc đã lên lịch             |
-| `picoclaw cron disable`   | Vô hiệu hóa công việc đã lên lịch      |
-| `picoclaw cron remove`    | Xóa công việc đã lên lịch              |
-| `picoclaw skills list`    | Liệt kê các Skill đã cài đặt           |
-| `picoclaw skills install` | Cài đặt một Skill                       |
-| `picoclaw migrate`        | Di chuyển dữ liệu từ các phiên bản cũ  |
-| `picoclaw auth login`     | Xác thực với các provider               |
+| Lệnh                      | Mô tả                                 |
+| ------------------------- | ------------------------------------- |
+| `picoclaw onboard`        | Khởi tạo cấu hình & workspace         |
+| `picoclaw auth weixin`    | Kết nối tài khoản WeChat qua QR       |
+| `picoclaw agent -m "..."` | Trò chuyện với agent                  |
+| `picoclaw agent`          | Chế độ trò chuyện tương tác           |
+| `picoclaw gateway`        | Khởi động gateway                     |
+| `picoclaw status`         | Hiển thị trạng thái                   |
+| `picoclaw version`        | Hiển thị thông tin phiên bản          |
+| `picoclaw model`          | Xem hoặc chuyển đổi mô hình mặc định  |
+| `picoclaw cron list`      | Liệt kê tất cả công việc đã lên lịch  |
+| `picoclaw cron add ...`   | Thêm công việc đã lên lịch            |
+| `picoclaw cron disable`   | Vô hiệu hóa công việc đã lên lịch     |
+| `picoclaw cron remove`    | Xóa công việc đã lên lịch             |
+| `picoclaw skills list`    | Liệt kê các Skill đã cài đặt          |
+| `picoclaw skills install` | Cài đặt một Skill                     |
+| `picoclaw migrate`        | Di chuyển dữ liệu từ các phiên bản cũ |
+| `picoclaw auth login`     | Xác thực với các provider             |
 
 ### ⏰ Tác vụ Đã lên lịch / Nhắc nhở
 
@@ -596,19 +578,19 @@ PicoClaw hỗ trợ nhắc nhở đã lên lịch và tác vụ định kỳ th�
 
 Để biết các hướng dẫn chi tiết ngoài README này:
 
-| Chủ đề | Mô tả |
-|--------|-------|
-| [Docker & Khởi động Nhanh](../guides/docker.vi.md) | Thiết lập Docker Compose, chế độ Launcher/Agent |
-| [Ứng dụng Chat](../guides/chat-apps.vi.md) | Hướng dẫn thiết lập 17+ Channel |
-| [Cấu hình](../guides/configuration.vi.md) | Biến môi trường, bố cục workspace, sandbox bảo mật |
-| [Providers & Models](../guides/providers.vi.md) | 30+ Provider LLM, định tuyến mô hình, cấu hình model_list |
-| [Spawn & Tác vụ Bất đồng bộ](../guides/spawn-tasks.vi.md) | Tác vụ nhanh, tác vụ dài với spawn, điều phối sub-agent bất đồng bộ |
-| [Hooks](../architecture/hooks/README.md) | Hệ thống hook hướng sự kiện: observer, interceptor, approval hook |
-| [Steering](../architecture/steering.md) | Chèn tin nhắn vào vòng lặp agent đang chạy |
-| [SubTurn](../architecture/subturn.md) | Điều phối subagent, kiểm soát đồng thời, vòng đời |
-| [Khắc phục sự cố](../operations/troubleshooting.vi.md) | Các vấn đề thường gặp và giải pháp |
-| [Cấu hình Tools](../reference/tools_configuration.vi.md) | Bật/tắt từng tool, chính sách exec, MCP, Skills |
-| [Tương thích Phần cứng](../guides/hardware-compatibility.vi.md) | Các board đã kiểm tra, yêu cầu tối thiểu |
+| Chủ đề                                                          | Mô tả                                                               |
+| --------------------------------------------------------------- | ------------------------------------------------------------------- |
+| [Docker & Khởi động Nhanh](../guides/docker.vi.md)              | Thiết lập Docker Compose, chế độ Launcher/Agent                     |
+| [Ứng dụng Chat](../guides/chat-apps.vi.md)                      | Hướng dẫn thiết lập 17+ Channel                                     |
+| [Cấu hình](../guides/configuration.vi.md)                       | Biến môi trường, bố cục workspace, sandbox bảo mật                  |
+| [Providers & Models](../guides/providers.vi.md)                 | 30+ Provider LLM, định tuyến mô hình, cấu hình model_list           |
+| [Spawn & Tác vụ Bất đồng bộ](../guides/spawn-tasks.vi.md)       | Tác vụ nhanh, tác vụ dài với spawn, điều phối sub-agent bất đồng bộ |
+| [Hooks](../architecture/hooks/README.md)                        | Hệ thống hook hướng sự kiện: observer, interceptor, approval hook   |
+| [Steering](../architecture/steering.md)                         | Chèn tin nhắn vào vòng lặp agent đang chạy                          |
+| [SubTurn](../architecture/subturn.md)                           | Điều phối subagent, kiểm soát đồng thời, vòng đời                   |
+| [Khắc phục sự cố](../operations/troubleshooting.vi.md)          | Các vấn đề thường gặp và giải pháp                                  |
+| [Cấu hình Tools](../reference/tools_configuration.vi.md)        | Bật/tắt từng tool, chính sách exec, MCP, Skills                     |
+| [Tương thích Phần cứng](../guides/hardware-compatibility.vi.md) | Các board đã kiểm tra, yêu cầu tối thiểu                            |
 
 ## 🤝 Đóng góp & Lộ trình
 

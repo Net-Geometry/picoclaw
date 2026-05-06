@@ -127,8 +127,7 @@ func NewAgentInstance(
 			mcpDiscoveryActive && cfg.Tools.MCP.Discovery.UseBM25,
 			mcpDiscoveryActive && cfg.Tools.MCP.Discovery.UseRegex,
 		).
-		WithSplitOnMarker(cfg.Agents.Defaults.SplitOnMarker).
-		WithMemoryCore(cfg.MemoryCore)
+		WithSplitOnMarker(cfg.Agents.Defaults.SplitOnMarker)
 
 	agentID := routing.DefaultAgentID
 	agentName := ""
@@ -271,8 +270,8 @@ func populateCandidateProvidersFromNames(
 				map[string]any{"name": name, "error": err.Error()})
 			continue
 		}
-		protocol, modelID := providers.ExtractProtocol(strings.TrimSpace(mc.Model))
-		key := providers.ModelKey(providers.NormalizeProvider(protocol), modelID)
+		protocol, modelID := providers.ExtractProtocol(mc)
+		key := providers.ModelKey(protocol, modelID)
 		if _, exists := out[key]; exists {
 			continue
 		}

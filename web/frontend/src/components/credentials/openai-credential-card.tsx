@@ -56,7 +56,6 @@ export function OpenAICredentialCard({
       description={t("credentials.providers.openai.description")}
       status={status?.status ?? "not_logged_in"}
       authMethod={status?.auth_method}
-      credentialCount={status?.credential_count}
       details={
         status?.account_id ? (
           <p>

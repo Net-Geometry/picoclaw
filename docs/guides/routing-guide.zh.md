@@ -69,12 +69,14 @@ PicoClaw 里用户能直接感知到的“路由”主要有两部分：
   "model_list": [
     {
       "model_name": "gpt-main",
-      "model": "openai/gpt-5.4",
+      "provider": "openai",
+      "model": "gpt-5.4",
       "api_keys": ["sk-main"]
     },
     {
       "model_name": "flash-light",
-      "model": "gemini/gemini-2.0-flash-exp",
+      "provider": "gemini",
+      "model": "gemini-2.0-flash-exp",
       "api_keys": ["sk-light"]
     }
   ],
@@ -105,15 +107,15 @@ agents.dispatch.rules
 
 ## 支持的匹配字段
 
-| 字段 | 含义 | 示例 |
-| --- | --- | --- |
-| `channel` | Channel 名称 | `telegram`、`slack`、`discord` |
-| `account` | 归一化后的 account ID | `default`、`bot2` |
-| `space` | workspace、guild 等上层容器 | `workspace:t001`、`guild:123456` |
-| `chat` | 私聊、群或频道 | `direct:user123`、`group:-100123`、`channel:c123` |
-| `topic` | 线程或话题 | `topic:42` |
-| `sender` | 归一化后的发送者身份 | `12345`、`john` |
-| `mentioned` | 是否显式 @ 了 bot | `true` |
+| 字段        | 含义                        | 示例                                              |
+| ----------- | --------------------------- | ------------------------------------------------- |
+| `channel`   | Channel 名称                | `telegram`、`slack`、`discord`                    |
+| `account`   | 归一化后的 account ID       | `default`、`bot2`                                 |
+| `space`     | workspace、guild 等上层容器 | `workspace:t001`、`guild:123456`                  |
+| `chat`      | 私聊、群或频道              | `direct:user123`、`group:-100123`、`channel:c123` |
+| `topic`     | 线程或话题                  | `topic:42`                                        |
+| `sender`    | 归一化后的发送者身份        | `12345`、`john`                                   |
+| `mentioned` | 是否显式 @ 了 bot           | `true`                                            |
 
 注意，配置里要写的是运行时归一化后的值，不是原始 webhook / SDK payload。
 
@@ -229,11 +231,11 @@ agents.defaults.routing
 
 当前支持字段：
 
-| 字段 | 含义 |
-| --- | --- |
-| `enabled` | 开启或关闭模型路由 |
+| 字段          | 含义                                       |
+| ------------- | ------------------------------------------ |
+| `enabled`     | 开启或关闭模型路由                         |
 | `light_model` | `model_list` 中用于简单请求的 `model_name` |
-| `threshold` | `[0, 1]` 范围内的复杂度阈值 |
+| `threshold`   | `[0, 1]` 范围内的复杂度阈值                |
 
 关键行为：
 

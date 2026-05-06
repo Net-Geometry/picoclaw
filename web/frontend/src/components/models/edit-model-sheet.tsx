@@ -3,9 +3,12 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { type ModelInfo, setDefaultModel, updateModel } from "@/api/models"
+import { ConfigChangeNotice } from "@/components/config-change-notice"
+import { maskedSecretPlaceholder } from "@/components/secret-placeholder"
 import {
   AdvancedSection,
   Field,
+  KeyInput,
   SwitchCardField,
 } from "@/components/shared-form"
 import { Button } from "@/components/ui/button"
@@ -19,9 +22,13 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
+import { showSaveSuccessOrRestartToast } from "@/lib/restart-required"
+import { refreshGatewayState } from "@/store/gateway"
 
 interface EditForm {
-  apiKeys: string
+  provider: string
+  modelId: string
+  apiKey: string
   apiBase: string
   proxy: string
   authMethod: string
@@ -31,6 +38,7 @@ interface EditForm {
   maxTokensField: string
   requestTimeout: string
   thinkingLevel: string
+  toolSchemaTransform: string
   extraBody: string
   customHeaders: string
 }
@@ -42,6 +50,30 @@ interface EditModelSheetProps {
   onSaved: () => void
 }
 
+function buildInitialEditForm(model: ModelInfo): EditForm {
+  return {
+    provider: model.provider ?? "",
+    modelId: model.model,
+    apiKey: "",
+    apiBase: model.api_base ?? "",
+    proxy: model.proxy ?? "",
+    authMethod: model.auth_method ?? "",
+    connectMode: model.connect_mode ?? "",
+    workspace: model.workspace ?? "",
+    rpm: model.rpm ? String(model.rpm) : "",
+    maxTokensField: model.max_tokens_field ?? "",
+    requestTimeout: model.request_timeout ? String(model.request_timeout) : "",
+    thinkingLevel: model.thinking_level ?? "",
+    toolSchemaTransform: model.tool_schema_transform ?? "", // <-- AGGIUNGI QUESTA RIGA
+    extraBody: model.extra_body
+      ? JSON.stringify(model.extra_body, null, 2)
+      : "",
+    customHeaders: model.custom_headers
+      ? JSON.stringify(model.custom_headers, null, 2)
+      : "",
+  }
+}
+
 export function EditModelSheet({
   model,
   open,
@@ -50,7 +82,9 @@ export function EditModelSheet({
 }: EditModelSheetProps) {
   const { t } = useTranslation()
   const [form, setForm] = useState<EditForm>({
-    apiKeys: "",
+    provider: "",
+    modelId: "",
+    apiKey: "",
     apiBase: "",
     proxy: "",
     authMethod: "",
@@ -60,35 +94,22 @@ export function EditModelSheet({
     maxTokensField: "",
     requestTimeout: "",
     thinkingLevel: "",
+    toolSchemaTransform: "",
     extraBody: "",
     customHeaders: "",
   })
   const [saving, setSaving] = useState(false)
   const [setAsDefault, setSetAsDefault] = useState(false)
   const [error, setError] = useState("")
+  const initialForm = model ? buildInitialEditForm(model) : null
+  const isDirty =
+    model != null &&
+    (JSON.stringify(form) !== JSON.stringify(initialForm) ||
+      setAsDefault !== model.is_default)
 
   useEffect(() => {
     if (model) {
-      setForm({
-        apiKeys: "",
-        apiBase: model.api_base ?? "",
-        proxy: model.proxy ?? "",
-        authMethod: model.auth_method ?? "",
-        connectMode: model.connect_mode ?? "",
-        workspace: model.workspace ?? "",
-        rpm: model.rpm ? String(model.rpm) : "",
-        maxTokensField: model.max_tokens_field ?? "",
-        requestTimeout: model.request_timeout
-          ? String(model.request_timeout)
-          : "",
-        thinkingLevel: model.thinking_level ?? "",
-        extraBody: model.extra_body
-          ? JSON.stringify(model.extra_body, null, 2)
-          : "",
-        customHeaders: model.custom_headers
-          ? JSON.stringify(model.custom_headers, null, 2)
-          : "",
-      })
+      setForm(buildInitialEditForm(model))
       setSetAsDefault(model.is_default)
       setError("")
     }
@@ -99,24 +120,21 @@ export function EditModelSheet({
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setForm((f) => ({ ...f, [key]: e.target.value }))
 
-  const parseAPIKeysInput = (value: string): string[] => {
-    return value
-      .split(/[,\n]/)
-      .map((k) => k.trim())
-      .filter(Boolean)
-  }
-
   const handleSave = async () => {
     if (!model) return
+    if (!form.modelId.trim()) {
+      setError(t("models.add.errorRequired"))
+      return
+    }
     setSaving(true)
     setError("")
     try {
-      const parsedKeys = parseAPIKeysInput(form.apiKeys)
       await updateModel(model.index, {
         model_name: model.model_name,
-        model: model.model,
+        provider: form.provider.trim(),
+        model: form.modelId.trim(),
         api_base: form.apiBase || undefined,
-        api_keys: parsedKeys.length > 0 ? parsedKeys : undefined,
+        api_key: form.apiKey || undefined,
         proxy: form.proxy || undefined,
         auth_method: form.authMethod || undefined,
         connect_mode: form.connectMode || undefined,
@@ -127,6 +145,7 @@ export function EditModelSheet({
           ? Number(form.requestTimeout)
           : undefined,
         thinking_level: form.thinkingLevel || undefined,
+        tool_schema_transform: form.toolSchemaTransform.trim() || undefined,
         extra_body: form.extraBody.trim()
           ? JSON.parse(form.extraBody.trim())
           : {},
@@ -137,6 +156,13 @@ export function EditModelSheet({
       if (setAsDefault && !model.is_default) {
         await setDefaultModel(model.model_name)
       }
+      const gateway = await refreshGatewayState({ force: true })
+      showSaveSuccessOrRestartToast(
+        t,
+        t("models.edit.saveSuccess"),
+        model.model_name,
+        gateway?.restartRequired === true,
+      )
       onSaved()
       onClose()
     } catch (e) {
@@ -147,12 +173,13 @@ export function EditModelSheet({
   }
 
   const isOAuth = model?.auth_method === "oauth"
-  const hasSavedAPIKeys = (model?.api_keys_count ?? 0) > 0
-  const apiKeysPlaceholder = hasSavedAPIKeys
-    ? t("models.field.apiKeysPlaceholderSet", {
-        count: model?.api_keys_count ?? 0,
-      })
-    : t("models.field.apiKeysPlaceholder")
+  const hasSavedAPIKey = Boolean(model?.api_key)
+  const apiKeyPlaceholder = hasSavedAPIKey
+    ? maskedSecretPlaceholder(
+        model?.api_key ?? "",
+        t("models.field.apiKeyPlaceholderSet"),
+      )
+    : t("models.field.apiKeyPlaceholder")
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
@@ -171,22 +198,38 @@ export function EditModelSheet({
 
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="space-y-5 px-6 py-5">
+            <Field
+              label={t("models.field.provider")}
+              hint={t("models.field.providerHint")}
+            >
+              <Input
+                value={form.provider}
+                onChange={setField("provider")}
+                placeholder={t("models.field.providerPlaceholder")}
+              />
+            </Field>
+
+            <Field
+              label={t("models.add.modelId")}
+              hint={t("models.add.modelIdHint")}
+            >
+              <Input
+                value={form.modelId}
+                onChange={setField("modelId")}
+                placeholder={t("models.add.modelIdPlaceholder")}
+                className="font-mono text-sm"
+              />
+            </Field>
+
             {!isOAuth && (
               <Field
-                label={t("models.field.apiKeys")}
-                hint={
-                  hasSavedAPIKeys
-                    ? t("models.edit.apiKeysHint", {
-                        count: model?.api_keys_count ?? 0,
-                      })
-                    : t("models.field.apiKeysHint")
-                }
+                label={t("models.field.apiKey")}
+                hint={hasSavedAPIKey ? t("models.edit.apiKeyHint") : undefined}
               >
-                <Textarea
-                  value={form.apiKeys}
-                  onChange={setField("apiKeys")}
-                  placeholder={apiKeysPlaceholder}
-                  rows={3}
+                <KeyInput
+                  value={form.apiKey}
+                  onChange={(v) => setForm((f) => ({ ...f, apiKey: v }))}
+                  placeholder={apiKeyPlaceholder}
                 />
               </Field>
             )}
@@ -304,6 +347,17 @@ export function EditModelSheet({
               </Field>
 
               <Field
+                label={t("models.field.toolSchemaTransform")}
+                hint={t("models.field.toolSchemaTransformHint")}
+              >
+                <Input
+                  value={form.toolSchemaTransform}
+                  onChange={setField("toolSchemaTransform")}
+                  placeholder="google"
+                />
+              </Field>
+
+              <Field
                 label={t("models.field.extraBody")}
                 hint={t("models.field.extraBodyHint")}
               >
@@ -337,10 +391,17 @@ export function EditModelSheet({
         </div>
 
         <SheetFooter className="border-t-muted border-t px-6 py-4">
+          {isDirty && (
+            <ConfigChangeNotice
+              kind="save"
+              title={t("common.saveChangesTitle")}
+              description={t("models.unsavedPrompt")}
+            />
+          )}
           <Button variant="ghost" onClick={onClose} disabled={saving}>
             {t("common.cancel")}
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={handleSave} disabled={!isDirty || saving}>
             {saving && <IconLoader2 className="size-4 animate-spin" />}
             {t("common.save")}
           </Button>

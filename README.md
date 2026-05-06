@@ -101,12 +101,12 @@ _*Recent builds may use 10-20MB due to rapid PR merges. Resource optimization is
 
 <div align="center">
 
-|                                | OpenClaw      | NanoBot                  | **PicoClaw**                           |
-| ------------------------------ | ------------- | ------------------------ | -------------------------------------- |
-| **Language**                   | TypeScript    | Python                   | **Go**                                 |
-| **RAM**                        | >1GB          | >100MB                   | **< 10MB***                            |
-| **Boot time**</br>(0.8GHz core) | >500s         | >30s                     | **<1s**                                |
-| **Cost**                       | Mac Mini $599 | Most Linux boards ~$50   | **Any Linux board**</br>**from $10**   |
+|                                 | OpenClaw      | NanoBot                | **PicoClaw**                         |
+| ------------------------------- | ------------- | ---------------------- | ------------------------------------ |
+| **Language**                    | TypeScript    | Python                 | **Go**                               |
+| **RAM**                         | >1GB          | >100MB                 | **< 10MB***                          |
+| **Boot time**</br>(0.8GHz core) | >500s         | >30s                   | **<1s**                              |
+| **Cost**                        | Mac Mini $599 | Most Linux boards ~$50 | **Any Linux board**</br>**from $10** |
 
 <img src="assets/compare.jpg" alt="PicoClaw" width="512">
 
@@ -291,24 +291,6 @@ After this one-time step, `picoclaw-launcher` will open normally on subsequent l
 
 </details>
 
-### 💻 TUI Launcher (Recommended for Headless / SSH)
-
-The TUI (Terminal UI) Launcher provides a full-featured terminal interface for configuration and management. Ideal for servers, Raspberry Pi, and other headless environments.
-
-```bash
-picoclaw-launcher-tui
-```
-
-<p align="center">
-<img src="assets/launcher-tui.jpg" alt="TUI Launcher" width="600">
-</p>
-
-**Getting started:**
-
-Use the TUI menus to: **1)** Configure a Provider -> **2)** Configure a Channel -> **3)** Start the Gateway -> **4)** Chat!
-
-For detailed TUI documentation, see [docs.picoclaw.io](https://docs.picoclaw.io).
-
 <a id="-run-on-old-android-phones"></a>
 ### 📱 Android
 
@@ -402,31 +384,31 @@ picoclaw gateway
 
 PicoClaw supports 30+ LLM providers through the `model_list` configuration. Use the `protocol/model` format:
 
-| Provider | Protocol | API Key | Notes |
-|----------|----------|---------|-------|
-| [OpenAI](https://platform.openai.com/api-keys) | `openai/` | Required | GPT-5.4, GPT-4o, o3, etc. |
-| [Anthropic](https://console.anthropic.com/settings/keys) | `anthropic/` | Required | Claude Opus 4.6, Sonnet 4.6, etc. |
-| [Google Gemini](https://aistudio.google.com/apikey) | `gemini/` | Required | Gemini 3 Flash, 2.5 Pro, etc. |
-| [OpenRouter](https://openrouter.ai/keys) | `openrouter/` | Required | 200+ models, unified API |
-| [Zhipu (GLM)](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) | `zhipu/` | Required | GLM-4.7, GLM-5, etc. |
-| [DeepSeek](https://platform.deepseek.com/api_keys) | `deepseek/` | Required | DeepSeek-V3, DeepSeek-R1 |
-| [Volcengine](https://console.volcengine.com) | `volcengine/` | Required | Doubao, Ark models |
-| [Qwen](https://dashscope.console.aliyun.com/apiKey) | `qwen/` | Required | Qwen3, Qwen-Max, etc. |
-| [Groq](https://console.groq.com/keys) | `groq/` | Required | Fast inference (Llama, Mixtral) |
-| [Moonshot (Kimi)](https://platform.moonshot.cn/console/api-keys) | `moonshot/` | Required | Kimi models |
-| [Minimax](https://platform.minimaxi.com/user-center/basic-information/interface-key) | `minimax/` | Required | MiniMax models |
-| [Mistral](https://console.mistral.ai/api-keys) | `mistral/` | Required | Mistral Large, Codestral |
-| [NVIDIA NIM](https://build.nvidia.com/) | `nvidia/` | Required | NVIDIA hosted models |
-| [Cerebras](https://cloud.cerebras.ai/) | `cerebras/` | Required | Fast inference |
-| [Novita AI](https://novita.ai/) | `novita/` | Required | Various open models |
-| [Xiaomi MiMo](https://platform.xiaomimimo.com/) | `mimo/` | Required | MiMo models |
-| [Ollama](https://ollama.com/) | `ollama/` | Not needed | Local models, self-hosted |
-| [vLLM](https://docs.vllm.ai/) | `vllm/` | Not needed | Local deployment, OpenAI-compatible |
-| [LiteLLM](https://docs.litellm.ai/) | `litellm/` | Varies | Proxy for 100+ providers |
-| [Azure OpenAI](https://portal.azure.com/) | `azure/` | Required | Enterprise Azure deployment |
-| [GitHub Copilot](https://github.com/features/copilot) | `github-copilot/` | OAuth | Device code login |
-| [Antigravity](https://console.cloud.google.com/) | `antigravity/` | OAuth | Google Cloud AI |
-| [AWS Bedrock](https://console.aws.amazon.com/bedrock)* | `bedrock/` | AWS credentials | Claude, Llama, Mistral on AWS |
+| Provider                                                                             | Protocol          | API Key         | Notes                               |
+| ------------------------------------------------------------------------------------ | ----------------- | --------------- | ----------------------------------- |
+| [OpenAI](https://platform.openai.com/api-keys)                                       | `openai/`         | Required        | GPT-5.4, GPT-4o, o3, etc.           |
+| [Anthropic](https://console.anthropic.com/settings/keys)                             | `anthropic/`      | Required        | Claude Opus 4.6, Sonnet 4.6, etc.   |
+| [Google Gemini](https://aistudio.google.com/apikey)                                  | `gemini/`         | Required        | Gemini 3 Flash, 2.5 Pro, etc.       |
+| [OpenRouter](https://openrouter.ai/keys)                                             | `openrouter/`     | Required        | 200+ models, unified API            |
+| [Zhipu (GLM)](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys)                 | `zhipu/`          | Required        | GLM-4.7, GLM-5, etc.                |
+| [DeepSeek](https://platform.deepseek.com/api_keys)                                   | `deepseek/`       | Required        | DeepSeek-V3, DeepSeek-R1            |
+| [Volcengine](https://console.volcengine.com)                                         | `volcengine/`     | Required        | Doubao, Ark models                  |
+| [Qwen](https://dashscope.console.aliyun.com/apiKey)                                  | `qwen/`           | Required        | Qwen3, Qwen-Max, etc.               |
+| [Groq](https://console.groq.com/keys)                                                | `groq/`           | Required        | Fast inference (Llama, Mixtral)     |
+| [Moonshot (Kimi)](https://platform.moonshot.cn/console/api-keys)                     | `moonshot/`       | Required        | Kimi models                         |
+| [Minimax](https://platform.minimaxi.com/user-center/basic-information/interface-key) | `minimax/`        | Required        | MiniMax models                      |
+| [Mistral](https://console.mistral.ai/api-keys)                                       | `mistral/`        | Required        | Mistral Large, Codestral            |
+| [NVIDIA NIM](https://build.nvidia.com/)                                              | `nvidia/`         | Required        | NVIDIA hosted models                |
+| [Cerebras](https://cloud.cerebras.ai/)                                               | `cerebras/`       | Required        | Fast inference                      |
+| [Novita AI](https://novita.ai/)                                                      | `novita/`         | Required        | Various open models                 |
+| [Xiaomi MiMo](https://platform.xiaomimimo.com/)                                      | `mimo/`           | Required        | MiMo models                         |
+| [Ollama](https://ollama.com/)                                                        | `ollama/`         | Not needed      | Local models, self-hosted           |
+| [vLLM](https://docs.vllm.ai/)                                                        | `vllm/`           | Not needed      | Local deployment, OpenAI-compatible |
+| [LiteLLM](https://docs.litellm.ai/)                                                  | `litellm/`        | Varies          | Proxy for 100+ providers            |
+| [Azure OpenAI](https://portal.azure.com/)                                            | `azure/`          | Required        | Enterprise Azure deployment         |
+| [GitHub Copilot](https://github.com/features/copilot)                                | `github-copilot/` | OAuth           | Device code login                   |
+| [Antigravity](https://console.cloud.google.com/)                                     | `antigravity/`    | OAuth           | Google Cloud AI                     |
+| [AWS Bedrock](https://console.aws.amazon.com/bedrock)*                               | `bedrock/`        | AWS credentials | Claude, Llama, Mistral on AWS       |
 
 > \* AWS Bedrock requires build tag: `go build -tags bedrock`. Set `api_base` to a region name (e.g., `us-east-1`) for automatic endpoint resolution across all AWS partitions (aws, aws-cn, aws-us-gov). When using a full endpoint URL instead, you must also configure `AWS_REGION` via environment variable or AWS config/profile.
 
@@ -467,25 +449,25 @@ For full provider configuration details, see [Providers & Models](docs/guides/pr
 
 Talk to your PicoClaw through 18+ messaging platforms:
 
-| Channel | Setup | Protocol | Docs |
-|---------|-------|----------|------|
-| **Telegram** | Easy (bot token) | Long polling | [Guide](docs/channels/telegram/README.md) |
-| **Discord** | Easy (bot token + intents) | WebSocket | [Guide](docs/channels/discord/README.md) |
-| **WhatsApp** | Easy (QR scan or bridge URL) | Native / Bridge | [Guide](docs/guides/chat-apps.md#whatsapp) |
-| **Weixin** | Easy (Native QR scan) | iLink API | [Guide](docs/guides/chat-apps.md#weixin) |
-| **QQ** | Easy (AppID + AppSecret) | WebSocket | [Guide](docs/channels/qq/README.md) |
-| **Slack** | Easy (bot + app token) | Socket Mode | [Guide](docs/channels/slack/README.md) |
-| **Matrix** | Medium (homeserver + token) | Sync API | [Guide](docs/channels/matrix/README.md) |
-| **DingTalk** | Medium (client credentials) | Stream | [Guide](docs/channels/dingtalk/README.md) |
-| **Feishu / Lark** | Medium (App ID + Secret) | WebSocket/SDK | [Guide](docs/channels/feishu/README.md) |
-| **LINE** | Medium (credentials + webhook) | Webhook | [Guide](docs/channels/line/README.md) |
-| **WeCom** | Easy (QR login or manual) | WebSocket | [Guide](docs/channels/wecom/README.md) |
-| **VK** | Easy (group token) | Long Poll | [Guide](docs/channels/vk/README.md) |
-| **IRC** | Medium (server + nick) | IRC protocol | [Guide](docs/guides/chat-apps.md#irc) |
-| **OneBot** | Medium (WebSocket URL) | OneBot v11 | [Guide](docs/channels/onebot/README.md) |
-| **MaixCam** | Easy (enable) | TCP socket | [Guide](docs/channels/maixcam/README.md) |
-| **Pico** | Easy (enable) | Native protocol | Built-in |
-| **Pico Client** | Easy (WebSocket URL) | WebSocket | Built-in |
+| Channel           | Setup                          | Protocol        | Docs                                       |
+| ----------------- | ------------------------------ | --------------- | ------------------------------------------ |
+| **Telegram**      | Easy (bot token)               | Long polling    | [Guide](docs/channels/telegram/README.md)  |
+| **Discord**       | Easy (bot token + intents)     | WebSocket       | [Guide](docs/channels/discord/README.md)   |
+| **WhatsApp**      | Easy (QR scan or bridge URL)   | Native / Bridge | [Guide](docs/guides/chat-apps.md#whatsapp) |
+| **Weixin**        | Easy (Native QR scan)          | iLink API       | [Guide](docs/guides/chat-apps.md#weixin)   |
+| **QQ**            | Easy (AppID + AppSecret)       | WebSocket       | [Guide](docs/channels/qq/README.md)        |
+| **Slack**         | Easy (bot + app token)         | Socket Mode     | [Guide](docs/channels/slack/README.md)     |
+| **Matrix**        | Medium (homeserver + token)    | Sync API        | [Guide](docs/channels/matrix/README.md)    |
+| **DingTalk**      | Medium (client credentials)    | Stream          | [Guide](docs/channels/dingtalk/README.md)  |
+| **Feishu / Lark** | Medium (App ID + Secret)       | WebSocket/SDK   | [Guide](docs/channels/feishu/README.md)    |
+| **LINE**          | Medium (credentials + webhook) | Webhook         | [Guide](docs/channels/line/README.md)      |
+| **WeCom**         | Easy (QR login or manual)      | WebSocket       | [Guide](docs/channels/wecom/README.md)     |
+| **VK**            | Easy (group token)             | Long Poll       | [Guide](docs/channels/vk/README.md)        |
+| **IRC**           | Medium (server + nick)         | IRC protocol    | [Guide](docs/guides/chat-apps.md#irc)      |
+| **OneBot**        | Medium (WebSocket URL)         | OneBot v11      | [Guide](docs/channels/onebot/README.md)    |
+| **MaixCam**       | Easy (enable)                  | TCP socket      | [Guide](docs/channels/maixcam/README.md)   |
+| **Pico**          | Easy (enable)                  | Native protocol | Built-in                                   |
+| **Pico Client**   | Easy (WebSocket URL)           | WebSocket       | Built-in                                   |
 
 > All webhook-based channels share a single Gateway HTTP server (`gateway.host`:`gateway.port`, default `127.0.0.1:18790`). Feishu uses WebSocket/SDK mode and does not use the shared HTTP server.
 
@@ -499,15 +481,15 @@ For detailed channel setup instructions, see [Chat Apps Configuration](docs/guid
 
 PicoClaw can search the web to provide up-to-date information. Configure in `tools.web`:
 
-| Search Engine | API Key | Free Tier | Link |
-|--------------|---------|-----------|------|
-| DuckDuckGo | Not needed | Unlimited | Built-in fallback |
-| [Baidu Search](https://cloud.baidu.com/doc/qianfan-api/s/Wmbq4z7e5) | Required | 1000 queries/day | AI-powered, China-optimized |
-| [Tavily](https://tavily.com) | Required | 1000 queries/month | Optimized for AI Agents |
-| [Brave Search](https://brave.com/search/api) | Required | 2000 queries/month | Fast and private |
-| [Perplexity](https://www.perplexity.ai) | Required | Paid | AI-powered search |
-| [SearXNG](https://github.com/searxng/searxng) | Not needed | Self-hosted | Free metasearch engine |
-| [GLM Search](https://open.bigmodel.cn/) | Required | Varies | Zhipu web search |
+| Search Engine                                                       | API Key    | Free Tier          | Link                        |
+| ------------------------------------------------------------------- | ---------- | ------------------ | --------------------------- |
+| DuckDuckGo                                                          | Not needed | Unlimited          | Built-in fallback           |
+| [Baidu Search](https://cloud.baidu.com/doc/qianfan-api/s/Wmbq4z7e5) | Required   | 1000 queries/day   | AI-powered, China-optimized |
+| [Tavily](https://tavily.com)                                        | Required   | 1000 queries/month | Optimized for AI Agents     |
+| [Brave Search](https://brave.com/search/api)                        | Required   | 2000 queries/month | Fast and private            |
+| [Perplexity](https://www.perplexity.ai)                             | Required   | Paid               | AI-powered search           |
+| [SearXNG](https://github.com/searxng/searxng)                       | Not needed | Self-hosted        | Free metasearch engine      |
+| [GLM Search](https://open.bigmodel.cn/)                             | Required   | Varies             | Zhipu web search            |
 
 ### ⚙️ Other Tools
 
@@ -571,7 +553,20 @@ PicoClaw natively supports [MCP](https://modelcontextprotocol.io/) — connect a
 }
 ```
 
-For full MCP configuration (stdio, SSE, HTTP transports, Tool Discovery), see [Tools Configuration - MCP](docs/reference/tools_configuration.md#mcp-tool).
+You can manage common MCP setups directly from the CLI instead of editing JSON by hand:
+
+```bash
+picoclaw mcp add filesystem -- npx -y @modelcontextprotocol/server-filesystem /tmp
+picoclaw mcp list
+picoclaw mcp test filesystem
+```
+
+`picoclaw mcp` is a configuration manager: it updates `config.json` under `tools.mcp.servers`, but it does not keep the server process running itself.
+
+Use `picoclaw mcp edit` when you need advanced fields that are not covered by `picoclaw mcp add`.
+For example, `picoclaw mcp add` supports `--deferred` and `--env-file`, while `picoclaw mcp edit` is still useful for direct JSON editing and uncommon MCP settings.
+
+For full MCP configuration (stdio, SSE, HTTP transports, Tool Discovery), see [Tools Configuration - MCP](docs/reference/tools_configuration.md#mcp-tool). For CLI usage and examples, see [MCP Server CLI](docs/reference/mcp-cli.md).
 
 ## <img src="assets/clawdchat-icon.png" width="24" height="24" alt="ClawdChat"> Join the Agent Social Network
 
@@ -581,24 +576,29 @@ Connect PicoClaw to the Agent Social Network simply by sending a single message 
 
 ## 🖥️ CLI Reference
 
-| Command                   | Description                      |
-| ------------------------- | -------------------------------- |
-| `picoclaw onboard`        | Initialize config & workspace    |
-| `picoclaw auth weixin` | Connect WeChat account via QR |
-| `picoclaw agent -m "..."` | Chat with the agent              |
-| `picoclaw agent`          | Interactive chat mode            |
-| `picoclaw gateway`        | Start the gateway                |
-| `picoclaw status`         | Show status                      |
-| `picoclaw version`        | Show version info                |
-| `picoclaw model`          | View or switch the default model |
-| `picoclaw cron list`      | List all scheduled jobs          |
-| `picoclaw cron add ...`   | Add a scheduled job              |
-| `picoclaw cron disable`   | Disable a scheduled job          |
-| `picoclaw cron remove`    | Remove a scheduled job           |
-| `picoclaw skills list`    | List installed skills            |
-| `picoclaw skills install` | Install a skill                  |
-| `picoclaw migrate`        | Migrate data from older versions |
-| `picoclaw auth login`     | Authenticate with providers      |
+| Command                   | Description                          |
+| ------------------------- | ------------------------------------ |
+| `picoclaw onboard`        | Initialize config & workspace        |
+| `picoclaw auth weixin`    | Connect WeChat account via QR        |
+| `picoclaw agent -m "..."` | Chat with the agent                  |
+| `picoclaw agent`          | Interactive chat mode                |
+| `picoclaw gateway`        | Start the gateway                    |
+| `picoclaw status`         | Show status                          |
+| `picoclaw version`        | Show version info                    |
+| `picoclaw model`          | View or switch the default model     |
+| `picoclaw mcp list`       | List configured MCP servers          |
+| `picoclaw mcp add ...`    | Add or update an MCP server entry    |
+| `picoclaw mcp test`       | Probe a configured MCP server        |
+| `picoclaw mcp edit`       | Open config for advanced MCP editing |
+| `picoclaw mcp remove`     | Remove an MCP server entry           |
+| `picoclaw cron list`      | List all scheduled jobs              |
+| `picoclaw cron add ...`   | Add a scheduled job                  |
+| `picoclaw cron disable`   | Disable a scheduled job              |
+| `picoclaw cron remove`    | Remove a scheduled job               |
+| `picoclaw skills list`    | List installed skills                |
+| `picoclaw skills install` | Install a skill                      |
+| `picoclaw migrate`        | Migrate data from older versions     |
+| `picoclaw auth login`     | Authenticate with providers          |
 
 ### ⏰ Scheduled Tasks / Reminders
 
@@ -614,20 +614,21 @@ See [docs/reference/cron.md](docs/reference/cron.md) for current schedule types,
 
 For detailed guides beyond this README:
 
-| Topic | Description |
-|-------|-------------|
-| [Docker & Quick Start](docs/guides/docker.md) | Docker Compose setup, Launcher/Agent modes |
-| [Chat Apps](docs/guides/chat-apps.md) | All 17+ channel setup guides |
-| [Configuration](docs/guides/configuration.md) | Environment variables, workspace layout, security sandbox |
-| [Scheduled Tasks and Cron Jobs](docs/reference/cron.md) | Cron schedule types, deliver modes, command gates, job storage |
-| [Providers & Models](docs/guides/providers.md) | 30+ LLM providers, model routing, model_list configuration |
-| [Spawn & Async Tasks](docs/guides/spawn-tasks.md) | Quick tasks, long tasks with spawn, async sub-agent orchestration |
-| [Hooks](docs/architecture/hooks/README.md) | Event-driven hook system: observers, interceptors, approval hooks |
-| [Steering](docs/architecture/steering.md) | Inject messages into a running agent loop between tool calls |
-| [SubTurn](docs/architecture/subturn.md) | Subagent coordination, concurrency control, lifecycle |
-| [Troubleshooting](docs/operations/troubleshooting.md) | Common issues and solutions |
-| [Tools Configuration](docs/reference/tools_configuration.md) | Per-tool enable/disable, exec policies, MCP, Skills |
-| [Hardware Compatibility](docs/guides/hardware-compatibility.md) | Tested boards, minimum requirements |
+| Topic                                                           | Description                                                       |
+| --------------------------------------------------------------- | ----------------------------------------------------------------- |
+| [Docker & Quick Start](docs/guides/docker.md)                   | Docker Compose setup, Launcher/Agent modes                        |
+| [Chat Apps](docs/guides/chat-apps.md)                           | All 17+ channel setup guides                                      |
+| [Configuration](docs/guides/configuration.md)                   | Environment variables, workspace layout, security sandbox         |
+| [MCP Server CLI](docs/reference/mcp-cli.md)                     | Add, list, test, edit, and remove MCP server entries from the CLI |
+| [Scheduled Tasks and Cron Jobs](docs/reference/cron.md)         | Cron schedule types, deliver modes, command gates, job storage    |
+| [Providers & Models](docs/guides/providers.md)                  | 30+ LLM providers, model routing, model_list configuration        |
+| [Spawn & Async Tasks](docs/guides/spawn-tasks.md)               | Quick tasks, long tasks with spawn, async sub-agent orchestration |
+| [Hooks](docs/architecture/hooks/README.md)                      | Event-driven hook system: observers, interceptors, approval hooks |
+| [Steering](docs/architecture/steering.md)                       | Inject messages into a running agent loop between tool calls      |
+| [SubTurn](docs/architecture/subturn.md)                         | Subagent coordination, concurrency control, lifecycle             |
+| [Troubleshooting](docs/operations/troubleshooting.md)           | Common issues and solutions                                       |
+| [Tools Configuration](docs/reference/tools_configuration.md)    | Per-tool enable/disable, exec policies, MCP, Skills               |
+| [Hardware Compatibility](docs/guides/hardware-compatibility.md) | Tested boards, minimum requirements                               |
 
 ## 🤝 Contribute & Roadmap
 

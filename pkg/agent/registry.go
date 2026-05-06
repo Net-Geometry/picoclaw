@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"strings"
 	"sync"
 
 	"github.com/sipeed/picoclaw/pkg/bus"
@@ -14,10 +13,9 @@ import (
 
 // AgentRegistry manages multiple agent instances and routes messages to them.
 type AgentRegistry struct {
-	agents     map[string]*AgentInstance
-	agentModes map[string]string
-	resolver   *routing.RouteResolver
-	mu         sync.RWMutex
+	agents   map[string]*AgentInstance
+	resolver *routing.RouteResolver
+	mu       sync.RWMutex
 }
 
 // NewAgentRegistry creates a registry from config, instantiating all agents.
@@ -26,9 +24,8 @@ func NewAgentRegistry(
 	provider providers.LLMProvider,
 ) *AgentRegistry {
 	registry := &AgentRegistry{
-		agents:     make(map[string]*AgentInstance),
-		agentModes: make(map[string]string),
-		resolver:   routing.NewRouteResolver(cfg),
+		agents:   make(map[string]*AgentInstance),
+		resolver: routing.NewRouteResolver(cfg),
 	}
 
 	agentConfigs := cfg.Agents.List
@@ -46,7 +43,6 @@ func NewAgentRegistry(
 			id := routing.NormalizeAgentID(ac.ID)
 			instance := NewAgentInstance(ac, &cfg.Agents.Defaults, cfg, provider)
 			registry.agents[id] = instance
-			registry.agentModes[id] = strings.ToLower(strings.TrimSpace(ac.Mode))
 			logger.InfoCF("agent", "Registered agent",
 				map[string]any{
 					"agent_id":  id,
@@ -58,19 +54,6 @@ func NewAgentRegistry(
 	}
 
 	return registry
-}
-
-// IsPassiveAgent reports whether the configured agent mode is passive.
-func (r *AgentRegistry) IsPassiveAgent(agentID string) bool {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	mode := strings.ToLower(strings.TrimSpace(r.agentModes[routing.NormalizeAgentID(agentID)]))
-	return mode == "passive"
-}
-
-func isPMAgent(agentID string) bool {
-	normalized := routing.NormalizeAgentID(agentID)
-	return normalized == "pm" || strings.HasPrefix(normalized, "pm-")
 }
 
 // GetAgent returns the agent instance for a given ID.
@@ -108,32 +91,15 @@ func (r *AgentRegistry) CanSpawnSubagent(parentAgentID, targetAgentID string) bo
 		return false
 	}
 	targetNorm := routing.NormalizeAgentID(targetAgentID)
-	allowed := false
-	for _, allow := range parent.Subagents.AllowAgents {
-		if allow == "*" {
-			allowed = true
-			break
+	for _, allowed := range parent.Subagents.AllowAgents {
+		if allowed == "*" {
+			return true
 		}
-		if routing.NormalizeAgentID(allow) == targetNorm {
-			allowed = true
-			break
+		if routing.NormalizeAgentID(allowed) == targetNorm {
+			return true
 		}
 	}
-	if !allowed {
-		return false
-	}
-
-	// Strict PM policy: only active PM agents can spawn passive PM agents.
-	if isPMAgent(parentAgentID) || isPMAgent(targetAgentID) {
-		if r.IsPassiveAgent(parentAgentID) {
-			return false
-		}
-		if !r.IsPassiveAgent(targetAgentID) {
-			return false
-		}
-	}
-
-	return true
+	return false
 }
 
 // ForEachTool calls fn for every tool registered under the given name

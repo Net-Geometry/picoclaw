@@ -69,12 +69,14 @@ This guide explains how to configure both for real deployments.
   "model_list": [
     {
       "model_name": "gpt-main",
-      "model": "openai/gpt-5.4",
+      "provider": "openai",
+      "model": "gpt-5.4",
       "api_keys": ["sk-main"]
     },
     {
       "model_name": "flash-light",
-      "model": "gemini/gemini-2.0-flash-exp",
+      "provider": "gemini",
+      "model": "gemini-2.0-flash-exp",
       "api_keys": ["sk-light"]
     }
   ],
@@ -105,15 +107,15 @@ If no rule matches, PicoClaw falls back to the default agent.
 
 ## Supported Match Fields
 
-| Field | Meaning | Example |
-| --- | --- | --- |
-| `channel` | Channel name | `telegram`, `slack`, `discord` |
-| `account` | Normalized account ID | `default`, `bot2` |
-| `space` | Workspace, guild, or similar container | `workspace:t001`, `guild:123456` |
-| `chat` | Direct chat, group, or channel | `direct:user123`, `group:-100123`, `channel:c123` |
-| `topic` | Thread or topic | `topic:42` |
-| `sender` | Normalized sender identity | `12345`, `john` |
-| `mentioned` | Whether the bot was explicitly mentioned | `true` |
+| Field       | Meaning                                  | Example                                           |
+| ----------- | ---------------------------------------- | ------------------------------------------------- |
+| `channel`   | Channel name                             | `telegram`, `slack`, `discord`                    |
+| `account`   | Normalized account ID                    | `default`, `bot2`                                 |
+| `space`     | Workspace, guild, or similar container   | `workspace:t001`, `guild:123456`                  |
+| `chat`      | Direct chat, group, or channel           | `direct:user123`, `group:-100123`, `channel:c123` |
+| `topic`     | Thread or topic                          | `topic:42`                                        |
+| `sender`    | Normalized sender identity               | `12345`, `john`                                   |
+| `mentioned` | Whether the bot was explicitly mentioned | `true`                                            |
 
 Values must match the normalized runtime shape, not the raw incoming payload.
 
@@ -229,11 +231,11 @@ agents.defaults.routing
 
 Current fields:
 
-| Field | Meaning |
-| --- | --- |
-| `enabled` | Turn model routing on or off |
+| Field         | Meaning                                              |
+| ------------- | ---------------------------------------------------- |
+| `enabled`     | Turn model routing on or off                         |
 | `light_model` | `model_name` from `model_list` used for simple turns |
-| `threshold` | Complexity cutoff in `[0, 1]` |
+| `threshold`   | Complexity cutoff in `[0, 1]`                        |
 
 Important behavior:
 

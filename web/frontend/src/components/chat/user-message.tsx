@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils"
 import type { ChatAttachment } from "@/store/chat"
 
 interface UserMessageProps {
@@ -7,11 +8,9 @@ interface UserMessageProps {
 
 export function UserMessage({ content, attachments = [] }: UserMessageProps) {
   const hasText = content.trim().length > 0
+  const isCommand = content.trim().startsWith("/")
   const imageAttachments = attachments.filter(
     (attachment) => attachment.type === "image",
-  )
-  const otherAttachments = attachments.filter(
-    (attachment) => attachment.type !== "image",
   )
 
   return (
@@ -29,27 +28,25 @@ export function UserMessage({ content, attachments = [] }: UserMessageProps) {
         </div>
       )}
 
-      {otherAttachments.length > 0 && (
-        <div className="flex max-w-[70%] flex-col items-end gap-2">
-          {otherAttachments.map((attachment, index) => (
-            <div
-              key={`${attachment.url}-${index}`}
-              className="bg-background border-border text-foreground flex max-w-full items-center gap-2 rounded-xl border px-3 py-2 text-xs"
-            >
-              <span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 uppercase">
-                {attachment.type === "audio" ? "audio" : "file"}
-              </span>
-              <span className="max-w-72 truncate">
-                {attachment.filename || "attachment"}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
       {hasText && (
-        <div className="max-w-[70%] rounded-2xl rounded-tr-sm bg-violet-500 px-5 py-3 text-[15px] leading-relaxed wrap-break-word whitespace-pre-wrap text-white shadow-sm">
-          {content}
+        <div
+          className={cn(
+            "max-w-[70%] wrap-break-word whitespace-pre-wrap",
+            isCommand
+              ? "rounded-xl border border-zinc-200 bg-transparent px-4 py-3 font-mono text-[14px] text-zinc-800 dark:border-zinc-800/60 dark:bg-[#121212] dark:text-zinc-200 dark:shadow-sm"
+              : "rounded-2xl rounded-tr-sm bg-violet-500 px-5 py-3 text-[15px] leading-relaxed text-white shadow-sm",
+          )}
+        >
+          {isCommand ? (
+            <div className="flex items-start gap-2.5">
+              <span className="font-bold text-emerald-600 select-none dark:text-emerald-400">
+                ❯
+              </span>
+              <span className="mt-[1px]">{content}</span>
+            </div>
+          ) : (
+            content
+          )}
         </div>
       )}
     </div>

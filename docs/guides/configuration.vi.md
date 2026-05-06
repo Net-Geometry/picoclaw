@@ -10,10 +10,10 @@ File cấu hình: `~/.picoclaw/config.json`
 
 Bạn có thể ghi đè các đường dẫn mặc định bằng biến môi trường. Điều này hữu ích cho cài đặt portable, triển khai container, hoặc chạy picoclaw như dịch vụ hệ thống. Các biến này độc lập và kiểm soát các đường dẫn khác nhau.
 
-| Biến              | Mô tả                                                                                                                             | Đường Dẫn Mặc Định       |
-|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------|---------------------------|
+| Biến              | Mô tả                                                                                                                          | Đường Dẫn Mặc Định        |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------- |
 | `PICOCLAW_CONFIG` | Ghi đè đường dẫn đến file cấu hình. Chỉ định trực tiếp cho picoclaw file `config.json` nào cần tải, bỏ qua tất cả vị trí khác. | `~/.picoclaw/config.json` |
-| `PICOCLAW_HOME`   | Ghi đè thư mục gốc cho dữ liệu picoclaw. Thay đổi vị trí mặc định của `workspace` và các thư mục dữ liệu khác.          | `~/.picoclaw`             |
+| `PICOCLAW_HOME`   | Ghi đè thư mục gốc cho dữ liệu picoclaw. Thay đổi vị trí mặc định của `workspace` và các thư mục dữ liệu khác.                 | `~/.picoclaw`             |
 
 **Ví dụ:**
 
@@ -125,23 +125,23 @@ PicoClaw chạy trong môi trường sandbox mặc định. Agent chỉ có th�
 }
 ```
 
-| Tùy chọn                | Mặc định                | Mô tả                                    |
-| ----------------------- | ----------------------- | ----------------------------------------- |
-| `workspace`             | `~/.picoclaw/workspace` | Thư mục làm việc của agent               |
+| Tùy chọn                | Mặc định                | Mô tả                                       |
+| ----------------------- | ----------------------- | ------------------------------------------- |
+| `workspace`             | `~/.picoclaw/workspace` | Thư mục làm việc của agent                  |
 | `restrict_to_workspace` | `true`                  | Giới hạn truy cập file/lệnh trong workspace |
 
 #### Công Cụ Được Bảo Vệ
 
 Khi `restrict_to_workspace: true`, các công cụ sau được sandbox:
 
-| Công cụ       | Chức năng        | Giới hạn                               |
-| ------------- | ---------------- | -------------------------------------- |
-| `read_file`   | Đọc file         | Chỉ file trong workspace              |
-| `write_file`  | Ghi file         | Chỉ file trong workspace              |
-| `list_dir`    | Liệt kê thư mục | Chỉ thư mục trong workspace           |
-| `edit_file`   | Sửa file         | Chỉ file trong workspace              |
-| `append_file` | Nối vào file     | Chỉ file trong workspace              |
-| `exec`        | Thực thi lệnh   | Đường dẫn lệnh phải trong workspace   |
+| Công cụ       | Chức năng       | Giới hạn                            |
+| ------------- | --------------- | ----------------------------------- |
+| `read_file`   | Đọc file        | Chỉ file trong workspace            |
+| `write_file`  | Ghi file        | Chỉ file trong workspace            |
+| `list_dir`    | Liệt kê thư mục | Chỉ thư mục trong workspace         |
+| `edit_file`   | Sửa file        | Chỉ file trong workspace            |
+| `append_file` | Nối vào file    | Chỉ file trong workspace            |
+| `exec`        | Thực thi lệnh   | Đường dẫn lệnh phải trong workspace |
 
 #### Bảo Vệ Exec Bổ Sung
 
@@ -156,19 +156,19 @@ Ngay cả khi `restrict_to_workspace: false`, công cụ `exec` chặn các lệ
 
 ### Kiểm Soát Truy Cập File
 
-| Config Key | Type | Default | Description |
-|------------|------|---------|-------------|
-| `tools.allow_read_paths` | string[] | `[]` | Additional paths allowed for reading outside workspace |
-| `tools.allow_write_paths` | string[] | `[]` | Additional paths allowed for writing outside workspace |
+| Config Key                | Type     | Default | Description                                            |
+| ------------------------- | -------- | ------- | ------------------------------------------------------ |
+| `tools.allow_read_paths`  | string[] | `[]`    | Additional paths allowed for reading outside workspace |
+| `tools.allow_write_paths` | string[] | `[]`    | Additional paths allowed for writing outside workspace |
 
 ### Bảo Mật Exec
 
-| Config Key | Type | Default | Description |
-|------------|------|---------|-------------|
-| `tools.exec.allow_remote` | bool | `false` | Allow exec tool from remote channels (Telegram/Discord etc.) |
-| `tools.exec.enable_deny_patterns` | bool | `true` | Enable dangerous command interception |
-| `tools.exec.custom_deny_patterns` | string[] | `[]` | Custom regex patterns to block |
-| `tools.exec.custom_allow_patterns` | string[] | `[]` | Custom regex patterns to allow |
+| Config Key                         | Type     | Default | Description                                                  |
+| ---------------------------------- | -------- | ------- | ------------------------------------------------------------ |
+| `tools.exec.allow_remote`          | bool     | `false` | Allow exec tool from remote channels (Telegram/Discord etc.) |
+| `tools.exec.enable_deny_patterns`  | bool     | `true`  | Enable dangerous command interception                        |
+| `tools.exec.custom_deny_patterns`  | string[] | `[]`    | Custom regex patterns to block                               |
+| `tools.exec.custom_allow_patterns` | string[] | `[]`    | Custom regex patterns to allow                               |
 
 > **Lưu ý Bảo Mật:** Bảo vệ symlink được bật mặc định — tất cả đường dẫn file được giải quyết qua `filepath.EvalSymlinks` trước khi so khớp whitelist, ngăn chặn tấn công thoát qua symlink.
 
@@ -224,11 +224,11 @@ export PICOCLAW_AGENTS_DEFAULTS_RESTRICT_TO_WORKSPACE=false
 
 Cài đặt `restrict_to_workspace` áp dụng nhất quán trên tất cả đường dẫn thực thi:
 
-| Đường Dẫn Thực Thi | Ranh Giới Bảo Mật          |
-| -------------------- | ---------------------------- |
-| Main Agent           | `restrict_to_workspace` ✅   |
-| Subagent / Spawn     | Kế thừa cùng giới hạn ✅    |
-| Heartbeat tasks      | Kế thừa cùng giới hạn ✅    |
+| Đường Dẫn Thực Thi | Ranh Giới Bảo Mật         |
+| ------------------ | ------------------------- |
+| Main Agent         | `restrict_to_workspace` ✅ |
+| Subagent / Spawn   | Kế thừa cùng giới hạn ✅   |
+| Heartbeat tasks    | Kế thừa cùng giới hạn ✅   |
 
 Tất cả đường dẫn chia sẻ cùng giới hạn workspace — không có cách nào vượt qua ranh giới bảo mật qua subagent hoặc tác vụ lên lịch.
 
@@ -265,12 +265,12 @@ Cho tác vụ chạy lâu (tìm kiếm web, gọi API), sử dụng công cụ `
 
 **Hành vi chính:**
 
-| Tính năng        | Mô tả                                                              |
-| ---------------- | ------------------------------------------------------------------ |
-| **spawn**        | Tạo subagent bất đồng bộ, không chặn heartbeat                    |
-| **Ngữ cảnh độc lập** | Subagent có ngữ cảnh riêng, không có lịch sử phiên             |
-| **message tool** | Subagent giao tiếp trực tiếp với người dùng qua message tool      |
-| **Không chặn**   | Sau khi spawn, heartbeat tiếp tục tác vụ tiếp theo                |
+| Tính năng            | Mô tả                                                        |
+| -------------------- | ------------------------------------------------------------ |
+| **spawn**            | Tạo subagent bất đồng bộ, không chặn heartbeat               |
+| **Ngữ cảnh độc lập** | Subagent có ngữ cảnh riêng, không có lịch sử phiên           |
+| **message tool**     | Subagent giao tiếp trực tiếp với người dùng qua message tool |
+| **Không chặn**       | Sau khi spawn, heartbeat tiếp tục tác vụ tiếp theo           |
 
 #### Luồng Giao Tiếp Của Subagent
 
@@ -299,9 +299,9 @@ Trả lời HEARTBEAT_OK        Người dùng nhận kết quả trực tiếp
 }
 ```
 
-| Tùy chọn   | Mặc định | Mô tả                                  |
-| ---------- | -------- | -------------------------------------- |
-| `enabled`  | `true`   | Bật/tắt heartbeat                      |
+| Tùy chọn   | Mặc định | Mô tả                                                   |
+| ---------- | -------- | ------------------------------------------------------- |
+| `enabled`  | `true`   | Bật/tắt heartbeat                                       |
 | `interval` | `30`     | Khoảng thời gian kiểm tra tính bằng phút (tối thiểu: 5) |
 
 **Biến môi trường:**
@@ -314,19 +314,19 @@ Trả lời HEARTBEAT_OK        Người dùng nhận kết quả trực tiếp
 > [!NOTE]
 > Groq cung cấp chuyển đổi giọng nói thành văn bản miễn phí qua Whisper. Nếu được cấu hình, tin nhắn âm thanh từ bất kỳ kênh nào sẽ được tự động chuyển đổi ở cấp độ agent.
 
-| Provider     | Mục đích                                | Lấy API Key                                                  |
-| ------------ | --------------------------------------- | ------------------------------------------------------------ |
-| `gemini`     | LLM (Gemini trực tiếp)                  | [aistudio.google.com](https://aistudio.google.com)           |
-| `zhipu`      | LLM (Zhipu trực tiếp)                   | [bigmodel.cn](https://bigmodel.cn)                           |
-| `volcengine` | LLM (Volcengine trực tiếp)              | [volcengine.com](https://www.volcengine.com/activity/codingplan?utm_campaign=PicoClaw&utm_content=PicoClaw&utm_medium=devrel&utm_source=OWO&utm_term=PicoClaw) |
-| `openrouter` | LLM (khuyến nghị, truy cập tất cả mô hình) | [openrouter.ai](https://openrouter.ai)                   |
-| `anthropic`  | LLM (Claude trực tiếp)                  | [console.anthropic.com](https://console.anthropic.com)       |
-| `openai`     | LLM (GPT trực tiếp)                     | [platform.openai.com](https://platform.openai.com)           |
-| `deepseek`   | LLM (DeepSeek trực tiếp)                | [platform.deepseek.com](https://platform.deepseek.com)       |
-| `qwen`       | LLM (Qwen trực tiếp)                    | [dashscope.console.aliyun.com](https://dashscope.console.aliyun.com) |
-| `groq`       | LLM + **Chuyển đổi giọng nói** (Whisper)| [console.groq.com](https://console.groq.com)                 |
-| `cerebras`   | LLM (Cerebras trực tiếp)                | [cerebras.ai](https://cerebras.ai)                           |
-| `vivgrid`    | LLM (Vivgrid trực tiếp)                 | [vivgrid.com](https://vivgrid.com)                           |
+| Provider     | Mục đích                                   | Lấy API Key                                                                                                                                                    |
+| ------------ | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gemini`     | LLM (Gemini trực tiếp)                     | [aistudio.google.com](https://aistudio.google.com)                                                                                                             |
+| `zhipu`      | LLM (Zhipu trực tiếp)                      | [bigmodel.cn](https://bigmodel.cn)                                                                                                                             |
+| `volcengine` | LLM (Volcengine trực tiếp)                 | [volcengine.com](https://www.volcengine.com/activity/codingplan?utm_campaign=PicoClaw&utm_content=PicoClaw&utm_medium=devrel&utm_source=OWO&utm_term=PicoClaw) |
+| `openrouter` | LLM (khuyến nghị, truy cập tất cả mô hình) | [openrouter.ai](https://openrouter.ai)                                                                                                                         |
+| `anthropic`  | LLM (Claude trực tiếp)                     | [console.anthropic.com](https://console.anthropic.com)                                                                                                         |
+| `openai`     | LLM (GPT trực tiếp)                        | [platform.openai.com](https://platform.openai.com)                                                                                                             |
+| `deepseek`   | LLM (DeepSeek trực tiếp)                   | [platform.deepseek.com](https://platform.deepseek.com)                                                                                                         |
+| `qwen`       | LLM (Qwen trực tiếp)                       | [dashscope.console.aliyun.com](https://dashscope.console.aliyun.com)                                                                                           |
+| `groq`       | LLM + **Chuyển đổi giọng nói** (Whisper)   | [console.groq.com](https://console.groq.com)                                                                                                                   |
+| `cerebras`   | LLM (Cerebras trực tiếp)                   | [cerebras.ai](https://cerebras.ai)                                                                                                                             |
+| `vivgrid`    | LLM (Vivgrid trực tiếp)                    | [vivgrid.com](https://vivgrid.com)                                                                                                                             |
 
 ### Cấu Hình Mô Hình (model_list)
 
@@ -334,19 +334,19 @@ Trả lời HEARTBEAT_OK        Người dùng nhận kết quả trực tiếp
 
 #### Tất Cả Vendor Được Hỗ Trợ
 
-| Vendor                  | Tiền tố `model` | API Base mặc định                                   | Giao thức | API Key                                                          |
-| ----------------------- | --------------- | --------------------------------------------------- | --------- | ---------------------------------------------------------------- |
-| **OpenAI**              | `openai/`       | `https://api.openai.com/v1`                         | OpenAI    | [Lấy](https://platform.openai.com)                               |
-| **Anthropic**           | `anthropic/`    | `https://api.anthropic.com/v1`                      | Anthropic | [Lấy](https://console.anthropic.com)                             |
-| **智谱 AI (GLM)**       | `zhipu/`        | `https://open.bigmodel.cn/api/paas/v4`              | OpenAI    | [Lấy](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys)     |
-| **DeepSeek**            | `deepseek/`     | `https://api.deepseek.com/v1`                       | OpenAI    | [Lấy](https://platform.deepseek.com)                             |
-| **Google Gemini**       | `gemini/`       | `https://generativelanguage.googleapis.com/v1beta`  | OpenAI    | [Lấy](https://aistudio.google.com/api-keys)                      |
-| **Groq**                | `groq/`         | `https://api.groq.com/openai/v1`                    | OpenAI    | [Lấy](https://console.groq.com)                                  |
-| **通义千问 (Qwen)**     | `qwen/`         | `https://dashscope.aliyuncs.com/compatible-mode/v1` | OpenAI    | [Lấy](https://dashscope.console.aliyun.com)                      |
-| **Ollama**              | `ollama/`       | `http://localhost:11434/v1`                         | OpenAI    | Cục bộ (không cần key)                                           |
-| **OpenRouter**          | `openrouter/`   | `https://openrouter.ai/api/v1`                      | OpenAI    | [Lấy](https://openrouter.ai/keys)                                |
+| Vendor                  | Tiền tố `model` | API Base mặc định                                   | Giao thức | API Key                                                                                                                                             |
+| ----------------------- | --------------- | --------------------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **OpenAI**              | `openai/`       | `https://api.openai.com/v1`                         | OpenAI    | [Lấy](https://platform.openai.com)                                                                                                                  |
+| **Anthropic**           | `anthropic/`    | `https://api.anthropic.com/v1`                      | Anthropic | [Lấy](https://console.anthropic.com)                                                                                                                |
+| **智谱 AI (GLM)**       | `zhipu/`        | `https://open.bigmodel.cn/api/paas/v4`              | OpenAI    | [Lấy](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys)                                                                                        |
+| **DeepSeek**            | `deepseek/`     | `https://api.deepseek.com/v1`                       | OpenAI    | [Lấy](https://platform.deepseek.com)                                                                                                                |
+| **Google Gemini**       | `gemini/`       | `https://generativelanguage.googleapis.com/v1beta`  | Gemini    | [Lấy](https://aistudio.google.com/api-keys)                                                                                                         |
+| **Groq**                | `groq/`         | `https://api.groq.com/openai/v1`                    | OpenAI    | [Lấy](https://console.groq.com)                                                                                                                     |
+| **通义千问 (Qwen)**     | `qwen/`         | `https://dashscope.aliyuncs.com/compatible-mode/v1` | OpenAI    | [Lấy](https://dashscope.console.aliyun.com)                                                                                                         |
+| **Ollama**              | `ollama/`       | `http://localhost:11434/v1`                         | OpenAI    | Cục bộ (không cần key)                                                                                                                              |
+| **OpenRouter**          | `openrouter/`   | `https://openrouter.ai/api/v1`                      | OpenAI    | [Lấy](https://openrouter.ai/keys)                                                                                                                   |
 | **VolcEngine (Doubao)** | `volcengine/`   | `https://ark.cn-beijing.volces.com/api/v3`          | OpenAI    | [Lấy](https://www.volcengine.com/activity/codingplan?utm_campaign=PicoClaw&utm_content=PicoClaw&utm_medium=devrel&utm_source=OWO&utm_term=PicoClaw) |
-| **Antigravity**         | `antigravity/`  | Google Cloud                                        | Custom    | Chỉ OAuth                                                        |
+| **Antigravity**         | `antigravity/`  | Google Cloud                                        | Custom    | Chỉ OAuth                                                                                                                                           |
 
 #### Cân Bằng Tải
 
@@ -370,8 +370,11 @@ Cấu hình `providers` cũ đã **bị deprecated** và đã được loại b�
 PicoClaw định tuyến provider theo họ giao thức:
 
 - **Tương thích OpenAI**: OpenRouter, Groq, Zhipu, endpoint kiểu vLLM và hầu hết các provider khác.
+- **Gemini native**: Google Gemini qua các endpoint native `models/*:generateContent` và `models/*:streamGenerateContent`.
 - **Anthropic**: Hành vi API Claude gốc.
 - **Codex/OAuth**: Tuyến xác thực OAuth/token OpenAI.
+
+Điều này giữ runtime nhẹ trong khi khiến backend OpenAI-compatible mới chủ yếu chỉ là thao tác cấu hình (`api_base` + `api_keys`).
 
 ### Tác Vụ Đã Lên Lịch / Nhắc Nhở
 
@@ -392,9 +395,9 @@ Tác vụ đã lên lịch được lưu trữ bền vững sau khi khởi độ
 
 ### Chủ Đề Nâng Cao
 
-| Chủ đề | Mô tả |
-| ------ | ----- |
-| [Hệ Thống Hook](../architecture/hooks/README.md) | Hook hướng sự kiện: observer, interceptor, approval hook |
-| [Steering](../architecture/steering.md) | Chèn tin nhắn vào vòng lặp agent đang chạy |
-| [SubTurn](../architecture/subturn.md) | Điều phối subagent, kiểm soát đồng thời, vòng đời |
-| [Quản Lý Ngữ Cảnh](../architecture/agent-refactor/context.md) | Phát hiện ranh giới ngữ cảnh, nén |
+| Chủ đề                                                        | Mô tả                                                    |
+| ------------------------------------------------------------- | -------------------------------------------------------- |
+| [Hệ Thống Hook](../architecture/hooks/README.md)              | Hook hướng sự kiện: observer, interceptor, approval hook |
+| [Steering](../architecture/steering.md)                       | Chèn tin nhắn vào vòng lặp agent đang chạy               |
+| [SubTurn](../architecture/subturn.md)                         | Điều phối subagent, kiểm soát đồng thời, vòng đời        |
+| [Quản Lý Ngữ Cảnh](../architecture/agent-refactor/context.md) | Phát hiện ranh giới ngữ cảnh, nén                        |

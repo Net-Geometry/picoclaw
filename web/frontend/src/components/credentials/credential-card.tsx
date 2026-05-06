@@ -1,5 +1,4 @@
 import type { ReactNode } from "react"
-import { useTranslation } from "react-i18next"
 
 import type { OAuthProviderStatus } from "@/api/oauth"
 
@@ -10,7 +9,6 @@ interface CredentialCardProps {
   description: string
   status: OAuthProviderStatus["status"]
   authMethod?: string
-  credentialCount?: number
   details?: ReactNode
   actions: ReactNode
   footer?: ReactNode
@@ -21,12 +19,10 @@ export function CredentialCard({
   description,
   status,
   authMethod,
-  credentialCount,
   details,
   actions,
   footer,
 }: CredentialCardProps) {
-  const { t } = useTranslation()
   return (
     <section className="bg-card flex h-full flex-col rounded-xl border p-4">
       <div className="min-h-16">
@@ -35,11 +31,6 @@ export function CredentialCard({
       </div>
 
       <ProviderStatusLine status={status} authMethod={authMethod} />
-      {credentialCount && credentialCount > 1 ? (
-        <p className="text-muted-foreground mt-2 text-[11px] leading-5">
-          {t("credentials.labels.credentialCount", { count: credentialCount })}
-        </p>
-      ) : null}
       <div className="text-muted-foreground mt-3 min-h-11 text-xs leading-5">
         {details}
       </div>

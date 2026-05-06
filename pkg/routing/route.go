@@ -72,7 +72,7 @@ func (r *RouteResolver) pickAgentID(agentID string) string {
 		return normalized
 	}
 	for _, a := range agents {
-		if NormalizeAgentID(a.ID) == normalized && !a.IsPassive() {
+		if NormalizeAgentID(a.ID) == normalized {
 			return normalized
 		}
 	}
@@ -85,20 +85,15 @@ func (r *RouteResolver) resolveDefaultAgentID() string {
 		return DefaultAgentID
 	}
 	for _, a := range agents {
-		if a.Default && !a.IsPassive() {
+		if a.Default {
 			id := strings.TrimSpace(a.ID)
 			if id != "" {
 				return NormalizeAgentID(id)
 			}
 		}
 	}
-	for _, a := range agents {
-		if a.IsPassive() {
-			continue
-		}
-		if id := strings.TrimSpace(a.ID); id != "" {
-			return NormalizeAgentID(id)
-		}
+	if id := strings.TrimSpace(agents[0].ID); id != "" {
+		return NormalizeAgentID(id)
 	}
 	return DefaultAgentID
 }

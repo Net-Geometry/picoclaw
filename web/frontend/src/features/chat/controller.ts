@@ -476,6 +476,7 @@ export async function newChatSession() {
     messages: [],
     isTyping: false,
     hasHydratedActiveSession: true,
+    contextUsage: undefined,
   })
 
   if (store.get(gatewayAtom).status === "running") {

@@ -7,25 +7,25 @@
 > [!NOTE]
 > Groq は Whisper による無料の音声文字起こしを提供しています。Groq を設定すると、任意のチャネルからの音声メッセージが Agent レベルで自動的にテキストに変換されます。
 
-| プロバイダー         | 用途                         | API Key の取得                                                       |
-| -------------------- | ---------------------------- | -------------------------------------------------------------------- |
-| `gemini`             | LLM (Gemini 直接接続)       | [aistudio.google.com](https://aistudio.google.com)                   |
-| `zhipu`              | LLM (Zhipu 直接接続)        | [bigmodel.cn](https://bigmodel.cn)                                   |
-| `volcengine`         | LLM (Volcengine 直接接続)   | [volcengine.com](https://www.volcengine.com/activity/codingplan?utm_campaign=PicoClaw&utm_content=PicoClaw&utm_medium=devrel&utm_source=OWO&utm_term=PicoClaw) |
-| `openrouter`         | LLM (推奨、全モデルアクセス可) | [openrouter.ai](https://openrouter.ai)                               |
-| `anthropic`          | LLM (Claude 直接接続)       | [console.anthropic.com](https://console.anthropic.com)               |
-| `openai`             | LLM (GPT 直接接続)          | [platform.openai.com](https://platform.openai.com)                   |
-| `deepseek`           | LLM (DeepSeek 直接接続)     | [platform.deepseek.com](https://platform.deepseek.com)               |
-| `qwen`               | LLM (Qwen 直接接続)         | [dashscope.console.aliyun.com](https://dashscope.console.aliyun.com) |
-| `groq`               | LLM + **音声文字起こし** (Whisper) | [console.groq.com](https://console.groq.com)                         |
-| `cerebras`           | LLM (Cerebras 直接接続)     | [cerebras.ai](https://cerebras.ai)                                   |
-| `vivgrid`            | LLM (Vivgrid 直接接続)      | [vivgrid.com](https://vivgrid.com)                                   |
-| `moonshot`           | LLM (Kimi/Moonshot 直接接続) | [platform.moonshot.cn](https://platform.moonshot.cn)                 |
-| `minimax`            | LLM (Minimax 直接接続)      | [platform.minimaxi.com](https://platform.minimaxi.com)              |
-| `avian`              | LLM (Avian 直接接続)        | [avian.io](https://avian.io)                                         |
-| `mistral`            | LLM (Mistral 直接接続)      | [console.mistral.ai](https://console.mistral.ai)                    |
-| `longcat`            | LLM (Longcat 直接接続)      | [longcat.ai](https://longcat.ai)                                     |
-| `modelscope`         | LLM (ModelScope 直接接続)   | [modelscope.cn](https://modelscope.cn)                               |
+| プロバイダー | 用途                               | API Key の取得                                                                                                                                                 |
+| ------------ | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gemini`     | LLM (Gemini 直接接続)              | [aistudio.google.com](https://aistudio.google.com)                                                                                                             |
+| `zhipu`      | LLM (Zhipu 直接接続)               | [bigmodel.cn](https://bigmodel.cn)                                                                                                                             |
+| `volcengine` | LLM (Volcengine 直接接続)          | [volcengine.com](https://www.volcengine.com/activity/codingplan?utm_campaign=PicoClaw&utm_content=PicoClaw&utm_medium=devrel&utm_source=OWO&utm_term=PicoClaw) |
+| `openrouter` | LLM (推奨、全モデルアクセス可)     | [openrouter.ai](https://openrouter.ai)                                                                                                                         |
+| `anthropic`  | LLM (Claude 直接接続)              | [console.anthropic.com](https://console.anthropic.com)                                                                                                         |
+| `openai`     | LLM (GPT 直接接続)                 | [platform.openai.com](https://platform.openai.com)                                                                                                             |
+| `deepseek`   | LLM (DeepSeek 直接接続)            | [platform.deepseek.com](https://platform.deepseek.com)                                                                                                         |
+| `qwen`       | LLM (Qwen 直接接続)                | [dashscope.console.aliyun.com](https://dashscope.console.aliyun.com)                                                                                           |
+| `groq`       | LLM + **音声文字起こし** (Whisper) | [console.groq.com](https://console.groq.com)                                                                                                                   |
+| `cerebras`   | LLM (Cerebras 直接接続)            | [cerebras.ai](https://cerebras.ai)                                                                                                                             |
+| `vivgrid`    | LLM (Vivgrid 直接接続)             | [vivgrid.com](https://vivgrid.com)                                                                                                                             |
+| `moonshot`   | LLM (Kimi/Moonshot 直接接続)       | [platform.moonshot.cn](https://platform.moonshot.cn)                                                                                                           |
+| `minimax`    | LLM (Minimax 直接接続)             | [platform.minimaxi.com](https://platform.minimaxi.com)                                                                                                         |
+| `avian`      | LLM (Avian 直接接続)               | [avian.io](https://avian.io)                                                                                                                                   |
+| `mistral`    | LLM (Mistral 直接接続)             | [console.mistral.ai](https://console.mistral.ai)                                                                                                               |
+| `longcat`    | LLM (Longcat 直接接続)             | [longcat.ai](https://longcat.ai)                                                                                                                               |
+| `modelscope` | LLM (ModelScope 直接接続)          | [modelscope.cn](https://modelscope.cn)                                                                                                                         |
 
 <a id="モデル設定-model_list"></a>
 ### モデル設定 (model_list)
@@ -41,30 +41,30 @@
 
 #### 📋 サポートされている全ベンダー
 
-| ベンダー            | `model` プレフィックス | デフォルト API Base                                 | プロトコル | API Key の取得                                                    |
-| ------------------- | --------------------- | --------------------------------------------------- | ---------- | ----------------------------------------------------------------- |
-| **OpenAI**          | `openai/`             | `https://api.openai.com/v1`                         | OpenAI     | [キーを取得](https://platform.openai.com)                         |
-| **Anthropic**       | `anthropic/`          | `https://api.anthropic.com/v1`                      | Anthropic  | [キーを取得](https://console.anthropic.com)                       |
-| **智谱 AI (GLM)**   | `zhipu/`              | `https://open.bigmodel.cn/api/paas/v4`              | OpenAI     | [キーを取得](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) |
-| **DeepSeek**        | `deepseek/`           | `https://api.deepseek.com/v1`                       | OpenAI     | [キーを取得](https://platform.deepseek.com)                       |
-| **Google Gemini**   | `gemini/`             | `https://generativelanguage.googleapis.com/v1beta`  | OpenAI     | [キーを取得](https://aistudio.google.com/api-keys)                |
-| **Groq**            | `groq/`               | `https://api.groq.com/openai/v1`                    | OpenAI     | [キーを取得](https://console.groq.com)                            |
-| **Moonshot**        | `moonshot/`           | `https://api.moonshot.cn/v1`                        | OpenAI     | [キーを取得](https://platform.moonshot.cn)                        |
-| **通義千問 (Qwen)** | `qwen/`               | `https://dashscope.aliyuncs.com/compatible-mode/v1` | OpenAI     | [キーを取得](https://dashscope.console.aliyun.com)                |
-| **NVIDIA**          | `nvidia/`             | `https://integrate.api.nvidia.com/v1`               | OpenAI     | [キーを取得](https://build.nvidia.com)                            |
-| **Ollama**          | `ollama/`             | `http://localhost:11434/v1`                         | OpenAI     | ローカル（キー不要）                                              |
-| **OpenRouter**      | `openrouter/`         | `https://openrouter.ai/api/v1`                      | OpenAI     | [キーを取得](https://openrouter.ai/keys)                          |
-| **LiteLLM Proxy**   | `litellm/`            | `http://localhost:4000/v1`                          | OpenAI     | LiteLLM プロキシキー                                              |
-| **VLLM**            | `vllm/`               | `http://localhost:8000/v1`                          | OpenAI     | ローカル                                                          |
-| **Cerebras**        | `cerebras/`           | `https://api.cerebras.ai/v1`                        | OpenAI     | [キーを取得](https://cerebras.ai)                                 |
-| **VolcEngine (Doubao)** | `volcengine/`     | `https://ark.cn-beijing.volces.com/api/v3`          | OpenAI     | [キーを取得](https://www.volcengine.com/activity/codingplan?utm_campaign=PicoClaw&utm_content=PicoClaw&utm_medium=devrel&utm_source=OWO&utm_term=PicoClaw) |
-| **神算云**          | `shengsuanyun/`       | `https://router.shengsuanyun.com/api/v1`            | OpenAI     | -                                                                 |
-| **BytePlus**        | `byteplus/`           | `https://ark.ap-southeast.bytepluses.com/api/v3`    | OpenAI     | [キーを取得](https://www.byteplus.com)                            |
-| **Vivgrid**         | `vivgrid/`            | `https://api.vivgrid.com/v1`                        | OpenAI     | [キーを取得](https://vivgrid.com)                                 |
-| **LongCat**         | `longcat/`            | `https://api.longcat.chat/openai`                   | OpenAI     | [キーを取得](https://longcat.chat/platform)                       |
-| **ModelScope (魔搭)**| `modelscope/`        | `https://api-inference.modelscope.cn/v1`            | OpenAI     | [トークンを取得](https://modelscope.cn/my/tokens)                |
-| **Antigravity**     | `antigravity/`        | Google Cloud                                        | カスタム   | OAuth のみ                                                        |
-| **GitHub Copilot**  | `github-copilot/`     | `localhost:4321`                                    | gRPC       | -                                                                 |
+| ベンダー                | `model` プレフィックス | デフォルト API Base                                 | プロトコル | API Key の取得                                                                                                                                             |
+| ----------------------- | ---------------------- | --------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **OpenAI**              | `openai/`              | `https://api.openai.com/v1`                         | OpenAI     | [キーを取得](https://platform.openai.com)                                                                                                                  |
+| **Anthropic**           | `anthropic/`           | `https://api.anthropic.com/v1`                      | Anthropic  | [キーを取得](https://console.anthropic.com)                                                                                                                |
+| **智谱 AI (GLM)**       | `zhipu/`               | `https://open.bigmodel.cn/api/paas/v4`              | OpenAI     | [キーを取得](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys)                                                                                        |
+| **DeepSeek**            | `deepseek/`            | `https://api.deepseek.com/v1`                       | OpenAI     | [キーを取得](https://platform.deepseek.com)                                                                                                                |
+| **Google Gemini**       | `gemini/`              | `https://generativelanguage.googleapis.com/v1beta`  | Gemini     | [キーを取得](https://aistudio.google.com/api-keys)                                                                                                         |
+| **Groq**                | `groq/`                | `https://api.groq.com/openai/v1`                    | OpenAI     | [キーを取得](https://console.groq.com)                                                                                                                     |
+| **Moonshot**            | `moonshot/`            | `https://api.moonshot.cn/v1`                        | OpenAI     | [キーを取得](https://platform.moonshot.cn)                                                                                                                 |
+| **通義千問 (Qwen)**     | `qwen/`                | `https://dashscope.aliyuncs.com/compatible-mode/v1` | OpenAI     | [キーを取得](https://dashscope.console.aliyun.com)                                                                                                         |
+| **NVIDIA**              | `nvidia/`              | `https://integrate.api.nvidia.com/v1`               | OpenAI     | [キーを取得](https://build.nvidia.com)                                                                                                                     |
+| **Ollama**              | `ollama/`              | `http://localhost:11434/v1`                         | OpenAI     | ローカル（キー不要）                                                                                                                                       |
+| **OpenRouter**          | `openrouter/`          | `https://openrouter.ai/api/v1`                      | OpenAI     | [キーを取得](https://openrouter.ai/keys)                                                                                                                   |
+| **LiteLLM Proxy**       | `litellm/`             | `http://localhost:4000/v1`                          | OpenAI     | LiteLLM プロキシキー                                                                                                                                       |
+| **VLLM**                | `vllm/`                | `http://localhost:8000/v1`                          | OpenAI     | ローカル                                                                                                                                                   |
+| **Cerebras**            | `cerebras/`            | `https://api.cerebras.ai/v1`                        | OpenAI     | [キーを取得](https://cerebras.ai)                                                                                                                          |
+| **VolcEngine (Doubao)** | `volcengine/`          | `https://ark.cn-beijing.volces.com/api/v3`          | OpenAI     | [キーを取得](https://www.volcengine.com/activity/codingplan?utm_campaign=PicoClaw&utm_content=PicoClaw&utm_medium=devrel&utm_source=OWO&utm_term=PicoClaw) |
+| **神算云**              | `shengsuanyun/`        | `https://router.shengsuanyun.com/api/v1`            | OpenAI     | -                                                                                                                                                          |
+| **BytePlus**            | `byteplus/`            | `https://ark.ap-southeast.bytepluses.com/api/v3`    | OpenAI     | [キーを取得](https://www.byteplus.com)                                                                                                                     |
+| **Vivgrid**             | `vivgrid/`             | `https://api.vivgrid.com/v1`                        | OpenAI     | [キーを取得](https://vivgrid.com)                                                                                                                          |
+| **LongCat**             | `longcat/`             | `https://api.longcat.chat/openai`                   | OpenAI     | [キーを取得](https://longcat.chat/platform)                                                                                                                |
+| **ModelScope (魔搭)**   | `modelscope/`          | `https://api-inference.modelscope.cn/v1`            | OpenAI     | [トークンを取得](https://modelscope.cn/my/tokens)                                                                                                          |
+| **Antigravity**         | `antigravity/`         | Google Cloud                                        | カスタム   | OAuth のみ                                                                                                                                                 |
+| **GitHub Copilot**      | `github-copilot/`      | `localhost:4321`                                    | gRPC       | -                                                                                                                                                          |
 
 #### 基本設定
 
@@ -102,21 +102,21 @@
 
 #### `model_list` エントリフィールド
 
-| フィールド | 型 | 必須 | 説明 |
-|-----------|------|------|------|
-| `model_name` | string | はい | agent 設定でこのモデルを参照するための一意の名前 |
-| `model` | string | はい | ベンダー/モデル識別子（例：`openai/gpt-5.4`、`azure/gpt-5.4`、`anthropic/claude-sonnet-4.6`） |
-| `api_keys` | string[] | はい* | 認証キー。複数キーでリクエストごとのローテーションが可能。ローカル provider（Ollama、LM Studio、VLLM）には不要 |
-| `api_base` | string | いいえ | デフォルトの API エンドポイント URL を上書き |
-| `proxy` | string | いいえ | このモデルエントリの HTTP プロキシ URL |
-| `user_agent` | string | いいえ | カスタム `User-Agent` リクエストヘッダー（OpenAI 互換、Anthropic、Azure provider で対応） |
-| `request_timeout` | int | いいえ | リクエストタイムアウト（秒）。デフォルト値は provider により異なる |
-| `max_tokens_field` | string | いいえ | リクエストボディの max tokens フィールド名を上書き（例：o1 モデルでは `max_completion_tokens`） |
-| `thinking_level` | string | いいえ | 拡張思考レベル：`off`、`low`、`medium`、`high`、`xhigh`、`adaptive` |
-| `extra_body` | object | いいえ | 各リクエストボディに注入する追加フィールド |
-| `rpm` | int | いいえ | 1 分あたりのリクエストレート制限 |
-| `fallbacks` | string[] | いいえ | 自動フェイルオーバーのフォールバックモデル名 |
-| `enabled` | bool | いいえ | このモデルエントリを有効にするかどうか（デフォルト：`true`） |
+| フィールド         | 型       | 必須   | 説明                                                                                                           |
+| ------------------ | -------- | ------ | -------------------------------------------------------------------------------------------------------------- |
+| `model_name`       | string   | はい   | agent 設定でこのモデルを参照するための一意の名前                                                               |
+| `model`            | string   | はい   | ベンダー/モデル識別子（例：`openai/gpt-5.4`、`azure/gpt-5.4`、`anthropic/claude-sonnet-4.6`）                  |
+| `api_keys`         | string[] | はい*  | 認証キー。複数キーでリクエストごとのローテーションが可能。ローカル provider（Ollama、LM Studio、VLLM）には不要 |
+| `api_base`         | string   | いいえ | デフォルトの API エンドポイント URL を上書き                                                                   |
+| `proxy`            | string   | いいえ | このモデルエントリの HTTP プロキシ URL                                                                         |
+| `user_agent`       | string   | いいえ | カスタム `User-Agent` リクエストヘッダー（OpenAI 互換、Gemini、Anthropic、Azure provider で対応）              |
+| `request_timeout`  | int      | いいえ | リクエストタイムアウト（秒）。デフォルト値は provider により異なる                                             |
+| `max_tokens_field` | string   | いいえ | リクエストボディの max tokens フィールド名を上書き（例：o1 モデルでは `max_completion_tokens`）                |
+| `thinking_level`   | string   | いいえ | 拡張思考レベル：`off`、`low`、`medium`、`high`、`xhigh`、`adaptive`                                            |
+| `extra_body`       | object   | いいえ | 各リクエストボディに注入する追加フィールド                                                                     |
+| `rpm`              | int      | いいえ | 1 分あたりのリクエストレート制限                                                                               |
+| `fallbacks`        | string[] | いいえ | 自動フェイルオーバーのフォールバックモデル名                                                                   |
+| `enabled`          | bool     | いいえ | このモデルエントリを有効にするかどうか（デフォルト：`true`）                                                   |
 
 #### ベンダー別設定例
 
@@ -311,6 +311,7 @@ PicoClaw はリクエスト送信前に外側の `litellm/` プレフィック�
 PicoClaw はプロトコルファミリーごとに Provider をルーティングします：
 
 - OpenAI 互換プロトコル：OpenRouter、OpenAI 互換ゲートウェイ、Groq、Zhipu、vLLM スタイルのエンドポイント。
+- Gemini ネイティブプロトコル：Google Gemini のネイティブ `models/*:generateContent` / `models/*:streamGenerateContent` エンドポイント。
 - Anthropic プロトコル：Claude ネイティブ API 動作。
 - Codex/OAuth パス：OpenAI OAuth/Token 認証ルート。
 
@@ -451,17 +452,17 @@ picoclaw agent -m "こんにちは"
 
 ## 📝 API Key 比較表
 
-| サービス         | Pricing                  | ユースケース                          |
-| ---------------- | ------------------------ | ------------------------------------- |
-| **OpenRouter**   | Free: 200K tokens/month  | マルチモデル (Claude, GPT-4 など)     |
-| **Volcengine CodingPlan** | ¥9.9/first month | 中国ユーザー向け、複数の SOTA モデル (Doubao, DeepSeek など) |
-| **Zhipu**        | Free: 200K tokens/month  | 中国ユーザー向け                      |
-| **Brave Search** | $5/1000 queries          | Web 検索機能                          |
-| **SearXNG**      | Free (self-hosted)       | プライバシー重視のメタ検索 (70+ engines) |
-| **Groq**         | Free tier available      | 高速推論 (Llama, Mixtral)             |
-| **Cerebras**     | Free tier available      | 高速推論 (Llama, Qwen など)           |
-| **LongCat**      | Free: up to 5M tokens/day | 高速推論                             |
-| **ModelScope**   | Free: 2000 requests/day  | 推論 (Qwen, GLM, DeepSeek など)       |
+| サービス                  | Pricing                   | ユースケース                                                 |
+| ------------------------- | ------------------------- | ------------------------------------------------------------ |
+| **OpenRouter**            | Free: 200K tokens/month   | マルチモデル (Claude, GPT-4 など)                            |
+| **Volcengine CodingPlan** | ¥9.9/first month          | 中国ユーザー向け、複数の SOTA モデル (Doubao, DeepSeek など) |
+| **Zhipu**                 | Free: 200K tokens/month   | 中国ユーザー向け                                             |
+| **Brave Search**          | $5/1000 queries           | Web 検索機能                                                 |
+| **SearXNG**               | Free (self-hosted)        | プライバシー重視のメタ検索 (70+ engines)                     |
+| **Groq**                  | Free tier available       | 高速推論 (Llama, Mixtral)                                    |
+| **Cerebras**              | Free tier available       | 高速推論 (Llama, Qwen など)                                  |
+| **LongCat**               | Free: up to 5M tokens/day | 高速推論                                                     |
+| **ModelScope**            | Free: 2000 requests/day   | 推論 (Qwen, GLM, DeepSeek など)                              |
 
 ---
 

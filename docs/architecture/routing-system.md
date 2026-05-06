@@ -14,12 +14,12 @@ It does not describe the launcher's HTTP `ServeMux` routes or the frontend's Tan
 
 ## Routing Layers
 
-| Layer | Files | Responsibility |
-| --- | --- | --- |
-| Agent dispatch | `pkg/routing/route.go`, `pkg/routing/agent_id.go` | Choose the target agent for the inbound message. |
-| Session policy selection | `pkg/routing/route.go` | Decide which dimensions should define session isolation for that routed turn. |
-| Model routing | `pkg/routing/router.go`, `pkg/routing/features.go`, `pkg/routing/classifier.go` | Choose between the primary model and a configured light model based on message complexity. |
-| Runtime integration | `pkg/agent/registry.go`, `pkg/agent/loop_message.go`, `pkg/agent/loop_turn.go` | Apply the route result, allocate session scope, and select model candidates before provider execution. |
+| Layer                    | Files                                                                            | Responsibility                                                                                         |
+| ------------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Agent dispatch           | `pkg/routing/route.go`, `pkg/routing/agent_id.go`                                | Choose the target agent for the inbound message.                                                       |
+| Session policy selection | `pkg/routing/route.go`                                                           | Decide which dimensions should define session isolation for that routed turn.                          |
+| Model routing            | `pkg/routing/router.go`, `pkg/routing/features.go`, `pkg/routing/classifier.go`  | Choose between the primary model and a configured light model based on message complexity.             |
+| Runtime integration      | `pkg/agent/registry.go`, `pkg/agent/agent_message.go`, `pkg/agent/turn_coord.go` | Apply the route result, allocate session scope, and select model candidates before provider execution. |
 
 ## End-To-End Flow
 
@@ -64,15 +64,15 @@ Typical values are:
 Before matching rules, the resolver builds a normalized `dispatchView`.
 Each field is normalized to the exact shape expected by rule matching.
 
-| Selector field | Runtime shape |
-| --- | --- |
-| `channel` | lowercased channel name |
-| `account` | normalized account ID |
-| `space` | `<space_type>:<space_id>` |
-| `chat` | `<chat_type>:<chat_id>` |
-| `topic` | `topic:<topic_id>` |
-| `sender` | lowercased canonical sender ID |
-| `mentioned` | boolean copied from inbound context |
+| Selector field | Runtime shape                       |
+| -------------- | ----------------------------------- |
+| `channel`      | lowercased channel name             |
+| `account`      | normalized account ID               |
+| `space`        | `<space_type>:<space_id>`           |
+| `chat`         | `<chat_type>:<chat_id>`             |
+| `topic`        | `topic:<topic_id>`                  |
+| `sender`       | lowercased canonical sender ID      |
+| `mentioned`    | boolean copied from inbound context |
 
 This means dispatch rules must match the normalized shape, for example:
 
@@ -204,13 +204,13 @@ At runtime this only matters when the agent actually has light-model candidates 
 
 `ExtractFeatures(...)` computes a language-agnostic feature vector:
 
-| Feature | Meaning |
-| --- | --- |
-| `TokenEstimate` | Approximate token count; CJK runes count more accurately than a flat rune split. |
-| `CodeBlockCount` | Number of fenced code blocks in the current message. |
-| `RecentToolCalls` | Tool-call count across the last six history entries. |
-| `ConversationDepth` | Total history length. |
-| `HasAttachments` | Detects embedded media or common media URL/file extensions. |
+| Feature             | Meaning                                                                          |
+| ------------------- | -------------------------------------------------------------------------------- |
+| `TokenEstimate`     | Approximate token count; CJK runes count more accurately than a flat rune split. |
+| `CodeBlockCount`    | Number of fenced code blocks in the current message.                             |
+| `RecentToolCalls`   | Tool-call count across the last six history entries.                             |
+| `ConversationDepth` | Total history length.                                                            |
+| `HasAttachments`    | Detects embedded media or common media URL/file extensions.                      |
 
 This is intentionally structural rather than keyword-based, so the router behaves the same across languages.
 
@@ -219,14 +219,14 @@ This is intentionally structural rather than keyword-based, so the router behave
 The current classifier is `RuleClassifier`.
 It uses a weighted sum capped to `[0, 1]`.
 
-| Signal | Score |
-| --- | --- |
-| attachments present | `1.00` |
-| token estimate `> 200` | `0.35` |
-| token estimate `> 50` | `0.15` |
-| code block present | `0.40` |
-| recent tool calls `> 3` | `0.25` |
-| recent tool calls `1..3` | `0.10` |
+| Signal                    | Score  |
+| ------------------------- | ------ |
+| attachments present       | `1.00` |
+| token estimate `> 200`    | `0.35` |
+| token estimate `> 50`     | `0.15` |
+| code block present        | `0.40` |
+| recent tool calls `> 3`   | `0.25` |
+| recent tool calls `1..3`  | `0.10` |
 | conversation depth `> 10` | `0.10` |
 
 The default threshold is `0.35`.
@@ -242,8 +242,8 @@ That makes the following behavior intentional:
 Agent dispatch and model routing happen in different places:
 
 - `pkg/agent/registry.go` owns `RouteResolver`
-- `pkg/agent/loop_message.go` resolves the route and allocates session scope
-- `pkg/agent/loop_turn.go:selectCandidates` calls `agent.Router.SelectModel(...)`
+- `pkg/agent/agent_message.go` resolves the route and allocates session scope
+- `pkg/agent/turn_coord.go:selectCandidates` calls `agent.Router.SelectModel(...)`
 
 When the light model is selected, the agent loop swaps to `agent.LightCandidates`.
 When it is not selected, execution stays on the agent's primary provider candidate set.
@@ -252,7 +252,7 @@ When it is not selected, execution stays on the agent's primary provider candida
 
 One nuance sits just outside `pkg/routing` but matters for the full routing story.
 
-After a route is allocated, `pkg/agent/loop_utils.go:resolveScopeKey` preserves an explicit incoming session key when the caller already supplied:
+After a route is allocated, `pkg/agent/agent_utils.go:resolveScopeKey` preserves an explicit incoming session key when the caller already supplied:
 
 - an opaque canonical key
 - a legacy `agent:...` key
@@ -278,5 +278,5 @@ They are separate from the runtime routing system described here.
 - `pkg/routing/agent_id.go`
 - `pkg/session/allocator.go`
 - `pkg/agent/registry.go`
-- `pkg/agent/loop_message.go`
-- `pkg/agent/loop_turn.go`
+- `pkg/agent/agent_message.go`
+- `pkg/agent/turn_coord.go`

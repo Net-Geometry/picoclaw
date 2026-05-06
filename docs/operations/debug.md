@@ -36,13 +36,13 @@ When this flag is active, the global truncation function is disabled. This is ex
 
 When debug mode is active, the agent emits structured log entries at each stage of the tool execution lifecycle. These entries carry a `component=agent` label and use `INFO` or `DEBUG` level depending on the amount of detail:
 
-| Log message | Level | Key fields | Description |
-|---|---|---|---|
-| `LLM requested tool calls` | INFO | `tools`, `count`, `iteration` | List of tool names the model decided to call |
-| `Tool call: <name>(<args>)` | INFO | `tool`, `iteration` | The tool name and a preview of its arguments (truncated to 200 chars) |
-| `Sent tool result to user` | DEBUG | `tool`, `content_len` | Fired when a tool result is forwarded to the chat channel |
-| `TTL tick after tool execution` | DEBUG | `agent_id`, `iteration` | MCP tool-discovery TTL decrement after each tool round |
-| `Async tool completed, publishing result` | INFO | `tool`, `content_len`, `channel` | Only for tools that run asynchronously in the background |
+| Log message                               | Level | Key fields                       | Description                                                           |
+| ----------------------------------------- | ----- | -------------------------------- | --------------------------------------------------------------------- |
+| `LLM requested tool calls`                | INFO  | `tools`, `count`, `iteration`    | List of tool names the model decided to call                          |
+| `Tool call: <name>(<args>)`               | INFO  | `tool`, `iteration`              | The tool name and a preview of its arguments (truncated to 200 chars) |
+| `Sent tool result to user`                | DEBUG | `tool`, `content_len`            | Fired when a tool result is forwarded to the chat channel             |
+| `TTL tick after tool execution`           | DEBUG | `agent_id`, `iteration`          | MCP tool-discovery TTL decrement after each tool round                |
+| `Async tool completed, publishing result` | INFO  | `tool`, `content_len`, `channel` | Only for tools that run asynchronously in the background              |
 
 ### Reading a tool call log entry
 
@@ -65,7 +65,8 @@ Debug logs are server-side only. If you want the agent to send a visible notific
     "defaults": {
       "tool_feedback": {
         "enabled": true,
-        "max_args_length": 300
+        "max_args_length": 300,
+        "separate_messages": true
       }
     }
   }
@@ -82,10 +83,11 @@ When `enabled` is `true`, every tool call sends a short message to the chat befo
 
 ### Options
 
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `enabled` | bool | `false` | Send a chat notification for each tool call |
-| `max_args_length` | int | `300` | Maximum characters of the serialised arguments included in the notification |
+| Field               | Type | Default | Description                                                                                                         |
+| ------------------- | ---- | ------- | ------------------------------------------------------------------------------------------------------------------- |
+| `enabled`           | bool | `false` | Send a chat notification for each tool call                                                                         |
+| `separate_messages` | bool | `false` | Keep every tool feedback update as a separate chat message instead of reusing a single placeholder/progress message |
+| `max_args_length`   | int  | `300`   | Maximum characters of the serialised arguments included in the notification                                         |
 
 ### Environment variables
 

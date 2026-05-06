@@ -7,25 +7,25 @@
 > [!NOTE]
 > Groq cung cấp chuyển đổi giọng nói miễn phí qua Whisper. Nếu được cấu hình, tin nhắn âm thanh từ bất kỳ kênh nào sẽ được tự động chuyển đổi ở cấp agent.
 
-| Provider     | Purpose                                 | Get API Key                                                  |
-| ------------ | --------------------------------------- | ------------------------------------------------------------ |
-| `gemini`     | LLM (Gemini direct)                     | [aistudio.google.com](https://aistudio.google.com)           |
-| `zhipu`      | LLM (Zhipu direct)                      | [bigmodel.cn](https://bigmodel.cn)                           |
-| `volcengine` | LLM(Volcengine direct)                  | [volcengine.com](https://www.volcengine.com/activity/codingplan?utm_campaign=PicoClaw&utm_content=PicoClaw&utm_medium=devrel&utm_source=OWO&utm_term=PicoClaw)                 |
-| `openrouter` | LLM (recommended, access to all models) | [openrouter.ai](https://openrouter.ai)                       |
-| `anthropic`  | LLM (Claude direct)                     | [console.anthropic.com](https://console.anthropic.com)       |
-| `openai`     | LLM (GPT direct)                        | [platform.openai.com](https://platform.openai.com)           |
-| `deepseek`   | LLM (DeepSeek direct)                   | [platform.deepseek.com](https://platform.deepseek.com)       |
-| `qwen`       | LLM (Qwen direct)                       | [dashscope.console.aliyun.com](https://dashscope.console.aliyun.com) |
-| `groq`       | LLM + **Voice transcription** (Whisper) | [console.groq.com](https://console.groq.com)                 |
-| `cerebras`   | LLM (Cerebras direct)                   | [cerebras.ai](https://cerebras.ai)                           |
-| `vivgrid`    | LLM (Vivgrid direct)                    | [vivgrid.com](https://vivgrid.com)                           |
-| `moonshot`   | LLM (Kimi/Moonshot direct)              | [platform.moonshot.cn](https://platform.moonshot.cn)         |
-| `minimax`    | LLM (Minimax direct)                    | [platform.minimaxi.com](https://platform.minimaxi.com)      |
-| `avian`      | LLM (Avian direct)                      | [avian.io](https://avian.io)                                 |
-| `mistral`    | LLM (Mistral direct)                    | [console.mistral.ai](https://console.mistral.ai)            |
-| `longcat`    | LLM (Longcat direct)                    | [longcat.ai](https://longcat.ai)                             |
-| `modelscope` | LLM (ModelScope direct)                 | [modelscope.cn](https://modelscope.cn)                       |
+| Provider     | Purpose                                 | Get API Key                                                                                                                                                    |
+| ------------ | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gemini`     | LLM (Gemini direct)                     | [aistudio.google.com](https://aistudio.google.com)                                                                                                             |
+| `zhipu`      | LLM (Zhipu direct)                      | [bigmodel.cn](https://bigmodel.cn)                                                                                                                             |
+| `volcengine` | LLM(Volcengine direct)                  | [volcengine.com](https://www.volcengine.com/activity/codingplan?utm_campaign=PicoClaw&utm_content=PicoClaw&utm_medium=devrel&utm_source=OWO&utm_term=PicoClaw) |
+| `openrouter` | LLM (recommended, access to all models) | [openrouter.ai](https://openrouter.ai)                                                                                                                         |
+| `anthropic`  | LLM (Claude direct)                     | [console.anthropic.com](https://console.anthropic.com)                                                                                                         |
+| `openai`     | LLM (GPT direct)                        | [platform.openai.com](https://platform.openai.com)                                                                                                             |
+| `deepseek`   | LLM (DeepSeek direct)                   | [platform.deepseek.com](https://platform.deepseek.com)                                                                                                         |
+| `qwen`       | LLM (Qwen direct)                       | [dashscope.console.aliyun.com](https://dashscope.console.aliyun.com)                                                                                           |
+| `groq`       | LLM + **Voice transcription** (Whisper) | [console.groq.com](https://console.groq.com)                                                                                                                   |
+| `cerebras`   | LLM (Cerebras direct)                   | [cerebras.ai](https://cerebras.ai)                                                                                                                             |
+| `vivgrid`    | LLM (Vivgrid direct)                    | [vivgrid.com](https://vivgrid.com)                                                                                                                             |
+| `moonshot`   | LLM (Kimi/Moonshot direct)              | [platform.moonshot.cn](https://platform.moonshot.cn)                                                                                                           |
+| `minimax`    | LLM (Minimax direct)                    | [platform.minimaxi.com](https://platform.minimaxi.com)                                                                                                         |
+| `avian`      | LLM (Avian direct)                      | [avian.io](https://avian.io)                                                                                                                                   |
+| `mistral`    | LLM (Mistral direct)                    | [console.mistral.ai](https://console.mistral.ai)                                                                                                               |
+| `longcat`    | LLM (Longcat direct)                    | [longcat.ai](https://longcat.ai)                                                                                                                               |
+| `modelscope` | LLM (ModelScope direct)                 | [modelscope.cn](https://modelscope.cn)                                                                                                                         |
 
 ### Cấu Hình Mô Hình (model_list)
 
@@ -40,30 +40,30 @@ Thiết kế này cũng cho phép **hỗ trợ đa agent** với lựa chọn pr
 
 #### 📋 Tất Cả Vendor Được Hỗ Trợ
 
-| Vendor              | `model` Prefix    | Default API Base                                    | Protocol  | API Key                                                          |
-| ------------------- | ----------------- |-----------------------------------------------------| --------- | ---------------------------------------------------------------- |
-| **OpenAI**          | `openai/`         | `https://api.openai.com/v1`                         | OpenAI    | [Get Key](https://platform.openai.com)                           |
-| **Anthropic**       | `anthropic/`      | `https://api.anthropic.com/v1`                      | Anthropic | [Get Key](https://console.anthropic.com)                         |
-| **智谱 AI (GLM)**   | `zhipu/`          | `https://open.bigmodel.cn/api/paas/v4`              | OpenAI    | [Get Key](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) |
-| **DeepSeek**        | `deepseek/`       | `https://api.deepseek.com/v1`                       | OpenAI    | [Get Key](https://platform.deepseek.com)                         |
-| **Google Gemini**   | `gemini/`         | `https://generativelanguage.googleapis.com/v1beta`  | OpenAI    | [Get Key](https://aistudio.google.com/api-keys)                  |
-| **Groq**            | `groq/`           | `https://api.groq.com/openai/v1`                    | OpenAI    | [Get Key](https://console.groq.com)                              |
-| **Moonshot**        | `moonshot/`       | `https://api.moonshot.cn/v1`                        | OpenAI    | [Get Key](https://platform.moonshot.cn)                          |
-| **通义千问 (Qwen)** | `qwen/`           | `https://dashscope.aliyuncs.com/compatible-mode/v1` | OpenAI    | [Get Key](https://dashscope.console.aliyun.com)                  |
-| **NVIDIA**          | `nvidia/`         | `https://integrate.api.nvidia.com/v1`               | OpenAI    | [Get Key](https://build.nvidia.com)                              |
-| **Ollama**          | `ollama/`         | `http://localhost:11434/v1`                         | OpenAI    | Local (no key needed)                                            |
-| **OpenRouter**      | `openrouter/`     | `https://openrouter.ai/api/v1`                      | OpenAI    | [Get Key](https://openrouter.ai/keys)                            |
-| **LiteLLM Proxy**   | `litellm/`        | `http://localhost:4000/v1`                          | OpenAI    | Your LiteLLM proxy key                                            |
-| **VLLM**            | `vllm/`           | `http://localhost:8000/v1`                          | OpenAI    | Local                                                            |
-| **Cerebras**        | `cerebras/`       | `https://api.cerebras.ai/v1`                        | OpenAI    | [Get Key](https://cerebras.ai)                                   |
-| **VolcEngine (Doubao)** | `volcengine/`     | `https://ark.cn-beijing.volces.com/api/v3`          | OpenAI    | [Get Key](https://www.volcengine.com/activity/codingplan?utm_campaign=PicoClaw&utm_content=PicoClaw&utm_medium=devrel&utm_source=OWO&utm_term=PicoClaw)                        |
-| **神算云**          | `shengsuanyun/`   | `https://router.shengsuanyun.com/api/v1`            | OpenAI    | -                                                                |
-| **BytePlus**        | `byteplus/`       | `https://ark.ap-southeast.bytepluses.com/api/v3`    | OpenAI    | [Get Key](https://www.byteplus.com)                        |
-| **Vivgrid**         | `vivgrid/`        | `https://api.vivgrid.com/v1`                        | OpenAI    | [Get Key](https://vivgrid.com)                                   |
-| **LongCat**         | `longcat/`        | `https://api.longcat.chat/openai`                   | OpenAI    | [Get Key](https://longcat.chat/platform)                         |
-| **ModelScope (魔搭)**| `modelscope/`    | `https://api-inference.modelscope.cn/v1`            | OpenAI    | [Get Token](https://modelscope.cn/my/tokens)                     |
-| **Antigravity**     | `antigravity/`    | Google Cloud                                        | Custom    | OAuth only                                                       |
-| **GitHub Copilot**  | `github-copilot/` | `localhost:4321`                                    | gRPC      | -                                                                |
+| Vendor                  | `model` Prefix    | Default API Base                                    | Protocol  | API Key                                                                                                                                                 |
+| ----------------------- | ----------------- | --------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **OpenAI**              | `openai/`         | `https://api.openai.com/v1`                         | OpenAI    | [Get Key](https://platform.openai.com)                                                                                                                  |
+| **Anthropic**           | `anthropic/`      | `https://api.anthropic.com/v1`                      | Anthropic | [Get Key](https://console.anthropic.com)                                                                                                                |
+| **智谱 AI (GLM)**       | `zhipu/`          | `https://open.bigmodel.cn/api/paas/v4`              | OpenAI    | [Get Key](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys)                                                                                        |
+| **DeepSeek**            | `deepseek/`       | `https://api.deepseek.com/v1`                       | OpenAI    | [Get Key](https://platform.deepseek.com)                                                                                                                |
+| **Google Gemini**       | `gemini/`         | `https://generativelanguage.googleapis.com/v1beta`  | Gemini    | [Get Key](https://aistudio.google.com/api-keys)                                                                                                         |
+| **Groq**                | `groq/`           | `https://api.groq.com/openai/v1`                    | OpenAI    | [Get Key](https://console.groq.com)                                                                                                                     |
+| **Moonshot**            | `moonshot/`       | `https://api.moonshot.cn/v1`                        | OpenAI    | [Get Key](https://platform.moonshot.cn)                                                                                                                 |
+| **通义千问 (Qwen)**     | `qwen/`           | `https://dashscope.aliyuncs.com/compatible-mode/v1` | OpenAI    | [Get Key](https://dashscope.console.aliyun.com)                                                                                                         |
+| **NVIDIA**              | `nvidia/`         | `https://integrate.api.nvidia.com/v1`               | OpenAI    | [Get Key](https://build.nvidia.com)                                                                                                                     |
+| **Ollama**              | `ollama/`         | `http://localhost:11434/v1`                         | OpenAI    | Local (no key needed)                                                                                                                                   |
+| **OpenRouter**          | `openrouter/`     | `https://openrouter.ai/api/v1`                      | OpenAI    | [Get Key](https://openrouter.ai/keys)                                                                                                                   |
+| **LiteLLM Proxy**       | `litellm/`        | `http://localhost:4000/v1`                          | OpenAI    | Your LiteLLM proxy key                                                                                                                                  |
+| **VLLM**                | `vllm/`           | `http://localhost:8000/v1`                          | OpenAI    | Local                                                                                                                                                   |
+| **Cerebras**            | `cerebras/`       | `https://api.cerebras.ai/v1`                        | OpenAI    | [Get Key](https://cerebras.ai)                                                                                                                          |
+| **VolcEngine (Doubao)** | `volcengine/`     | `https://ark.cn-beijing.volces.com/api/v3`          | OpenAI    | [Get Key](https://www.volcengine.com/activity/codingplan?utm_campaign=PicoClaw&utm_content=PicoClaw&utm_medium=devrel&utm_source=OWO&utm_term=PicoClaw) |
+| **神算云**              | `shengsuanyun/`   | `https://router.shengsuanyun.com/api/v1`            | OpenAI    | -                                                                                                                                                       |
+| **BytePlus**            | `byteplus/`       | `https://ark.ap-southeast.bytepluses.com/api/v3`    | OpenAI    | [Get Key](https://www.byteplus.com)                                                                                                                     |
+| **Vivgrid**             | `vivgrid/`        | `https://api.vivgrid.com/v1`                        | OpenAI    | [Get Key](https://vivgrid.com)                                                                                                                          |
+| **LongCat**             | `longcat/`        | `https://api.longcat.chat/openai`                   | OpenAI    | [Get Key](https://longcat.chat/platform)                                                                                                                |
+| **ModelScope (魔搭)**   | `modelscope/`     | `https://api-inference.modelscope.cn/v1`            | OpenAI    | [Get Token](https://modelscope.cn/my/tokens)                                                                                                            |
+| **Antigravity**         | `antigravity/`    | Google Cloud                                        | Custom    | OAuth only                                                                                                                                              |
+| **GitHub Copilot**      | `github-copilot/` | `localhost:4321`                                    | gRPC      | -                                                                                                                                                       |
 
 #### Cấu Hình Cơ Bản
 
@@ -101,21 +101,21 @@ Thiết kế này cũng cho phép **hỗ trợ đa agent** với lựa chọn pr
 
 #### Các trường entry `model_list`
 
-| Trường | Kiểu | Bắt buộc | Mô tả |
-|--------|------|----------|------|
-| `model_name` | string | Có | Tên duy nhất để tham chiếu model này trong cấu hình agent |
-| `model` | string | Có | Định danh nhà cung cấp/model (ví dụ: `openai/gpt-5.4`, `azure/gpt-5.4`, `anthropic/claude-sonnet-4.6`) |
-| `api_keys` | string[] | Có* | Khóa API xác thực. Nhiều khóa cho phép xoay vòng theo yêu cầu. Không cần thiết cho provider nội bộ (Ollama, LM Studio, VLLM) |
-| `api_base` | string | Không | Ghi đè URL endpoint API mặc định |
-| `proxy` | string | Không | URL proxy HTTP cho entry model này |
-| `user_agent` | string | Không | Header `User-Agent` tùy chỉnh gửi với yêu cầu API (được hỗ trợ bởi provider OpenAI-compatible, Anthropic và Azure) |
-| `request_timeout` | int | Không | Timeout yêu cầu tính bằng giây (mặc định khác nhau tùy provider) |
-| `max_tokens_field` | string | Không | Ghi đè tên trường max tokens trong request body (ví dụ: `max_completion_tokens` cho model o1) |
-| `thinking_level` | string | Không | Mức độ tư duy mở rộng: `off`, `low`, `medium`, `high`, `xhigh` hoặc `adaptive` |
-| `extra_body` | object | Không | Các trường bổ sung để chèn vào mỗi request body |
-| `rpm` | int | Không | Giới hạn tốc độ yêu cầu mỗi phút |
-| `fallbacks` | string[] | Không | Tên model dự phòng cho failover tự động |
-| `enabled` | bool | Không | Kích hoạt hay vô hiệu hóa entry model này (mặc định: `true`) |
+| Trường             | Kiểu     | Bắt buộc | Mô tả                                                                                                                        |
+| ------------------ | -------- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `model_name`       | string   | Có       | Tên duy nhất để tham chiếu model này trong cấu hình agent                                                                    |
+| `model`            | string   | Có       | Định danh nhà cung cấp/model (ví dụ: `openai/gpt-5.4`, `azure/gpt-5.4`, `anthropic/claude-sonnet-4.6`)                       |
+| `api_keys`         | string[] | Có*      | Khóa API xác thực. Nhiều khóa cho phép xoay vòng theo yêu cầu. Không cần thiết cho provider nội bộ (Ollama, LM Studio, VLLM) |
+| `api_base`         | string   | Không    | Ghi đè URL endpoint API mặc định                                                                                             |
+| `proxy`            | string   | Không    | URL proxy HTTP cho entry model này                                                                                           |
+| `user_agent`       | string   | Không    | Header `User-Agent` tùy chỉnh gửi với yêu cầu API (được hỗ trợ bởi provider OpenAI-compatible, Gemini, Anthropic và Azure)   |
+| `request_timeout`  | int      | Không    | Timeout yêu cầu tính bằng giây (mặc định khác nhau tùy provider)                                                             |
+| `max_tokens_field` | string   | Không    | Ghi đè tên trường max tokens trong request body (ví dụ: `max_completion_tokens` cho model o1)                                |
+| `thinking_level`   | string   | Không    | Mức độ tư duy mở rộng: `off`, `low`, `medium`, `high`, `xhigh` hoặc `adaptive`                                               |
+| `extra_body`       | object   | Không    | Các trường bổ sung để chèn vào mỗi request body                                                                              |
+| `rpm`              | int      | Không    | Giới hạn tốc độ yêu cầu mỗi phút                                                                                             |
+| `fallbacks`        | string[] | Không    | Tên model dự phòng cho failover tự động                                                                                      |
+| `enabled`          | bool     | Không    | Kích hoạt hay vô hiệu hóa entry model này (mặc định: `true`)                                                                 |
 
 #### Ví Dụ Theo Vendor
 
@@ -299,6 +299,7 @@ Cấu hình `providers` cũ đã **bị deprecated** và đã được loại b�
 PicoClaw định tuyến provider theo họ giao thức:
 
 - Giao thức tương thích OpenAI: OpenRouter, gateway tương thích OpenAI, Groq, Zhipu, và endpoint kiểu vLLM.
+- Giao thức Gemini native: Google Gemini qua các endpoint native `models/*:generateContent` và `models/*:streamGenerateContent`.
 - Giao thức Anthropic: Hành vi API native của Claude.
 - Đường dẫn Codex/OAuth: Tuyến xác thực OAuth/token của OpenAI.
 
@@ -439,17 +440,17 @@ picoclaw agent -m "Hello"
 
 ## 📝 So Sánh API Key
 
-| Service          | Pricing                  | Use Case                              |
-| ---------------- | ------------------------ | ------------------------------------- |
-| **OpenRouter**   | Free: 200K tokens/month  | Multiple models (Claude, GPT-4, etc.) |
-| **Volcengine CodingPlan** | ¥9.9/first month | Best for Chinese users, multiple SOTA models (Doubao, DeepSeek, etc.) |
-| **Zhipu**        | Free: 200K tokens/month  | Suitable for Chinese users                |
-| **Brave Search** | $5/1000 queries          | Web search functionality              |
-| **SearXNG**      | Free (self-hosted)       | Privacy-focused metasearch (70+ engines) |
-| **Groq**         | Free tier available      | Fast inference (Llama, Mixtral)       |
-| **Cerebras**     | Free tier available      | Fast inference (Llama, Qwen, etc.)    |
-| **LongCat**      | Free: up to 5M tokens/day | Fast inference                       |
-| **ModelScope**   | Free: 2000 requests/day  | Inference (Qwen, GLM, DeepSeek, etc.) |
+| Service                   | Pricing                   | Use Case                                                              |
+| ------------------------- | ------------------------- | --------------------------------------------------------------------- |
+| **OpenRouter**            | Free: 200K tokens/month   | Multiple models (Claude, GPT-4, etc.)                                 |
+| **Volcengine CodingPlan** | ¥9.9/first month          | Best for Chinese users, multiple SOTA models (Doubao, DeepSeek, etc.) |
+| **Zhipu**                 | Free: 200K tokens/month   | Suitable for Chinese users                                            |
+| **Brave Search**          | $5/1000 queries           | Web search functionality                                              |
+| **SearXNG**               | Free (self-hosted)        | Privacy-focused metasearch (70+ engines)                              |
+| **Groq**                  | Free tier available       | Fast inference (Llama, Mixtral)                                       |
+| **Cerebras**              | Free tier available       | Fast inference (Llama, Qwen, etc.)                                    |
+| **LongCat**               | Free: up to 5M tokens/day | Fast inference                                                        |
+| **ModelScope**            | Free: 2000 requests/day   | Inference (Qwen, GLM, DeepSeek, etc.)                                 |
 
 ---
 

@@ -2,9 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "PicoClaw Launcher"
-#ifndef MyAppVersion
 #define MyAppVersion "1.0"
-#endif
 #define MyAppPublisher "PicoClaw"
 #define MyAppURL "https://github.com/sipeed/picoclaw"
 #define MyAppExeName "picoclaw-launcher.exe"

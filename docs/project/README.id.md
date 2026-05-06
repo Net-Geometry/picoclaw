@@ -101,12 +101,12 @@ _*Build terbaru mungkin menggunakan 10-20MB karena penggabungan PR yang cepat. O
 
 <div align="center">
 
-|                                | OpenClaw      | NanoBot                  | **PicoClaw**                           |
-| ------------------------------ | ------------- | ------------------------ | -------------------------------------- |
-| **Bahasa**                     | TypeScript    | Python                   | **Go**                                 |
-| **RAM**                        | >1GB          | >100MB                   | **< 10MB***                            |
-| **Waktu Boot**</br>(core 0,8GHz) | >500d       | >30d                     | **<1d**                                |
-| **Biaya**                      | Mac Mini $599 | Kebanyakan board Linux ~$50 | **Board Linux mana pun**</br>**mulai $10** |
+|                                  | OpenClaw      | NanoBot                     | **PicoClaw**                               |
+| -------------------------------- | ------------- | --------------------------- | ------------------------------------------ |
+| **Bahasa**                       | TypeScript    | Python                      | **Go**                                     |
+| **RAM**                          | >1GB          | >100MB                      | **< 10MB***                                |
+| **Waktu Boot**</br>(core 0,8GHz) | >500d         | >30d                        | **<1d**                                    |
+| **Biaya**                        | Mac Mini $599 | Kebanyakan board Linux ~$50 | **Board Linux mana pun**</br>**mulai $10** |
 
 <img src="../../assets/compare.jpg" alt="PicoClaw" width="512">
 
@@ -289,24 +289,6 @@ Setelah langkah satu kali ini, `picoclaw-launcher` akan terbuka secara normal pa
 
 </details>
 
-### 💻 TUI Launcher (Direkomendasikan untuk Headless / SSH)
-
-TUI (Terminal UI) Launcher menyediakan antarmuka terminal lengkap untuk konfigurasi dan manajemen. Ideal untuk server, Raspberry Pi, dan lingkungan headless lainnya.
-
-```bash
-picoclaw-launcher-tui
-```
-
-<p align="center">
-<img src="../../assets/launcher-tui.jpg" alt="TUI Launcher" width="600">
-</p>
-
-**Memulai:**
-
-Gunakan menu TUI untuk: **1)** Konfigurasi Provider -> **2)** Konfigurasi Channel -> **3)** Mulai Gateway -> **4)** Chat!
-
-Untuk dokumentasi TUI lengkap, lihat [docs.picoclaw.io](https://docs.picoclaw.io).
-
 ### 📱 Android
 
 Berikan kehidupan kedua untuk ponsel lama Anda! Ubah menjadi Asisten AI pintar dengan PicoClaw.
@@ -396,30 +378,30 @@ picoclaw gateway
 
 PicoClaw mendukung 30+ provider LLM melalui konfigurasi `model_list`. Gunakan format `protocol/model`:
 
-| Provider | Protocol | API Key | Catatan |
-|----------|----------|---------|---------|
-| [OpenAI](https://platform.openai.com/api-keys) | `openai/` | Diperlukan | GPT-5.4, GPT-4o, o3, dll. |
-| [Anthropic](https://console.anthropic.com/settings/keys) | `anthropic/` | Diperlukan | Claude Opus 4.6, Sonnet 4.6, dll. |
-| [Google Gemini](https://aistudio.google.com/apikey) | `gemini/` | Diperlukan | Gemini 3 Flash, 2.5 Pro, dll. |
-| [OpenRouter](https://openrouter.ai/keys) | `openrouter/` | Diperlukan | 200+ model, API terpadu |
-| [Zhipu (GLM)](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) | `zhipu/` | Diperlukan | GLM-4.7, GLM-5, dll. |
-| [DeepSeek](https://platform.deepseek.com/api_keys) | `deepseek/` | Diperlukan | DeepSeek-V3, DeepSeek-R1 |
-| [Volcengine](https://console.volcengine.com) | `volcengine/` | Diperlukan | Doubao, model Ark |
-| [Qwen](https://dashscope.console.aliyun.com/apiKey) | `qwen/` | Diperlukan | Qwen3, Qwen-Max, dll. |
-| [Groq](https://console.groq.com/keys) | `groq/` | Diperlukan | Inferensi cepat (Llama, Mixtral) |
-| [Moonshot (Kimi)](https://platform.moonshot.cn/console/api-keys) | `moonshot/` | Diperlukan | Model Kimi |
-| [Minimax](https://platform.minimaxi.com/user-center/basic-information/interface-key) | `minimax/` | Diperlukan | Model MiniMax |
-| [Mistral](https://console.mistral.ai/api-keys) | `mistral/` | Diperlukan | Mistral Large, Codestral |
-| [NVIDIA NIM](https://build.nvidia.com/) | `nvidia/` | Diperlukan | Model yang di-host NVIDIA |
-| [Cerebras](https://cloud.cerebras.ai/) | `cerebras/` | Diperlukan | Inferensi cepat |
-| [Novita AI](https://novita.ai/) | `novita/` | Diperlukan | Berbagai model open |
-| [Xiaomi MiMo](https://platform.xiaomimimo.com/) | `mimo/` | Diperlukan | Model MiMo |
-| [Ollama](https://ollama.com/) | `ollama/` | Tidak perlu | Model lokal, self-hosted |
-| [vLLM](https://docs.vllm.ai/) | `vllm/` | Tidak perlu | Deploy lokal, kompatibel OpenAI |
-| [LiteLLM](https://docs.litellm.ai/) | `litellm/` | Bervariasi | Proxy untuk 100+ provider |
-| [Azure OpenAI](https://portal.azure.com/) | `azure/` | Diperlukan | Deploy Azure enterprise |
-| [GitHub Copilot](https://github.com/features/copilot) | `github-copilot/` | OAuth | Login dengan device code |
-| [Antigravity](https://console.cloud.google.com/) | `antigravity/` | OAuth | Google Cloud AI |
+| Provider                                                                             | Protocol          | API Key     | Catatan                           |
+| ------------------------------------------------------------------------------------ | ----------------- | ----------- | --------------------------------- |
+| [OpenAI](https://platform.openai.com/api-keys)                                       | `openai/`         | Diperlukan  | GPT-5.4, GPT-4o, o3, dll.         |
+| [Anthropic](https://console.anthropic.com/settings/keys)                             | `anthropic/`      | Diperlukan  | Claude Opus 4.6, Sonnet 4.6, dll. |
+| [Google Gemini](https://aistudio.google.com/apikey)                                  | `gemini/`         | Diperlukan  | Gemini 3 Flash, 2.5 Pro, dll.     |
+| [OpenRouter](https://openrouter.ai/keys)                                             | `openrouter/`     | Diperlukan  | 200+ model, API terpadu           |
+| [Zhipu (GLM)](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys)                 | `zhipu/`          | Diperlukan  | GLM-4.7, GLM-5, dll.              |
+| [DeepSeek](https://platform.deepseek.com/api_keys)                                   | `deepseek/`       | Diperlukan  | DeepSeek-V3, DeepSeek-R1          |
+| [Volcengine](https://console.volcengine.com)                                         | `volcengine/`     | Diperlukan  | Doubao, model Ark                 |
+| [Qwen](https://dashscope.console.aliyun.com/apiKey)                                  | `qwen/`           | Diperlukan  | Qwen3, Qwen-Max, dll.             |
+| [Groq](https://console.groq.com/keys)                                                | `groq/`           | Diperlukan  | Inferensi cepat (Llama, Mixtral)  |
+| [Moonshot (Kimi)](https://platform.moonshot.cn/console/api-keys)                     | `moonshot/`       | Diperlukan  | Model Kimi                        |
+| [Minimax](https://platform.minimaxi.com/user-center/basic-information/interface-key) | `minimax/`        | Diperlukan  | Model MiniMax                     |
+| [Mistral](https://console.mistral.ai/api-keys)                                       | `mistral/`        | Diperlukan  | Mistral Large, Codestral          |
+| [NVIDIA NIM](https://build.nvidia.com/)                                              | `nvidia/`         | Diperlukan  | Model yang di-host NVIDIA         |
+| [Cerebras](https://cloud.cerebras.ai/)                                               | `cerebras/`       | Diperlukan  | Inferensi cepat                   |
+| [Novita AI](https://novita.ai/)                                                      | `novita/`         | Diperlukan  | Berbagai model open               |
+| [Xiaomi MiMo](https://platform.xiaomimimo.com/)                                      | `mimo/`           | Diperlukan  | Model MiMo                        |
+| [Ollama](https://ollama.com/)                                                        | `ollama/`         | Tidak perlu | Model lokal, self-hosted          |
+| [vLLM](https://docs.vllm.ai/)                                                        | `vllm/`           | Tidak perlu | Deploy lokal, kompatibel OpenAI   |
+| [LiteLLM](https://docs.litellm.ai/)                                                  | `litellm/`        | Bervariasi  | Proxy untuk 100+ provider         |
+| [Azure OpenAI](https://portal.azure.com/)                                            | `azure/`          | Diperlukan  | Deploy Azure enterprise           |
+| [GitHub Copilot](https://github.com/features/copilot)                                | `github-copilot/` | OAuth       | Login dengan device code          |
+| [Antigravity](https://console.cloud.google.com/)                                     | `antigravity/`    | OAuth       | Google Cloud AI                   |
 
 <details>
 <summary><b>Deploy lokal (Ollama, vLLM, dll.)</b></summary>
@@ -458,24 +440,24 @@ Untuk detail konfigurasi provider lengkap, lihat [Providers & Models](../guides/
 
 Bicara dengan PicoClaw Anda melalui 17+ platform pesan:
 
-| Channel | Pengaturan | Protocol | Dokumentasi |
-|---------|------------|----------|-------------|
-| **Telegram** | Mudah (bot token) | Long polling | [Panduan](../channels/telegram/README.md) |
-| **Discord** | Mudah (bot token + intents) | WebSocket | [Panduan](../channels/discord/README.md) |
-| **WhatsApp** | Mudah (scan QR atau bridge URL) | Native / Bridge | [Panduan](../guides/chat-apps.md#whatsapp) |
-| **Weixin** | Mudah (scan QR native) | iLink API | [Panduan](../guides/chat-apps.md#weixin) |
-| **QQ** | Mudah (AppID + AppSecret) | WebSocket | [Panduan](../channels/qq/README.md) |
-| **Slack** | Mudah (bot + app token) | Socket Mode | [Panduan](../channels/slack/README.md) |
-| **Matrix** | Sedang (homeserver + token) | Sync API | [Panduan](../channels/matrix/README.md) |
-| **DingTalk** | Sedang (client credentials) | Stream | [Panduan](../channels/dingtalk/README.md) |
-| **Feishu / Lark** | Sedang (App ID + Secret) | WebSocket/SDK | [Panduan](../channels/feishu/README.md) |
-| **LINE** | Sedang (credentials + webhook) | Webhook | [Panduan](../channels/line/README.md) |
-| **WeCom** | Mudah (login QR atau manual) | WebSocket | [Panduan](../channels/wecom/README.md) |
-| **IRC** | Sedang (server + nick) | IRC protocol | [Panduan](../guides/chat-apps.md#irc) |
-| **OneBot** | Sedang (WebSocket URL) | OneBot v11 | [Panduan](../channels/onebot/README.md) |
-| **MaixCam** | Mudah (aktifkan) | TCP socket | [Panduan](../channels/maixcam/README.md) |
-| **Pico** | Mudah (aktifkan) | Native protocol | Bawaan |
-| **Pico Client** | Mudah (WebSocket URL) | WebSocket | Bawaan |
+| Channel           | Pengaturan                      | Protocol        | Dokumentasi                                |
+| ----------------- | ------------------------------- | --------------- | ------------------------------------------ |
+| **Telegram**      | Mudah (bot token)               | Long polling    | [Panduan](../channels/telegram/README.md)  |
+| **Discord**       | Mudah (bot token + intents)     | WebSocket       | [Panduan](../channels/discord/README.md)   |
+| **WhatsApp**      | Mudah (scan QR atau bridge URL) | Native / Bridge | [Panduan](../guides/chat-apps.md#whatsapp) |
+| **Weixin**        | Mudah (scan QR native)          | iLink API       | [Panduan](../guides/chat-apps.md#weixin)   |
+| **QQ**            | Mudah (AppID + AppSecret)       | WebSocket       | [Panduan](../channels/qq/README.md)        |
+| **Slack**         | Mudah (bot + app token)         | Socket Mode     | [Panduan](../channels/slack/README.md)     |
+| **Matrix**        | Sedang (homeserver + token)     | Sync API        | [Panduan](../channels/matrix/README.md)    |
+| **DingTalk**      | Sedang (client credentials)     | Stream          | [Panduan](../channels/dingtalk/README.md)  |
+| **Feishu / Lark** | Sedang (App ID + Secret)        | WebSocket/SDK   | [Panduan](../channels/feishu/README.md)    |
+| **LINE**          | Sedang (credentials + webhook)  | Webhook         | [Panduan](../channels/line/README.md)      |
+| **WeCom**         | Mudah (login QR atau manual)    | WebSocket       | [Panduan](../channels/wecom/README.md)     |
+| **IRC**           | Sedang (server + nick)          | IRC protocol    | [Panduan](../guides/chat-apps.md#irc)      |
+| **OneBot**        | Sedang (WebSocket URL)          | OneBot v11      | [Panduan](../channels/onebot/README.md)    |
+| **MaixCam**       | Mudah (aktifkan)                | TCP socket      | [Panduan](../channels/maixcam/README.md)   |
+| **Pico**          | Mudah (aktifkan)                | Native protocol | Bawaan                                     |
+| **Pico Client**   | Mudah (WebSocket URL)           | WebSocket       | Bawaan                                     |
 
 > Semua channel berbasis webhook berbagi satu server HTTP Gateway (`gateway.host`:`gateway.port`, default `127.0.0.1:18790`). Feishu menggunakan mode WebSocket/SDK dan tidak menggunakan server HTTP bersama.
 
@@ -489,15 +471,15 @@ Untuk instruksi pengaturan channel lengkap, lihat [Konfigurasi Aplikasi Chat](..
 
 PicoClaw dapat mencari web untuk memberikan informasi terkini. Konfigurasi di `tools.web`:
 
-| Mesin Pencari | API Key | Tier Gratis | Tautan |
-|--------------|---------|-------------|--------|
-| DuckDuckGo | Tidak perlu | Tidak terbatas | Fallback bawaan |
-| [Baidu Search](https://cloud.baidu.com/doc/qianfan-api/s/Wmbq4z7e5) | Diperlukan | 1000 kueri/hari | Bertenaga AI, dioptimalkan untuk bahasa Mandarin |
-| [Tavily](https://tavily.com) | Diperlukan | 1000 kueri/bulan | Dioptimalkan untuk AI Agent |
-| [Brave Search](https://brave.com/search/api) | Diperlukan | 2000 kueri/bulan | Cepat dan privat |
-| [Perplexity](https://www.perplexity.ai) | Diperlukan | Berbayar | Pencarian bertenaga AI |
-| [SearXNG](https://github.com/searxng/searxng) | Tidak perlu | Self-hosted | Mesin metasearch gratis |
-| [GLM Search](https://open.bigmodel.cn/) | Diperlukan | Bervariasi | Pencarian web Zhipu |
+| Mesin Pencari                                                       | API Key     | Tier Gratis      | Tautan                                           |
+| ------------------------------------------------------------------- | ----------- | ---------------- | ------------------------------------------------ |
+| DuckDuckGo                                                          | Tidak perlu | Tidak terbatas   | Fallback bawaan                                  |
+| [Baidu Search](https://cloud.baidu.com/doc/qianfan-api/s/Wmbq4z7e5) | Diperlukan  | 1000 kueri/hari  | Bertenaga AI, dioptimalkan untuk bahasa Mandarin |
+| [Tavily](https://tavily.com)                                        | Diperlukan  | 1000 kueri/bulan | Dioptimalkan untuk AI Agent                      |
+| [Brave Search](https://brave.com/search/api)                        | Diperlukan  | 2000 kueri/bulan | Cepat dan privat                                 |
+| [Perplexity](https://www.perplexity.ai)                             | Diperlukan  | Berbayar         | Pencarian bertenaga AI                           |
+| [SearXNG](https://github.com/searxng/searxng)                       | Tidak perlu | Self-hosted      | Mesin metasearch gratis                          |
+| [GLM Search](https://open.bigmodel.cn/)                             | Diperlukan  | Bervariasi       | Pencarian web Zhipu                              |
 
 ### ⚙️ Tools Lainnya
 
@@ -564,24 +546,24 @@ Hubungkan PicoClaw ke Jaringan Sosial Agent hanya dengan mengirim satu pesan mel
 
 ## 🖥️ Referensi CLI
 
-| Perintah                   | Deskripsi                        |
-| -------------------------- | -------------------------------- |
-| `picoclaw onboard`         | Inisialisasi konfigurasi & workspace |
-| `picoclaw auth weixin` | Hubungkan akun WeChat via QR |
-| `picoclaw agent -m "..."` | Chat dengan agent                |
-| `picoclaw agent`           | Mode chat interaktif             |
-| `picoclaw gateway`         | Mulai gateway                    |
-| `picoclaw status`          | Tampilkan status                 |
-| `picoclaw version`         | Tampilkan info versi             |
-| `picoclaw model`           | Lihat atau ganti model default   |
-| `picoclaw cron list`       | Daftar semua tugas terjadwal     |
-| `picoclaw cron add ...`    | Tambah tugas terjadwal           |
-| `picoclaw cron disable`    | Nonaktifkan tugas terjadwal      |
-| `picoclaw cron remove`     | Hapus tugas terjadwal            |
-| `picoclaw skills list`     | Daftar skill yang terinstal      |
-| `picoclaw skills install`  | Instal skill                     |
-| `picoclaw migrate`         | Migrasi data dari versi lama     |
-| `picoclaw auth login`      | Autentikasi dengan provider      |
+| Perintah                  | Deskripsi                            |
+| ------------------------- | ------------------------------------ |
+| `picoclaw onboard`        | Inisialisasi konfigurasi & workspace |
+| `picoclaw auth weixin`    | Hubungkan akun WeChat via QR         |
+| `picoclaw agent -m "..."` | Chat dengan agent                    |
+| `picoclaw agent`          | Mode chat interaktif                 |
+| `picoclaw gateway`        | Mulai gateway                        |
+| `picoclaw status`         | Tampilkan status                     |
+| `picoclaw version`        | Tampilkan info versi                 |
+| `picoclaw model`          | Lihat atau ganti model default       |
+| `picoclaw cron list`      | Daftar semua tugas terjadwal         |
+| `picoclaw cron add ...`   | Tambah tugas terjadwal               |
+| `picoclaw cron disable`   | Nonaktifkan tugas terjadwal          |
+| `picoclaw cron remove`    | Hapus tugas terjadwal                |
+| `picoclaw skills list`    | Daftar skill yang terinstal          |
+| `picoclaw skills install` | Instal skill                         |
+| `picoclaw migrate`        | Migrasi data dari versi lama         |
+| `picoclaw auth login`     | Autentikasi dengan provider          |
 
 ### ⏰ Tugas Terjadwal / Pengingat
 
@@ -595,19 +577,19 @@ PicoClaw mendukung pengingat terjadwal dan tugas berulang melalui tool `cron`:
 
 Untuk panduan lengkap di luar README ini:
 
-| Topik | Deskripsi |
-|-------|-----------|
-| [Docker & Panduan Cepat](../guides/docker.md) | Pengaturan Docker Compose, mode Launcher/Agent |
-| [Aplikasi Chat](../guides/chat-apps.md) | Semua 17+ panduan pengaturan channel |
-| [Konfigurasi](../guides/configuration.md) | Variabel environment, tata letak workspace, sandbox keamanan |
-| [Providers & Models](../guides/providers.md) | 30+ provider LLM, routing model, konfigurasi model_list |
-| [Spawn & Tugas Async](../guides/spawn-tasks.md) | Tugas cepat, tugas panjang dengan spawn, orkestrasi sub-agent async |
-| [Hooks](../architecture/hooks/README.md) | Sistem hook berbasis event: observer, interceptor, approval hook |
-| [Steering](../architecture/steering.md) | Menyuntikkan pesan ke dalam loop agent yang sedang berjalan |
-| [SubTurn](../architecture/subturn.md) | Koordinasi subagent, kontrol konkurensi, siklus hidup |
-| [Pemecahan Masalah](../operations/troubleshooting.md) | Masalah umum dan solusinya |
-| [Konfigurasi Tools](../reference/tools_configuration.md) | Aktifkan/nonaktifkan per-tool, kebijakan exec, MCP, Skills |
-| [Kompatibilitas Hardware](../guides/hardware-compatibility.md) | Board yang telah diuji, persyaratan minimum |
+| Topik                                                          | Deskripsi                                                           |
+| -------------------------------------------------------------- | ------------------------------------------------------------------- |
+| [Docker & Panduan Cepat](../guides/docker.md)                  | Pengaturan Docker Compose, mode Launcher/Agent                      |
+| [Aplikasi Chat](../guides/chat-apps.md)                        | Semua 17+ panduan pengaturan channel                                |
+| [Konfigurasi](../guides/configuration.md)                      | Variabel environment, tata letak workspace, sandbox keamanan        |
+| [Providers & Models](../guides/providers.md)                   | 30+ provider LLM, routing model, konfigurasi model_list             |
+| [Spawn & Tugas Async](../guides/spawn-tasks.md)                | Tugas cepat, tugas panjang dengan spawn, orkestrasi sub-agent async |
+| [Hooks](../architecture/hooks/README.md)                       | Sistem hook berbasis event: observer, interceptor, approval hook    |
+| [Steering](../architecture/steering.md)                        | Menyuntikkan pesan ke dalam loop agent yang sedang berjalan         |
+| [SubTurn](../architecture/subturn.md)                          | Koordinasi subagent, kontrol konkurensi, siklus hidup               |
+| [Pemecahan Masalah](../operations/troubleshooting.md)          | Masalah umum dan solusinya                                          |
+| [Konfigurasi Tools](../reference/tools_configuration.md)       | Aktifkan/nonaktifkan per-tool, kebijakan exec, MCP, Skills          |
+| [Kompatibilitas Hardware](../guides/hardware-compatibility.md) | Board yang telah diuji, persyaratan minimum                         |
 
 ## 🤝 Kontribusi & Roadmap
 

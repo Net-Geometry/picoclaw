@@ -101,12 +101,12 @@ _*Binaan terkini mungkin menggunakan 10-20MB disebabkan penggabungan PR yang pes
 
 <div align="center">
 
-|                                | OpenClaw      | NanoBot                  | **PicoClaw**                           |
-| ------------------------------ | ------------- | ------------------------ | -------------------------------------- |
-| **Bahasa**                     | TypeScript    | Python                   | **Go**                                 |
-| **RAM**                        | >1GB          | >100MB                   | **< 10MB***                            |
-| **Masa Boot** (teras 0.8GHz)   | >500s         | >30s                     | **<1s**                                |
-| **Kos**                        | Mac Mini $599 | Kebanyakan papan Linux ~$50 | **Mana-mana papan Linux dari $10**  |
+|                              | OpenClaw      | NanoBot                     | **PicoClaw**                       |
+| ---------------------------- | ------------- | --------------------------- | ---------------------------------- |
+| **Bahasa**                   | TypeScript    | Python                      | **Go**                             |
+| **RAM**                      | >1GB          | >100MB                      | **< 10MB***                        |
+| **Masa Boot** (teras 0.8GHz) | >500s         | >30s                        | **<1s**                            |
+| **Kos**                      | Mac Mini $599 | Kebanyakan papan Linux ~$50 | **Mana-mana papan Linux dari $10** |
 
 <img src="../../assets/compare.jpg" alt="PicoClaw" width="512">
 
@@ -286,24 +286,6 @@ Selepas langkah sekali ini, `picoclaw-launcher` akan dibuka secara normal pada p
 
 </details>
 
-### 💻 Pelancar TUI (Disyorkan untuk Headless / SSH)
-
-Pelancar TUI menyediakan antara muka terminal lengkap untuk konfigurasi dan pengurusan. Sesuai untuk pelayan, Raspberry Pi, dan persekitaran tanpa kepala lain.
-
-```bash
-picoclaw-launcher-tui
-```
-
-<p align="center">
-<img src="../../assets/launcher-tui.jpg" alt="Pelancar TUI" width="600">
-</p>
-
-**Memulakan:**
-
-Gunakan menu TUI untuk: **1)** Konfigurasikan Penyedia -> **2)** Konfigurasikan Saluran -> **3)** Mulakan Gateway -> **4)** Sembang!
-
-Untuk dokumentasi TUI terperinci, lihat [docs.picoclaw.io](https://docs.picoclaw.io).
-
 ### 📱 Android
 
 Berikan telefon lama anda kehidupan baru! Jadikannya Pembantu AI pintar dengan PicoClaw.
@@ -392,31 +374,31 @@ picoclaw gateway
 
 PicoClaw menyokong 30+ penyedia LLM melalui konfigurasi `model_list`. Gunakan format `protokol/model`:
 
-| Penyedia | Protokol | Kunci API | Nota |
-|----------|----------|-----------|------|
-| [OpenAI](https://platform.openai.com/api-keys) | `openai/` | Diperlukan | GPT-5.4, GPT-4o, o3, dll. |
-| [Anthropic](https://console.anthropic.com/settings/keys) | `anthropic/` | Diperlukan | Claude Opus 4.6, Sonnet 4.6, dll. |
-| [Google Gemini](https://aistudio.google.com/apikey) | `gemini/` | Diperlukan | Gemini 3 Flash, 2.5 Pro, dll. |
-| [OpenRouter](https://openrouter.ai/keys) | `openrouter/` | Diperlukan | 200+ model, API bersatu |
-| [Zhipu (GLM)](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) | `zhipu/` | Diperlukan | GLM-4.7, GLM-5, dll. |
-| [DeepSeek](https://platform.deepseek.com/api_keys) | `deepseek/` | Diperlukan | DeepSeek-V3, DeepSeek-R1 |
-| [Volcengine](https://console.volcengine.com) | `volcengine/` | Diperlukan | Doubao, model Ark |
-| [Qwen](https://dashscope.console.aliyun.com/apiKey) | `qwen/` | Diperlukan | Qwen3, Qwen-Max, dll. |
-| [Groq](https://console.groq.com/keys) | `groq/` | Diperlukan | Inferens pantas (Llama, Mixtral) |
-| [Moonshot (Kimi)](https://platform.moonshot.cn/console/api-keys) | `moonshot/` | Diperlukan | Model Kimi |
-| [Minimax](https://platform.minimaxi.com/user-center/basic-information/interface-key) | `minimax/` | Diperlukan | Model MiniMax |
-| [Mistral](https://console.mistral.ai/api-keys) | `mistral/` | Diperlukan | Mistral Large, Codestral |
-| [NVIDIA NIM](https://build.nvidia.com/) | `nvidia/` | Diperlukan | Model hos NVIDIA |
-| [Cerebras](https://cloud.cerebras.ai/) | `cerebras/` | Diperlukan | Inferens pantas |
-| [Novita AI](https://novita.ai/) | `novita/` | Diperlukan | Pelbagai model terbuka |
-| [Xiaomi MiMo](https://platform.xiaomimimo.com/) | `mimo/` | Diperlukan | Model MiMo |
-| [Ollama](https://ollama.com/) | `ollama/` | Tidak perlu | Model tempatan, self-hosted |
-| [vLLM](https://docs.vllm.ai/) | `vllm/` | Tidak perlu | Deployment tempatan, serasi OpenAI |
-| [LiteLLM](https://docs.litellm.ai/) | `litellm/` | Berbeza | Proksi untuk 100+ penyedia |
-| [Azure OpenAI](https://portal.azure.com/) | `azure/` | Diperlukan | Deployment Azure perusahaan |
-| [GitHub Copilot](https://github.com/features/copilot) | `github-copilot/` | OAuth | Log masuk kod peranti |
-| [Antigravity](https://console.cloud.google.com/) | `antigravity/` | OAuth | Google Cloud AI |
-| [AWS Bedrock](https://console.aws.amazon.com/bedrock)* | `bedrock/` | Kelayakan AWS | Claude, Llama, Mistral pada AWS |
+| Penyedia                                                                             | Protokol          | Kunci API     | Nota                               |
+| ------------------------------------------------------------------------------------ | ----------------- | ------------- | ---------------------------------- |
+| [OpenAI](https://platform.openai.com/api-keys)                                       | `openai/`         | Diperlukan    | GPT-5.4, GPT-4o, o3, dll.          |
+| [Anthropic](https://console.anthropic.com/settings/keys)                             | `anthropic/`      | Diperlukan    | Claude Opus 4.6, Sonnet 4.6, dll.  |
+| [Google Gemini](https://aistudio.google.com/apikey)                                  | `gemini/`         | Diperlukan    | Gemini 3 Flash, 2.5 Pro, dll.      |
+| [OpenRouter](https://openrouter.ai/keys)                                             | `openrouter/`     | Diperlukan    | 200+ model, API bersatu            |
+| [Zhipu (GLM)](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys)                 | `zhipu/`          | Diperlukan    | GLM-4.7, GLM-5, dll.               |
+| [DeepSeek](https://platform.deepseek.com/api_keys)                                   | `deepseek/`       | Diperlukan    | DeepSeek-V3, DeepSeek-R1           |
+| [Volcengine](https://console.volcengine.com)                                         | `volcengine/`     | Diperlukan    | Doubao, model Ark                  |
+| [Qwen](https://dashscope.console.aliyun.com/apiKey)                                  | `qwen/`           | Diperlukan    | Qwen3, Qwen-Max, dll.              |
+| [Groq](https://console.groq.com/keys)                                                | `groq/`           | Diperlukan    | Inferens pantas (Llama, Mixtral)   |
+| [Moonshot (Kimi)](https://platform.moonshot.cn/console/api-keys)                     | `moonshot/`       | Diperlukan    | Model Kimi                         |
+| [Minimax](https://platform.minimaxi.com/user-center/basic-information/interface-key) | `minimax/`        | Diperlukan    | Model MiniMax                      |
+| [Mistral](https://console.mistral.ai/api-keys)                                       | `mistral/`        | Diperlukan    | Mistral Large, Codestral           |
+| [NVIDIA NIM](https://build.nvidia.com/)                                              | `nvidia/`         | Diperlukan    | Model hos NVIDIA                   |
+| [Cerebras](https://cloud.cerebras.ai/)                                               | `cerebras/`       | Diperlukan    | Inferens pantas                    |
+| [Novita AI](https://novita.ai/)                                                      | `novita/`         | Diperlukan    | Pelbagai model terbuka             |
+| [Xiaomi MiMo](https://platform.xiaomimimo.com/)                                      | `mimo/`           | Diperlukan    | Model MiMo                         |
+| [Ollama](https://ollama.com/)                                                        | `ollama/`         | Tidak perlu   | Model tempatan, self-hosted        |
+| [vLLM](https://docs.vllm.ai/)                                                        | `vllm/`           | Tidak perlu   | Deployment tempatan, serasi OpenAI |
+| [LiteLLM](https://docs.litellm.ai/)                                                  | `litellm/`        | Berbeza       | Proksi untuk 100+ penyedia         |
+| [Azure OpenAI](https://portal.azure.com/)                                            | `azure/`          | Diperlukan    | Deployment Azure perusahaan        |
+| [GitHub Copilot](https://github.com/features/copilot)                                | `github-copilot/` | OAuth         | Log masuk kod peranti              |
+| [Antigravity](https://console.cloud.google.com/)                                     | `antigravity/`    | OAuth         | Google Cloud AI                    |
+| [AWS Bedrock](https://console.aws.amazon.com/bedrock)*                               | `bedrock/`        | Kelayakan AWS | Claude, Llama, Mistral pada AWS    |
 
 > \* AWS Bedrock memerlukan tag binaan: `go build -tags bedrock`. Tetapkan `api_base` kepada nama rantau (cth. `us-east-1`) untuk resolusi endpoint automatik merentasi semua partition AWS. Apabila menggunakan URL endpoint penuh, anda juga perlu mengkonfigurasi `AWS_REGION` melalui pemboleh ubah persekitaran.
 
@@ -458,24 +440,24 @@ Untuk butiran konfigurasi penyedia penuh, lihat [Penyedia & Model](../guides/pro
 
 Bercakap dengan PicoClaw anda melalui 17+ platform pemesejan:
 
-| Saluran | Persediaan | Protokol | Dok |
-|---------|-----------|----------|-----|
-| **Telegram** | Mudah (token bot) | Long polling | [Panduan](../channels/telegram/README.md) |
-| **Discord** | Mudah (token bot + intents) | WebSocket | [Panduan](../channels/discord/README.md) |
-| **WhatsApp** | Mudah (imbas QR atau URL jambatan) | Natif / Jambatan | [Panduan](../guides/chat-apps.ms.md#whatsapp) |
-| **Weixin** | Mudah (imbas QR natif) | iLink API | [Panduan](../guides/chat-apps.ms.md#weixin) |
-| **QQ** | Mudah (AppID + AppSecret) | WebSocket | [Panduan](../channels/qq/README.md) |
-| **Slack** | Mudah (token bot + app) | Socket Mode | [Panduan](../channels/slack/README.md) |
-| **Matrix** | Sederhana (homeserver + token) | Sync API | [Panduan](../channels/matrix/README.md) |
-| **DingTalk** | Sederhana (kelayakan klien) | Stream | [Panduan](../channels/dingtalk/README.md) |
-| **Feishu / Lark** | Sederhana (App ID + Secret) | WebSocket/SDK | [Panduan](../channels/feishu/README.md) |
-| **LINE** | Sederhana (kelayakan + webhook) | Webhook | [Panduan](../channels/line/README.md) |
-| **WeCom** | Mudah (log masuk QR atau manual) | WebSocket | [Panduan](../channels/wecom/README.md) |
-| **IRC** | Sederhana (pelayan + nick) | Protokol IRC | [Panduan](../guides/chat-apps.ms.md#irc) |
-| **OneBot** | Sederhana (URL WebSocket) | OneBot v11 | [Panduan](../channels/onebot/README.md) |
-| **MaixCam** | Mudah (aktifkan) | TCP socket | [Panduan](../channels/maixcam/README.md) |
-| **Pico** | Mudah (aktifkan) | Protokol natif | Terbina dalam |
-| **Pico Client** | Mudah (URL WebSocket) | WebSocket | Terbina dalam |
+| Saluran           | Persediaan                         | Protokol         | Dok                                           |
+| ----------------- | ---------------------------------- | ---------------- | --------------------------------------------- |
+| **Telegram**      | Mudah (token bot)                  | Long polling     | [Panduan](../channels/telegram/README.md)     |
+| **Discord**       | Mudah (token bot + intents)        | WebSocket        | [Panduan](../channels/discord/README.md)      |
+| **WhatsApp**      | Mudah (imbas QR atau URL jambatan) | Natif / Jambatan | [Panduan](../guides/chat-apps.ms.md#whatsapp) |
+| **Weixin**        | Mudah (imbas QR natif)             | iLink API        | [Panduan](../guides/chat-apps.ms.md#weixin)   |
+| **QQ**            | Mudah (AppID + AppSecret)          | WebSocket        | [Panduan](../channels/qq/README.md)           |
+| **Slack**         | Mudah (token bot + app)            | Socket Mode      | [Panduan](../channels/slack/README.md)        |
+| **Matrix**        | Sederhana (homeserver + token)     | Sync API         | [Panduan](../channels/matrix/README.md)       |
+| **DingTalk**      | Sederhana (kelayakan klien)        | Stream           | [Panduan](../channels/dingtalk/README.md)     |
+| **Feishu / Lark** | Sederhana (App ID + Secret)        | WebSocket/SDK    | [Panduan](../channels/feishu/README.md)       |
+| **LINE**          | Sederhana (kelayakan + webhook)    | Webhook          | [Panduan](../channels/line/README.md)         |
+| **WeCom**         | Mudah (log masuk QR atau manual)   | WebSocket        | [Panduan](../channels/wecom/README.md)        |
+| **IRC**           | Sederhana (pelayan + nick)         | Protokol IRC     | [Panduan](../guides/chat-apps.ms.md#irc)      |
+| **OneBot**        | Sederhana (URL WebSocket)          | OneBot v11       | [Panduan](../channels/onebot/README.md)       |
+| **MaixCam**       | Mudah (aktifkan)                   | TCP socket       | [Panduan](../channels/maixcam/README.md)      |
+| **Pico**          | Mudah (aktifkan)                   | Protokol natif   | Terbina dalam                                 |
+| **Pico Client**   | Mudah (URL WebSocket)              | WebSocket        | Terbina dalam                                 |
 
 > Semua saluran berasaskan webhook berkongsi satu pelayan HTTP Gateway (`gateway.host`:`gateway.port`, lalai `127.0.0.1:18790`). Feishu menggunakan mod WebSocket/SDK dan tidak menggunakan pelayan HTTP yang dikongsi.
 
@@ -489,15 +471,15 @@ Untuk arahan persediaan saluran terperinci, lihat [Konfigurasi Aplikasi Sembang]
 
 PicoClaw boleh mencari web untuk menyediakan maklumat terkini. Konfigurasikan dalam `tools.web`:
 
-| Enjin Carian | Kunci API | Peringkat Percuma | Pautan |
-|-------------|-----------|-------------------|--------|
-| DuckDuckGo | Tidak perlu | Tanpa had | Sandaran terbina dalam |
-| [Baidu Search](https://cloud.baidu.com/doc/qianfan-api/s/Wmbq4z7e5) | Diperlukan | 1000 pertanyaan/hari | Dikuasai AI, dioptimumkan untuk China |
-| [Tavily](https://tavily.com) | Diperlukan | 1000 pertanyaan/bulan | Dioptimumkan untuk AI Agent |
-| [Brave Search](https://brave.com/search/api) | Diperlukan | 2000 pertanyaan/bulan | Pantas dan peribadi |
-| [Perplexity](https://www.perplexity.ai) | Diperlukan | Berbayar | Carian dikuasai AI |
-| [SearXNG](https://github.com/searxng/searxng) | Tidak perlu | Self-hosted | Enjin metasearch percuma |
-| [GLM Search](https://open.bigmodel.cn/) | Diperlukan | Berbeza | Carian web Zhipu |
+| Enjin Carian                                                        | Kunci API   | Peringkat Percuma     | Pautan                                |
+| ------------------------------------------------------------------- | ----------- | --------------------- | ------------------------------------- |
+| DuckDuckGo                                                          | Tidak perlu | Tanpa had             | Sandaran terbina dalam                |
+| [Baidu Search](https://cloud.baidu.com/doc/qianfan-api/s/Wmbq4z7e5) | Diperlukan  | 1000 pertanyaan/hari  | Dikuasai AI, dioptimumkan untuk China |
+| [Tavily](https://tavily.com)                                        | Diperlukan  | 1000 pertanyaan/bulan | Dioptimumkan untuk AI Agent           |
+| [Brave Search](https://brave.com/search/api)                        | Diperlukan  | 2000 pertanyaan/bulan | Pantas dan peribadi                   |
+| [Perplexity](https://www.perplexity.ai)                             | Diperlukan  | Berbayar              | Carian dikuasai AI                    |
+| [SearXNG](https://github.com/searxng/searxng)                       | Tidak perlu | Self-hosted           | Enjin metasearch percuma              |
+| [GLM Search](https://open.bigmodel.cn/)                             | Diperlukan  | Berbeza               | Carian web Zhipu                      |
 
 ### ⚙️ Alat Lain
 
@@ -564,24 +546,24 @@ Sambungkan PicoClaw ke Rangkaian Sosial Agent dengan menghantar satu mesej melal
 
 ## 🖥️ Rujukan CLI
 
-| Arahan | Penerangan |
-| ------ | ---------- |
-| `picoclaw onboard` | Mulakan konfigurasi & ruang kerja |
-| `picoclaw auth weixin` | Sambungkan akaun WeChat melalui QR |
-| `picoclaw agent -m "..."` | Sembang dengan agent |
-| `picoclaw agent` | Mod sembang interaktif |
-| `picoclaw gateway` | Mulakan gateway |
-| `picoclaw status` | Tunjukkan status |
-| `picoclaw version` | Tunjukkan maklumat versi |
-| `picoclaw model` | Lihat atau tukar model lalai |
-| `picoclaw cron list` | Senaraikan semua kerja berjadual |
-| `picoclaw cron add ...` | Tambah kerja berjadual |
-| `picoclaw cron disable` | Lumpuhkan kerja berjadual |
-| `picoclaw cron remove` | Buang kerja berjadual |
-| `picoclaw skills list` | Senaraikan kemahiran yang dipasang |
-| `picoclaw skills install` | Pasang kemahiran |
-| `picoclaw migrate` | Migrasi data dari versi lama |
-| `picoclaw auth login` | Sahkan dengan penyedia |
+| Arahan                    | Penerangan                         |
+| ------------------------- | ---------------------------------- |
+| `picoclaw onboard`        | Mulakan konfigurasi & ruang kerja  |
+| `picoclaw auth weixin`    | Sambungkan akaun WeChat melalui QR |
+| `picoclaw agent -m "..."` | Sembang dengan agent               |
+| `picoclaw agent`          | Mod sembang interaktif             |
+| `picoclaw gateway`        | Mulakan gateway                    |
+| `picoclaw status`         | Tunjukkan status                   |
+| `picoclaw version`        | Tunjukkan maklumat versi           |
+| `picoclaw model`          | Lihat atau tukar model lalai       |
+| `picoclaw cron list`      | Senaraikan semua kerja berjadual   |
+| `picoclaw cron add ...`   | Tambah kerja berjadual             |
+| `picoclaw cron disable`   | Lumpuhkan kerja berjadual          |
+| `picoclaw cron remove`    | Buang kerja berjadual              |
+| `picoclaw skills list`    | Senaraikan kemahiran yang dipasang |
+| `picoclaw skills install` | Pasang kemahiran                   |
+| `picoclaw migrate`        | Migrasi data dari versi lama       |
+| `picoclaw auth login`     | Sahkan dengan penyedia             |
 
 ### ⏰ Tugasan Berjadual / Peringatan
 
@@ -595,16 +577,16 @@ PicoClaw menyokong peringatan berjadual dan tugasan berulang melalui alat `cron`
 
 Untuk panduan terperinci melebihi README ini:
 
-| Topik | Penerangan |
-|-------|------------|
-| [Docker & Permulaan Pantas](../guides/docker.ms.md) | Persediaan Docker Compose, mod Launcher/Agent |
-| [Aplikasi Sembang](../guides/chat-apps.ms.md) | Panduan persediaan 17+ saluran |
-| [Konfigurasi](../guides/configuration.ms.md) | Pemboleh ubah persekitaran, susun atur ruang kerja |
-| [Penyedia & Model](../guides/providers.md) | 30+ penyedia LLM, penghalaan model |
-| [Spawn & Tugasan Async](../guides/spawn-tasks.ms.md) | Tugasan pantas, tugasan panjang dengan spawn |
-| [Penyelesaian Masalah](../operations/troubleshooting.ms.md) | Isu biasa dan penyelesaian |
-| [Konfigurasi Alat](../reference/tools_configuration.md) | Aktif/nyahaktif alat, dasar exec, MCP, Kemahiran |
-| [Keserasian Perkakasan](../guides/hardware-compatibility.md) | Papan yang diuji, keperluan minimum |
+| Topik                                                        | Penerangan                                         |
+| ------------------------------------------------------------ | -------------------------------------------------- |
+| [Docker & Permulaan Pantas](../guides/docker.ms.md)          | Persediaan Docker Compose, mod Launcher/Agent      |
+| [Aplikasi Sembang](../guides/chat-apps.ms.md)                | Panduan persediaan 17+ saluran                     |
+| [Konfigurasi](../guides/configuration.ms.md)                 | Pemboleh ubah persekitaran, susun atur ruang kerja |
+| [Penyedia & Model](../guides/providers.md)                   | 30+ penyedia LLM, penghalaan model                 |
+| [Spawn & Tugasan Async](../guides/spawn-tasks.ms.md)         | Tugasan pantas, tugasan panjang dengan spawn       |
+| [Penyelesaian Masalah](../operations/troubleshooting.ms.md)  | Isu biasa dan penyelesaian                         |
+| [Konfigurasi Alat](../reference/tools_configuration.md)      | Aktif/nyahaktif alat, dasar exec, MCP, Kemahiran   |
+| [Keserasian Perkakasan](../guides/hardware-compatibility.md) | Papan yang diuji, keperluan minimum                |
 
 ## 🤝 Sumbangan & Peta Jalan
 

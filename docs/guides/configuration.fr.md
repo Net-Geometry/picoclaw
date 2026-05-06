@@ -10,10 +10,10 @@ Fichier de configuration : `~/.picoclaw/config.json`
 
 Vous pouvez remplacer les chemins par défaut à l'aide de variables d'environnement. Ceci est utile pour les installations portables, les déploiements conteneurisés ou l'exécution de PicoClaw en tant que service système. Ces variables sont indépendantes et contrôlent des chemins différents.
 
-| Variable          | Description                                                                                                                             | Chemin par défaut         |
-|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------|---------------------------|
+| Variable          | Description                                                                                                                                               | Chemin par défaut         |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
 | `PICOCLAW_CONFIG` | Remplace le chemin vers le fichier de configuration. Indique directement à PicoClaw quel `config.json` charger, en ignorant tous les autres emplacements. | `~/.picoclaw/config.json` |
-| `PICOCLAW_HOME`   | Remplace le répertoire racine des données PicoClaw. Change l'emplacement par défaut du `workspace` et des autres répertoires de données. | `~/.picoclaw`             |
+| `PICOCLAW_HOME`   | Remplace le répertoire racine des données PicoClaw. Change l'emplacement par défaut du `workspace` et des autres répertoires de données.                  | `~/.picoclaw`             |
 
 **Exemples :**
 
@@ -124,23 +124,23 @@ PicoClaw s'exécute dans un environnement sandboxé par défaut. L'agent ne peut
 }
 ```
 
-| Option                  | Par défaut              | Description                                       |
-| ----------------------- | ----------------------- | ------------------------------------------------- |
-| `workspace`             | `~/.picoclaw/workspace` | Répertoire de travail de l'agent                  |
+| Option                  | Par défaut              | Description                                         |
+| ----------------------- | ----------------------- | --------------------------------------------------- |
+| `workspace`             | `~/.picoclaw/workspace` | Répertoire de travail de l'agent                    |
 | `restrict_to_workspace` | `true`                  | Restreindre l'accès fichiers/commandes au workspace |
 
 #### Outils Protégés
 
 Lorsque `restrict_to_workspace: true`, les outils suivants sont sandboxés :
 
-| Outil         | Fonction              | Restriction                                    |
-| ------------- | --------------------- | ---------------------------------------------- |
-| `read_file`   | Lire des fichiers     | Uniquement les fichiers dans le workspace      |
-| `write_file`  | Écrire des fichiers   | Uniquement les fichiers dans le workspace      |
-| `list_dir`    | Lister les répertoires| Uniquement les répertoires dans le workspace   |
-| `edit_file`   | Modifier des fichiers | Uniquement les fichiers dans le workspace      |
-| `append_file` | Ajouter aux fichiers  | Uniquement les fichiers dans le workspace      |
-| `exec`        | Exécuter des commandes| Les chemins de commande doivent être dans le workspace |
+| Outil         | Fonction               | Restriction                                            |
+| ------------- | ---------------------- | ------------------------------------------------------ |
+| `read_file`   | Lire des fichiers      | Uniquement les fichiers dans le workspace              |
+| `write_file`  | Écrire des fichiers    | Uniquement les fichiers dans le workspace              |
+| `list_dir`    | Lister les répertoires | Uniquement les répertoires dans le workspace           |
+| `edit_file`   | Modifier des fichiers  | Uniquement les fichiers dans le workspace              |
+| `append_file` | Ajouter aux fichiers   | Uniquement les fichiers dans le workspace              |
+| `exec`        | Exécuter des commandes | Les chemins de commande doivent être dans le workspace |
 
 #### Protection Exec Supplémentaire
 
@@ -155,19 +155,19 @@ Même avec `restrict_to_workspace: false`, l'outil `exec` bloque ces commandes d
 
 ### Contrôle d'Accès aux Fichiers
 
-| Clé de configuration | Type | Par défaut | Description |
-|----------------------|------|------------|-------------|
-| `tools.allow_read_paths` | string[] | `[]` | Chemins supplémentaires autorisés en lecture en dehors du workspace |
-| `tools.allow_write_paths` | string[] | `[]` | Chemins supplémentaires autorisés en écriture en dehors du workspace |
+| Clé de configuration      | Type     | Par défaut | Description                                                          |
+| ------------------------- | -------- | ---------- | -------------------------------------------------------------------- |
+| `tools.allow_read_paths`  | string[] | `[]`       | Chemins supplémentaires autorisés en lecture en dehors du workspace  |
+| `tools.allow_write_paths` | string[] | `[]`       | Chemins supplémentaires autorisés en écriture en dehors du workspace |
 
 ### Sécurité Exec
 
-| Clé de configuration | Type | Par défaut | Description |
-|----------------------|------|------------|-------------|
-| `tools.exec.allow_remote` | bool | `false` | Autoriser l'outil exec depuis les canaux distants (Telegram/Discord etc.) |
-| `tools.exec.enable_deny_patterns` | bool | `true` | Activer l'interception des commandes dangereuses |
-| `tools.exec.custom_deny_patterns` | string[] | `[]` | Patterns regex personnalisés à bloquer |
-| `tools.exec.custom_allow_patterns` | string[] | `[]` | Patterns regex personnalisés à autoriser |
+| Clé de configuration               | Type     | Par défaut | Description                                                               |
+| ---------------------------------- | -------- | ---------- | ------------------------------------------------------------------------- |
+| `tools.exec.allow_remote`          | bool     | `false`    | Autoriser l'outil exec depuis les canaux distants (Telegram/Discord etc.) |
+| `tools.exec.enable_deny_patterns`  | bool     | `true`     | Activer l'interception des commandes dangereuses                          |
+| `tools.exec.custom_deny_patterns`  | string[] | `[]`       | Patterns regex personnalisés à bloquer                                    |
+| `tools.exec.custom_allow_patterns` | string[] | `[]`       | Patterns regex personnalisés à autoriser                                  |
 
 > **Note de sécurité :** La protection Symlink est activée par défaut — tous les chemins de fichiers sont résolus via `filepath.EvalSymlinks` avant la correspondance avec la liste blanche, empêchant les attaques d'évasion par symlink.
 
@@ -223,8 +223,8 @@ export PICOCLAW_AGENTS_DEFAULTS_RESTRICT_TO_WORKSPACE=false
 
 Le paramètre `restrict_to_workspace` s'applique de manière cohérente à tous les chemins d'exécution :
 
-| Chemin d'exécution | Limite de sécurité               |
-| ------------------ | -------------------------------- |
+| Chemin d'exécution | Limite de sécurité              |
+| ------------------ | ------------------------------- |
 | Main Agent         | `restrict_to_workspace` ✅       |
 | Subagent / Spawn   | Hérite de la même restriction ✅ |
 | Heartbeat tasks    | Hérite de la même restriction ✅ |
@@ -264,12 +264,12 @@ Pour les tâches longues (recherche web, appels API), utilisez l'outil `spawn` p
 
 **Comportements clés :**
 
-| Fonctionnalité   | Description                                                        |
-| ---------------- | ------------------------------------------------------------------ |
-| **spawn**        | Crée un subagent asynchrone, ne bloque pas le heartbeat            |
+| Fonctionnalité           | Description                                                   |
+| ------------------------ | ------------------------------------------------------------- |
+| **spawn**                | Crée un subagent asynchrone, ne bloque pas le heartbeat       |
 | **Contexte indépendant** | Le subagent a son propre contexte, sans historique de session |
-| **message tool** | Le subagent communique directement avec l'utilisateur              |
-| **Non-bloquant** | Après le spawn, le heartbeat continue vers la tâche suivante       |
+| **message tool**         | Le subagent communique directement avec l'utilisateur         |
+| **Non-bloquant**         | Après le spawn, le heartbeat continue vers la tâche suivante  |
 
 #### Flux de Communication du Subagent
 
@@ -298,10 +298,10 @@ Répond HEARTBEAT_OK        Utilisateur reçoit le résultat
 }
 ```
 
-| Option     | Défaut | Description                              |
-| ---------- | ------ | ---------------------------------------- |
-| `enabled`  | `true` | Activer/désactiver le heartbeat          |
-| `interval` | `30`   | Intervalle en minutes (minimum : 5)      |
+| Option     | Défaut | Description                         |
+| ---------- | ------ | ----------------------------------- |
+| `enabled`  | `true` | Activer/désactiver le heartbeat     |
+| `interval` | `30`   | Intervalle en minutes (minimum : 5) |
 
 **Variables d'environnement :**
 
@@ -313,19 +313,19 @@ Répond HEARTBEAT_OK        Utilisateur reçoit le résultat
 > [!NOTE]
 > Groq fournit une transcription vocale gratuite via Whisper. Si configuré, les messages audio de n'importe quel canal seront automatiquement transcrits au niveau de l'agent.
 
-| Provider     | Usage                                   | Obtenir une clé API                                          |
-| ------------ | --------------------------------------- | ------------------------------------------------------------ |
-| `gemini`     | LLM (Gemini direct)                     | [aistudio.google.com](https://aistudio.google.com)           |
-| `zhipu`      | LLM (Zhipu direct)                      | [bigmodel.cn](https://bigmodel.cn)                           |
-| `volcengine` | LLM (Volcengine direct)                 | [volcengine.com](https://www.volcengine.com/activity/codingplan?utm_campaign=PicoClaw&utm_content=PicoClaw&utm_medium=devrel&utm_source=OWO&utm_term=PicoClaw) |
-| `openrouter` | LLM (recommandé, accès à tous modèles)  | [openrouter.ai](https://openrouter.ai)                       |
-| `anthropic`  | LLM (Claude direct)                     | [console.anthropic.com](https://console.anthropic.com)       |
-| `openai`     | LLM (GPT direct)                        | [platform.openai.com](https://platform.openai.com)           |
-| `deepseek`   | LLM (DeepSeek direct)                   | [platform.deepseek.com](https://platform.deepseek.com)       |
-| `qwen`       | LLM (Qwen direct)                       | [dashscope.console.aliyun.com](https://dashscope.console.aliyun.com) |
-| `groq`       | LLM + **Transcription vocale** (Whisper)| [console.groq.com](https://console.groq.com)                 |
-| `cerebras`   | LLM (Cerebras direct)                   | [cerebras.ai](https://cerebras.ai)                           |
-| `vivgrid`    | LLM (Vivgrid direct)                    | [vivgrid.com](https://vivgrid.com)                           |
+| Provider     | Usage                                    | Obtenir une clé API                                                                                                                                            |
+| ------------ | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gemini`     | LLM (Gemini direct)                      | [aistudio.google.com](https://aistudio.google.com)                                                                                                             |
+| `zhipu`      | LLM (Zhipu direct)                       | [bigmodel.cn](https://bigmodel.cn)                                                                                                                             |
+| `volcengine` | LLM (Volcengine direct)                  | [volcengine.com](https://www.volcengine.com/activity/codingplan?utm_campaign=PicoClaw&utm_content=PicoClaw&utm_medium=devrel&utm_source=OWO&utm_term=PicoClaw) |
+| `openrouter` | LLM (recommandé, accès à tous modèles)   | [openrouter.ai](https://openrouter.ai)                                                                                                                         |
+| `anthropic`  | LLM (Claude direct)                      | [console.anthropic.com](https://console.anthropic.com)                                                                                                         |
+| `openai`     | LLM (GPT direct)                         | [platform.openai.com](https://platform.openai.com)                                                                                                             |
+| `deepseek`   | LLM (DeepSeek direct)                    | [platform.deepseek.com](https://platform.deepseek.com)                                                                                                         |
+| `qwen`       | LLM (Qwen direct)                        | [dashscope.console.aliyun.com](https://dashscope.console.aliyun.com)                                                                                           |
+| `groq`       | LLM + **Transcription vocale** (Whisper) | [console.groq.com](https://console.groq.com)                                                                                                                   |
+| `cerebras`   | LLM (Cerebras direct)                    | [cerebras.ai](https://cerebras.ai)                                                                                                                             |
+| `vivgrid`    | LLM (Vivgrid direct)                     | [vivgrid.com](https://vivgrid.com)                                                                                                                             |
 
 ### Configuration des Modèles (model_list)
 
@@ -333,19 +333,19 @@ Répond HEARTBEAT_OK        Utilisateur reçoit le résultat
 
 #### Tous les Vendors Supportés
 
-| Vendor                  | Préfixe `model` | API Base par défaut                                 | Protocole | API Key                                                          |
-| ----------------------- | --------------- | --------------------------------------------------- | --------- | ---------------------------------------------------------------- |
-| **OpenAI**              | `openai/`       | `https://api.openai.com/v1`                         | OpenAI    | [Obtenir](https://platform.openai.com)                           |
-| **Anthropic**           | `anthropic/`    | `https://api.anthropic.com/v1`                      | Anthropic | [Obtenir](https://console.anthropic.com)                         |
-| **智谱 AI (GLM)**       | `zhipu/`        | `https://open.bigmodel.cn/api/paas/v4`              | OpenAI    | [Obtenir](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) |
-| **DeepSeek**            | `deepseek/`     | `https://api.deepseek.com/v1`                       | OpenAI    | [Obtenir](https://platform.deepseek.com)                         |
-| **Google Gemini**       | `gemini/`       | `https://generativelanguage.googleapis.com/v1beta`  | OpenAI    | [Obtenir](https://aistudio.google.com/api-keys)                  |
-| **Groq**                | `groq/`         | `https://api.groq.com/openai/v1`                    | OpenAI    | [Obtenir](https://console.groq.com)                              |
-| **通义千问 (Qwen)**     | `qwen/`         | `https://dashscope.aliyuncs.com/compatible-mode/v1` | OpenAI    | [Obtenir](https://dashscope.console.aliyun.com)                  |
-| **Ollama**              | `ollama/`       | `http://localhost:11434/v1`                         | OpenAI    | Local (pas de clé)                                               |
-| **OpenRouter**          | `openrouter/`   | `https://openrouter.ai/api/v1`                      | OpenAI    | [Obtenir](https://openrouter.ai/keys)                            |
+| Vendor                  | Préfixe `model` | API Base par défaut                                 | Protocole | API Key                                                                                                                                                 |
+| ----------------------- | --------------- | --------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **OpenAI**              | `openai/`       | `https://api.openai.com/v1`                         | OpenAI    | [Obtenir](https://platform.openai.com)                                                                                                                  |
+| **Anthropic**           | `anthropic/`    | `https://api.anthropic.com/v1`                      | Anthropic | [Obtenir](https://console.anthropic.com)                                                                                                                |
+| **智谱 AI (GLM)**       | `zhipu/`        | `https://open.bigmodel.cn/api/paas/v4`              | OpenAI    | [Obtenir](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys)                                                                                        |
+| **DeepSeek**            | `deepseek/`     | `https://api.deepseek.com/v1`                       | OpenAI    | [Obtenir](https://platform.deepseek.com)                                                                                                                |
+| **Google Gemini**       | `gemini/`       | `https://generativelanguage.googleapis.com/v1beta`  | Gemini    | [Obtenir](https://aistudio.google.com/api-keys)                                                                                                         |
+| **Groq**                | `groq/`         | `https://api.groq.com/openai/v1`                    | OpenAI    | [Obtenir](https://console.groq.com)                                                                                                                     |
+| **通义千问 (Qwen)**     | `qwen/`         | `https://dashscope.aliyuncs.com/compatible-mode/v1` | OpenAI    | [Obtenir](https://dashscope.console.aliyun.com)                                                                                                         |
+| **Ollama**              | `ollama/`       | `http://localhost:11434/v1`                         | OpenAI    | Local (pas de clé)                                                                                                                                      |
+| **OpenRouter**          | `openrouter/`   | `https://openrouter.ai/api/v1`                      | OpenAI    | [Obtenir](https://openrouter.ai/keys)                                                                                                                   |
 | **VolcEngine (Doubao)** | `volcengine/`   | `https://ark.cn-beijing.volces.com/api/v3`          | OpenAI    | [Obtenir](https://www.volcengine.com/activity/codingplan?utm_campaign=PicoClaw&utm_content=PicoClaw&utm_medium=devrel&utm_source=OWO&utm_term=PicoClaw) |
-| **Antigravity**         | `antigravity/`  | Google Cloud                                        | Custom    | OAuth uniquement                                                 |
+| **Antigravity**         | `antigravity/`  | Google Cloud                                        | Custom    | OAuth uniquement                                                                                                                                        |
 
 #### Équilibrage de Charge
 
@@ -369,8 +369,11 @@ L'ancienne configuration `providers` est **dépréciée** et a été supprimée 
 PicoClaw route les providers par famille de protocole :
 
 - **Compatible OpenAI** : OpenRouter, Groq, Zhipu, endpoints vLLM et la plupart des autres.
+- **Gemini natif** : Google Gemini via les endpoints natifs `models/*:generateContent` et `models/*:streamGenerateContent`.
 - **Anthropic** : Comportement natif de l'API Claude.
 - **Codex/OAuth** : Route d'authentification OAuth/token OpenAI.
+
+Cela maintient le runtime léger tout en faisant des nouveaux backends compatibles OpenAI principalement une opération de configuration (`api_base` + `api_keys`).
 
 ### Tâches Planifiées / Rappels
 
@@ -391,9 +394,9 @@ Les tâches planifiées persistent après redémarrage dans `~/.picoclaw/workspa
 
 ### Sujets Avancés
 
-| Sujet | Description |
-| ----- | ----------- |
-| [Système de Hooks](../architecture/hooks/README.md) | Hooks événementiels : observateurs, intercepteurs, hooks d'approbation |
-| [Steering](../architecture/steering.md) | Injecter des messages dans une boucle agent en cours d'exécution |
-| [SubTurn](../architecture/subturn.md) | Coordination de subagents, contrôle de concurrence, cycle de vie |
-| [Gestion du Contexte](../architecture/agent-refactor/context.md) | Détection des limites de contexte, compression |
+| Sujet                                                            | Description                                                            |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| [Système de Hooks](../architecture/hooks/README.md)              | Hooks événementiels : observateurs, intercepteurs, hooks d'approbation |
+| [Steering](../architecture/steering.md)                          | Injecter des messages dans une boucle agent en cours d'exécution       |
+| [SubTurn](../architecture/subturn.md)                            | Coordination de subagents, contrôle de concurrence, cycle de vie       |
+| [Gestion du Contexte](../architecture/agent-refactor/context.md) | Détection des limites de contexte, compression                         |

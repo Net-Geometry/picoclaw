@@ -101,12 +101,12 @@ _*최근 빌드는 급격한 PR 병합으로 인해 10~20MB를 사용할 수 있
 
 <div align="center">
 
-|                                | OpenClaw      | NanoBot                  | **PicoClaw**                           |
-| ------------------------------ | ------------- | ------------------------ | -------------------------------------- |
-| **언어**                       | TypeScript    | Python                   | **Go**                                 |
-| **RAM**                        | >1GB          | >100MB                   | **< 10MB***                            |
-| **부팅 시간**</br>(0.8GHz 코어) | >500초        | >30초                    | **<1초**                               |
-| **비용**                       | Mac Mini $599 | 대부분의 Linux 보드 ~$50 | **모든 Linux 보드**</br>**최저 $10부터** |
+|                                 | OpenClaw      | NanoBot                  | **PicoClaw**                             |
+| ------------------------------- | ------------- | ------------------------ | ---------------------------------------- |
+| **언어**                        | TypeScript    | Python                   | **Go**                                   |
+| **RAM**                         | >1GB          | >100MB                   | **< 10MB***                              |
+| **부팅 시간**</br>(0.8GHz 코어) | >500초        | >30초                    | **<1초**                                 |
+| **비용**                        | Mac Mini $599 | 대부분의 Linux 보드 ~$50 | **모든 Linux 보드**</br>**최저 $10부터** |
 
 <img src="../../assets/compare.jpg" alt="PicoClaw" width="512">
 
@@ -289,24 +289,6 @@ macOS에서는 인터넷에서 다운로드한 앱이고 Mac App Store 공증을
 
 </details>
 
-### 💻 TUI Launcher (헤드리스 / SSH 권장)
-
-TUI(Terminal UI) Launcher는 설정과 관리를 위한 모든 기능을 갖춘 터미널 인터페이스를 제공합니다. 서버, Raspberry Pi, 기타 헤드리스 환경에 적합합니다.
-
-```bash
-picoclaw-launcher-tui
-```
-
-<p align="center">
-<img src="../../assets/launcher-tui.jpg" alt="TUI Launcher" width="600">
-</p>
-
-**시작 방법:**
-
-TUI 메뉴를 사용해 다음 순서로 진행하세요. **1)** 프로바이더 설정 -> **2)** 채널 설정 -> **3)** 게이트웨이 시작 -> **4)** 채팅!
-
-자세한 TUI 문서는 [docs.picoclaw.io](https://docs.picoclaw.io)를 참고하세요.
-
 ### 📱 Android
 
 오래된 스마트폰에 새 생명을 불어넣어 보세요! PicoClaw를 설치하면 스마트 AI 어시스턴트로 바꿀 수 있습니다.
@@ -398,31 +380,31 @@ picoclaw gateway
 
 PicoClaw는 `model_list` 설정을 통해 30개 이상의 LLM 프로바이더를 지원합니다. 형식은 `protocol/model`입니다.
 
-| 프로바이더 | 프로토콜 | API Key | 비고 |
-|----------|----------|---------|------|
-| [OpenAI](https://platform.openai.com/api-keys) | `openai/` | 필수 | GPT-5.4, GPT-4o, o3 등 |
-| [Anthropic](https://console.anthropic.com/settings/keys) | `anthropic/` | 필수 | Claude Opus 4.6, Sonnet 4.6 등 |
-| [Google Gemini](https://aistudio.google.com/apikey) | `gemini/` | 필수 | Gemini 3 Flash, 2.5 Pro 등 |
-| [OpenRouter](https://openrouter.ai/keys) | `openrouter/` | 필수 | 200개 이상의 모델, 통합 API |
-| [Zhipu (GLM)](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) | `zhipu/` | 필수 | GLM-4.7, GLM-5 등 |
-| [DeepSeek](https://platform.deepseek.com/api_keys) | `deepseek/` | 필수 | DeepSeek-V3, DeepSeek-R1 |
-| [Volcengine](https://console.volcengine.com) | `volcengine/` | 필수 | Doubao, Ark 모델 |
-| [Qwen](https://dashscope.console.aliyun.com/apiKey) | `qwen/` | 필수 | Qwen3, Qwen-Max 등 |
-| [Groq](https://console.groq.com/keys) | `groq/` | 필수 | 빠른 추론(Llama, Mixtral) |
-| [Moonshot (Kimi)](https://platform.moonshot.cn/console/api-keys) | `moonshot/` | 필수 | Kimi 모델 |
-| [Minimax](https://platform.minimaxi.com/user-center/basic-information/interface-key) | `minimax/` | 필수 | MiniMax 모델 |
-| [Mistral](https://console.mistral.ai/api-keys) | `mistral/` | 필수 | Mistral Large, Codestral |
-| [NVIDIA NIM](https://build.nvidia.com/) | `nvidia/` | 필수 | NVIDIA 호스팅 모델 |
-| [Cerebras](https://cloud.cerebras.ai/) | `cerebras/` | 필수 | 빠른 추론 |
-| [Novita AI](https://novita.ai/) | `novita/` | 필수 | 다양한 오픈 모델 |
-| [Xiaomi MiMo](https://platform.xiaomimimo.com/) | `mimo/` | 필수 | MiMo 모델 |
-| [Ollama](https://ollama.com/) | `ollama/` | 불필요 | 로컬 모델, 셀프 호스팅 |
-| [vLLM](https://docs.vllm.ai/) | `vllm/` | 불필요 | 로컬 배포, OpenAI 호환 |
-| [LiteLLM](https://docs.litellm.ai/) | `litellm/` | 환경에 따라 다름 | 100개 이상의 프로바이더를 위한 프록시 |
-| [Azure OpenAI](https://portal.azure.com/) | `azure/` | 필수 | 엔터프라이즈 Azure 배포 |
-| [GitHub Copilot](https://github.com/features/copilot) | `github-copilot/` | OAuth | 디바이스 코드 로그인 |
-| [Antigravity](https://console.cloud.google.com/) | `antigravity/` | OAuth | Google Cloud AI |
-| [AWS Bedrock](https://console.aws.amazon.com/bedrock)* | `bedrock/` | AWS 자격 증명 | AWS에서 Claude, Llama, Mistral 사용 |
+| 프로바이더                                                                           | 프로토콜          | API Key          | 비고                                  |
+| ------------------------------------------------------------------------------------ | ----------------- | ---------------- | ------------------------------------- |
+| [OpenAI](https://platform.openai.com/api-keys)                                       | `openai/`         | 필수             | GPT-5.4, GPT-4o, o3 등                |
+| [Anthropic](https://console.anthropic.com/settings/keys)                             | `anthropic/`      | 필수             | Claude Opus 4.6, Sonnet 4.6 등        |
+| [Google Gemini](https://aistudio.google.com/apikey)                                  | `gemini/`         | 필수             | Gemini 3 Flash, 2.5 Pro 등            |
+| [OpenRouter](https://openrouter.ai/keys)                                             | `openrouter/`     | 필수             | 200개 이상의 모델, 통합 API           |
+| [Zhipu (GLM)](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys)                 | `zhipu/`          | 필수             | GLM-4.7, GLM-5 등                     |
+| [DeepSeek](https://platform.deepseek.com/api_keys)                                   | `deepseek/`       | 필수             | DeepSeek-V3, DeepSeek-R1              |
+| [Volcengine](https://console.volcengine.com)                                         | `volcengine/`     | 필수             | Doubao, Ark 모델                      |
+| [Qwen](https://dashscope.console.aliyun.com/apiKey)                                  | `qwen/`           | 필수             | Qwen3, Qwen-Max 등                    |
+| [Groq](https://console.groq.com/keys)                                                | `groq/`           | 필수             | 빠른 추론(Llama, Mixtral)             |
+| [Moonshot (Kimi)](https://platform.moonshot.cn/console/api-keys)                     | `moonshot/`       | 필수             | Kimi 모델                             |
+| [Minimax](https://platform.minimaxi.com/user-center/basic-information/interface-key) | `minimax/`        | 필수             | MiniMax 모델                          |
+| [Mistral](https://console.mistral.ai/api-keys)                                       | `mistral/`        | 필수             | Mistral Large, Codestral              |
+| [NVIDIA NIM](https://build.nvidia.com/)                                              | `nvidia/`         | 필수             | NVIDIA 호스팅 모델                    |
+| [Cerebras](https://cloud.cerebras.ai/)                                               | `cerebras/`       | 필수             | 빠른 추론                             |
+| [Novita AI](https://novita.ai/)                                                      | `novita/`         | 필수             | 다양한 오픈 모델                      |
+| [Xiaomi MiMo](https://platform.xiaomimimo.com/)                                      | `mimo/`           | 필수             | MiMo 모델                             |
+| [Ollama](https://ollama.com/)                                                        | `ollama/`         | 불필요           | 로컬 모델, 셀프 호스팅                |
+| [vLLM](https://docs.vllm.ai/)                                                        | `vllm/`           | 불필요           | 로컬 배포, OpenAI 호환                |
+| [LiteLLM](https://docs.litellm.ai/)                                                  | `litellm/`        | 환경에 따라 다름 | 100개 이상의 프로바이더를 위한 프록시 |
+| [Azure OpenAI](https://portal.azure.com/)                                            | `azure/`          | 필수             | 엔터프라이즈 Azure 배포               |
+| [GitHub Copilot](https://github.com/features/copilot)                                | `github-copilot/` | OAuth            | 디바이스 코드 로그인                  |
+| [Antigravity](https://console.cloud.google.com/)                                     | `antigravity/`    | OAuth            | Google Cloud AI                       |
+| [AWS Bedrock](https://console.aws.amazon.com/bedrock)*                               | `bedrock/`        | AWS 자격 증명    | AWS에서 Claude, Llama, Mistral 사용   |
 
 > \* AWS Bedrock은 빌드 태그 `go build -tags bedrock`이 필요합니다. 모든 AWS 파티션(aws, aws-cn, aws-us-gov)에서 엔드포인트를 자동 해석하려면 `api_base`를 리전명(예: `us-east-1`)으로 설정하세요. 전체 엔드포인트 URL을 직접 사용할 경우에는 환경 변수 또는 AWS config/profile을 통해 `AWS_REGION`도 함께 설정해야 합니다.
 
@@ -463,25 +445,25 @@ PicoClaw는 `model_list` 설정을 통해 30개 이상의 LLM 프로바이더를
 
 18개 이상의 메시징 플랫폼을 통해 PicoClaw와 대화할 수 있습니다.
 
-| 채널 | 설정 | 프로토콜 | 문서 |
-|---------|------|----------|------|
-| **Telegram** | 쉬움(봇 토큰) | Long polling | [가이드](../channels/telegram/README.md) |
-| **Discord** | 쉬움(봇 토큰 + intents) | WebSocket | [가이드](../channels/discord/README.md) |
-| **WhatsApp** | 쉬움(QR 스캔 또는 브리지 URL) | Native / Bridge | [가이드](../guides/chat-apps.md#whatsapp) |
-| **Weixin** | 쉬움(네이티브 QR 스캔) | iLink API | [가이드](../guides/chat-apps.md#weixin) |
-| **QQ** | 쉬움(AppID + AppSecret) | WebSocket | [가이드](../channels/qq/README.md) |
-| **Slack** | 쉬움(봇 + 앱 토큰) | Socket Mode | [가이드](../channels/slack/README.md) |
-| **Matrix** | 중간(homeserver + 토큰) | Sync API | [가이드](../channels/matrix/README.md) |
-| **DingTalk** | 중간(클라이언트 자격 증명) | Stream | [가이드](../channels/dingtalk/README.md) |
-| **Feishu / Lark** | 중간(App ID + Secret) | WebSocket/SDK | [가이드](../channels/feishu/README.md) |
-| **LINE** | 중간(인증 정보 + webhook) | Webhook | [가이드](../channels/line/README.md) |
-| **WeCom** | 쉬움(QR 로그인 또는 수동 설정) | WebSocket | [가이드](../channels/wecom/README.md) |
-| **VK** | 쉬움(그룹 토큰) | Long Poll | [가이드](../channels/vk/README.md) |
-| **IRC** | 중간(서버 + 닉네임) | IRC protocol | [가이드](../guides/chat-apps.md#irc) |
-| **OneBot** | 중간(WebSocket URL) | OneBot v11 | [가이드](../channels/onebot/README.md) |
-| **MaixCam** | 쉬움(활성화) | TCP socket | [가이드](../channels/maixcam/README.md) |
-| **Pico** | 쉬움(활성화) | 네이티브 프로토콜 | 내장 |
-| **Pico Client** | 쉬움(WebSocket URL) | WebSocket | 내장 |
+| 채널              | 설정                           | 프로토콜          | 문서                                      |
+| ----------------- | ------------------------------ | ----------------- | ----------------------------------------- |
+| **Telegram**      | 쉬움(봇 토큰)                  | Long polling      | [가이드](../channels/telegram/README.md)  |
+| **Discord**       | 쉬움(봇 토큰 + intents)        | WebSocket         | [가이드](../channels/discord/README.md)   |
+| **WhatsApp**      | 쉬움(QR 스캔 또는 브리지 URL)  | Native / Bridge   | [가이드](../guides/chat-apps.md#whatsapp) |
+| **Weixin**        | 쉬움(네이티브 QR 스캔)         | iLink API         | [가이드](../guides/chat-apps.md#weixin)   |
+| **QQ**            | 쉬움(AppID + AppSecret)        | WebSocket         | [가이드](../channels/qq/README.md)        |
+| **Slack**         | 쉬움(봇 + 앱 토큰)             | Socket Mode       | [가이드](../channels/slack/README.md)     |
+| **Matrix**        | 중간(homeserver + 토큰)        | Sync API          | [가이드](../channels/matrix/README.md)    |
+| **DingTalk**      | 중간(클라이언트 자격 증명)     | Stream            | [가이드](../channels/dingtalk/README.md)  |
+| **Feishu / Lark** | 중간(App ID + Secret)          | WebSocket/SDK     | [가이드](../channels/feishu/README.md)    |
+| **LINE**          | 중간(인증 정보 + webhook)      | Webhook           | [가이드](../channels/line/README.md)      |
+| **WeCom**         | 쉬움(QR 로그인 또는 수동 설정) | WebSocket         | [가이드](../channels/wecom/README.md)     |
+| **VK**            | 쉬움(그룹 토큰)                | Long Poll         | [가이드](../channels/vk/README.md)        |
+| **IRC**           | 중간(서버 + 닉네임)            | IRC protocol      | [가이드](../guides/chat-apps.md#irc)      |
+| **OneBot**        | 중간(WebSocket URL)            | OneBot v11        | [가이드](../channels/onebot/README.md)    |
+| **MaixCam**       | 쉬움(활성화)                   | TCP socket        | [가이드](../channels/maixcam/README.md)   |
+| **Pico**          | 쉬움(활성화)                   | 네이티브 프로토콜 | 내장                                      |
+| **Pico Client**   | 쉬움(WebSocket URL)            | WebSocket         | 내장                                      |
 
 > webhook 기반 채널은 모두 하나의 게이트웨이 HTTP 서버(`gateway.host`:`gateway.port`, 기본값 `127.0.0.1:18790`)를 공유합니다. Feishu는 WebSocket/SDK 모드를 사용하며 이 공용 HTTP 서버를 사용하지 않습니다.
 
@@ -495,15 +477,15 @@ PicoClaw는 `model_list` 설정을 통해 30개 이상의 LLM 프로바이더를
 
 PicoClaw는 최신 정보를 제공하기 위해 웹 검색을 수행할 수 있습니다. `tools.web`에서 설정하세요.
 
-| 검색 엔진 | API Key | 무료 제공량 | 링크 |
-|-----------|---------|-------------|------|
-| DuckDuckGo | 불필요 | 무제한 | 내장 백업 검색 |
-| [Baidu Search](https://cloud.baidu.com/doc/qianfan-api/s/Wmbq4z7e5) | 필수 | 하루 1000회 쿼리 | AI 기반, 중국 시장 최적화 |
-| [Tavily](https://tavily.com) | 필수 | 월 1000회 쿼리 | AI 에이전트에 최적화 |
-| [Brave Search](https://brave.com/search/api) | 필수 | 월 2000회 쿼리 | 빠르고 프라이빗함 |
-| [Perplexity](https://www.perplexity.ai) | 필수 | 유료 | AI 기반 검색 |
-| [SearXNG](https://github.com/searxng/searxng) | 불필요 | 셀프 호스팅 | 무료 메타 검색 엔진 |
-| [GLM Search](https://open.bigmodel.cn/) | 필수 | 상이함 | Zhipu 웹 검색 |
+| 검색 엔진                                                           | API Key | 무료 제공량      | 링크                      |
+| ------------------------------------------------------------------- | ------- | ---------------- | ------------------------- |
+| DuckDuckGo                                                          | 불필요  | 무제한           | 내장 백업 검색            |
+| [Baidu Search](https://cloud.baidu.com/doc/qianfan-api/s/Wmbq4z7e5) | 필수    | 하루 1000회 쿼리 | AI 기반, 중국 시장 최적화 |
+| [Tavily](https://tavily.com)                                        | 필수    | 월 1000회 쿼리   | AI 에이전트에 최적화      |
+| [Brave Search](https://brave.com/search/api)                        | 필수    | 월 2000회 쿼리   | 빠르고 프라이빗함         |
+| [Perplexity](https://www.perplexity.ai)                             | 필수    | 유료             | AI 기반 검색              |
+| [SearXNG](https://github.com/searxng/searxng)                       | 불필요  | 셀프 호스팅      | 무료 메타 검색 엔진       |
+| [GLM Search](https://open.bigmodel.cn/)                             | 필수    | 상이함           | Zhipu 웹 검색             |
 
 ### ⚙️ 기타 도구
 
@@ -570,24 +552,24 @@ CLI 또는 통합된 채팅 앱에서 메시지를 한 번만 보내면 PicoClaw
 
 ## 🖥️ CLI 레퍼런스
 
-| 명령어                    | 설명                           |
-| ------------------------- | ------------------------------ |
-| `picoclaw onboard`        | 설정 및 워크스페이스 초기화    |
-| `picoclaw auth weixin`    | QR로 WeChat 계정 연결          |
+| 명령어                    | 설명                          |
+| ------------------------- | ----------------------------- |
+| `picoclaw onboard`        | 설정 및 워크스페이스 초기화   |
+| `picoclaw auth weixin`    | QR로 WeChat 계정 연결         |
 | `picoclaw agent -m "..."` | 에이전트와 채팅               |
-| `picoclaw agent`          | 대화형 채팅 모드               |
-| `picoclaw gateway`        | 게이트웨이 시작                |
-| `picoclaw status`         | 상태 표시                      |
-| `picoclaw version`        | 버전 정보 표시                 |
-| `picoclaw model`          | 기본 모델 조회 또는 변경       |
-| `picoclaw cron list`      | 모든 예약 작업 목록 표시       |
-| `picoclaw cron add ...`   | 예약 작업 추가                 |
-| `picoclaw cron disable`   | 예약 작업 비활성화             |
-| `picoclaw cron remove`    | 예약 작업 삭제                 |
-| `picoclaw skills list`    | 설치된 스킬 목록 표시          |
-| `picoclaw skills install` | 스킬 설치                      |
-| `picoclaw migrate`        | 이전 버전 데이터 마이그레이션  |
-| `picoclaw auth login`     | 프로바이더 인증                |
+| `picoclaw agent`          | 대화형 채팅 모드              |
+| `picoclaw gateway`        | 게이트웨이 시작               |
+| `picoclaw status`         | 상태 표시                     |
+| `picoclaw version`        | 버전 정보 표시                |
+| `picoclaw model`          | 기본 모델 조회 또는 변경      |
+| `picoclaw cron list`      | 모든 예약 작업 목록 표시      |
+| `picoclaw cron add ...`   | 예약 작업 추가                |
+| `picoclaw cron disable`   | 예약 작업 비활성화            |
+| `picoclaw cron remove`    | 예약 작업 삭제                |
+| `picoclaw skills list`    | 설치된 스킬 목록 표시         |
+| `picoclaw skills install` | 스킬 설치                     |
+| `picoclaw migrate`        | 이전 버전 데이터 마이그레이션 |
+| `picoclaw auth login`     | 프로바이더 인증               |
 
 ### ⏰ 예약 작업 / 리마인더
 
@@ -603,20 +585,20 @@ PicoClaw는 `cron` 도구를 통해 예약 리마인더와 반복 작업을 지�
 
 이 README보다 더 자세한 가이드는 다음 문서를 참고하세요.
 
-| 주제 | 설명 |
-|------|------|
-| [도커 & 빠른 시작](../guides/docker.md) | Docker Compose 설정, 런처/에이전트 모드 |
-| [채팅 앱](../guides/chat-apps.md) | 17개 이상의 채널 설정 가이드 |
-| [설정](../guides/configuration.md) | 환경 변수, 워크스페이스 레이아웃, 보안 샌드박스 |
-| [예약 작업과 Cron](../reference/cron.md) | Cron 스케줄 유형, 전달 모드, 명령 게이트, 작업 저장 |
-| [프로바이더와 모델](../guides/providers.md) | 30개 이상의 LLM 프로바이더, 모델 라우팅, model_list 설정 |
-| [Spawn & 비동기 작업](../guides/spawn-tasks.md) | 빠른 작업, spawn을 이용한 장기 작업, 비동기 서브에이전트 오케스트레이션 |
-| [Hooks](../architecture/hooks/README.md) | 이벤트 기반 Hook 시스템: 관찰자, 인터셉터, 승인 훅 |
-| [Steering](../architecture/steering.md) | 실행 중인 에이전트 루프에서 도구 호출 사이에 메시지 주입 |
-| [SubTurn](../architecture/subturn.md) | 서브에이전트 조정, 동시성 제어, 생명주기 |
-| [문제 해결](../operations/troubleshooting.md) | 자주 발생하는 문제와 해결 방법 |
-| [도구 설정](../reference/tools_configuration.md) | 도구별 활성화/비활성화, exec 정책, MCP, 스킬 |
-| [하드웨어 호환성](../guides/hardware-compatibility.md) | 테스트된 보드, 최소 요구사항 |
+| 주제                                                   | 설명                                                                    |
+| ------------------------------------------------------ | ----------------------------------------------------------------------- |
+| [도커 & 빠른 시작](../guides/docker.md)                | Docker Compose 설정, 런처/에이전트 모드                                 |
+| [채팅 앱](../guides/chat-apps.md)                      | 17개 이상의 채널 설정 가이드                                            |
+| [설정](../guides/configuration.md)                     | 환경 변수, 워크스페이스 레이아웃, 보안 샌드박스                         |
+| [예약 작업과 Cron](../reference/cron.md)               | Cron 스케줄 유형, 전달 모드, 명령 게이트, 작업 저장                     |
+| [프로바이더와 모델](../guides/providers.md)            | 30개 이상의 LLM 프로바이더, 모델 라우팅, model_list 설정                |
+| [Spawn & 비동기 작업](../guides/spawn-tasks.md)        | 빠른 작업, spawn을 이용한 장기 작업, 비동기 서브에이전트 오케스트레이션 |
+| [Hooks](../architecture/hooks/README.md)               | 이벤트 기반 Hook 시스템: 관찰자, 인터셉터, 승인 훅                      |
+| [Steering](../architecture/steering.md)                | 실행 중인 에이전트 루프에서 도구 호출 사이에 메시지 주입                |
+| [SubTurn](../architecture/subturn.md)                  | 서브에이전트 조정, 동시성 제어, 생명주기                                |
+| [문제 해결](../operations/troubleshooting.md)          | 자주 발생하는 문제와 해결 방법                                          |
+| [도구 설정](../reference/tools_configuration.md)       | 도구별 활성화/비활성화, exec 정책, MCP, 스킬                            |
+| [하드웨어 호환성](../guides/hardware-compatibility.md) | 테스트된 보드, 최소 요구사항                                            |
 
 ## 🤝 기여 & 로드맵
 

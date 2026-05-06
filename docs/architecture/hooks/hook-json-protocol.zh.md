@@ -45,11 +45,11 @@
 }
 ```
 
-| 字段 | 说明 |
-|------|------|
-| `name` | hook 名称（来自配置） |
-| `version` | 协议版本，当前为 `1` |
-| `modes` | hook 支持的能力模式 |
+| 字段      | 说明                  |
+| --------- | --------------------- |
+| `name`    | hook 名称（来自配置） |
+| `version` | 协议版本，当前为 `1`  |
+| `modes`   | hook 支持的能力模式   |
 
 ### 响应
 
@@ -111,15 +111,15 @@
 }
 ```
 
-| 字段 | 说明 |
-|------|------|
-| `meta` | 事件元数据，用于追踪 |
-| `model` | 请求的模型名称 |
-| `messages` | 对话历史 |
-| `tools` | 可用工具定义列表 |
-| `options` | LLM 参数（temperature、max_tokens 等） |
-| `channel` | 请求来源通道 |
-| `chat_id` | 会话 ID |
+| 字段       | 说明                                   |
+| ---------- | -------------------------------------- |
+| `meta`     | 事件元数据，用于追踪                   |
+| `model`    | 请求的模型名称                         |
+| `messages` | 对话历史                               |
+| `tools`    | 可用工具定义列表                       |
+| `options`  | LLM 参数（temperature、max_tokens 等） |
+| `channel`  | 请求来源通道                           |
+| `chat_id`  | 会话 ID                                |
 
 ### 响应（注入工具示例）
 
@@ -160,10 +160,10 @@
 }
 ```
 
-| 字段 | 说明 |
-|------|------|
-| `action` | 决策动作（见下表） |
-| `request` | 修改后的请求对象 |
+| 字段      | 说明               |
+| --------- | ------------------ |
+| `action`  | 决策动作（见下表） |
+| `request` | 修改后的请求对象   |
 
 ---
 
@@ -246,9 +246,9 @@
 }
 ```
 
-| 字段 | 说明 |
-|------|------|
-| `tool` | 工具名称 |
+| 字段        | 说明     |
+| ----------- | -------- |
+| `tool`      | 工具名称 |
 | `arguments` | 工具参数 |
 
 ### 响应（改写参数）
@@ -311,11 +311,11 @@
 2. **工具结果缓存**：对重复调用返回缓存结果
 3. **工具模拟**：测试时返回模拟结果
 
-| 字段 | 说明 |
-|------|------|
-| `action` | 必须为 `respond` |
-| `call` | 修改后的调用信息（可选） |
-| `result` | 直接返回的工具结果 |
+| 字段     | 说明                     |
+| -------- | ------------------------ |
+| `action` | 必须为 `respond`         |
+| `call`   | 修改后的调用信息（可选） |
+| `result` | 直接返回的工具结果       |
 
 ---
 
@@ -357,17 +357,17 @@
 }
 ```
 
-| 字段 | 说明 |
-|------|------|
-| `result.for_llm` | 返回给 LLM 的内容 |
-| `result.for_user` | 发送给用户的内容 |
-| `result.silent` | 是否静默（不发送给用户） |
-| `result.is_error` | 是否为错误 |
-| `result.async` | 是否异步执行 |
-| `result.media` | 媒体引用列表 |
-| `result.artifact_tags` | 本地产物路径标签 |
-| `result.response_handled` | 是否已处理响应 |
-| `duration` | 执行耗时（纳秒） |
+| 字段                      | 说明                     |
+| ------------------------- | ------------------------ |
+| `result.for_llm`          | 返回给 LLM 的内容        |
+| `result.for_user`         | 发送给用户的内容         |
+| `result.silent`           | 是否静默（不发送给用户） |
+| `result.is_error`         | 是否为错误               |
+| `result.async`            | 是否异步执行             |
+| `result.media`            | 媒体引用列表             |
+| `result.artifact_tags`    | 本地产物路径标签         |
+| `result.response_handled` | 是否已处理响应           |
+| `duration`                | 执行耗时（纳秒）         |
 
 ### 响应
 
@@ -437,21 +437,28 @@
 
 ---
 
-## 7. `hook.event`（notification）
+## 7. `hook.runtime_event`（notification）
 
-观察型事件，仅广播，无需响应。`id` 为 `0` 或不存在。
+runtime 观察型事件，仅广播，无需响应。`id` 为 `0` 或不存在。
 
 ```json
 {
   "jsonrpc": "2.0",
-  "method": "hook.event",
+  "method": "hook.runtime_event",
   "params": {
-    "Kind": "tool_exec_start",
-    "Meta": {
-      "AgentID": "agent-1",
-      "TurnID": "turn-1"
+    "kind": "agent.tool.exec_start",
+    "source": {
+      "component": "agent",
+      "name": "agent-1"
     },
-    "Payload": {
+    "scope": {
+      "agent_id": "agent-1",
+      "session_key": "session-1",
+      "turn_id": "turn-1",
+      "channel": "cli",
+      "chat_id": "chat-1"
+    },
+    "payload": {
       "Tool": "echo_text",
       "Arguments": {"text": "hello"}
     }
@@ -460,25 +467,27 @@
 ```
 
 常见 `Kind` 值：
-- `turn_start` / `turn_end`
-- `llm_request` / `llm_response`
-- `tool_exec_start` / `tool_exec_end` / `tool_exec_skipped`
-- `steering_injected`
-- `interrupt_received`
-- `error`
+- `agent.turn.start` / `agent.turn.end`
+- `agent.llm.request` / `agent.llm.response`
+- `agent.tool.exec_start` / `agent.tool.exec_end` / `agent.tool.exec_skipped`
+- `agent.steering.injected`
+- `agent.interrupt.received`
+- `agent.error`
+
+旧 observe 配置名如 `turn_end`、`tool_exec_start` 仍然可用，并会归一化为 runtime event 名称。新的 process hook 通知使用 `hook.runtime_event`。
 
 ---
 
 ## action 可选值
 
-| action | 适用 hook | 效果 |
-|--------|----------|------|
-| `continue` | 所有拦截型 | 放行，不做修改 |
-| `modify` | `before_llm`, `before_tool`, `after_llm`, `after_tool` | 改写请求/响应后放行 |
-| `respond` | `before_tool` | 直接返回工具结果，跳过实际执行 |
-| `deny_tool` | `before_tool` | 拒绝执行该工具 |
-| `abort_turn` | 所有拦截型 | 中止当前 turn，返回错误 |
-| `hard_abort` | 所有拦截型 | 强制终止整个 agent loop |
+| action       | 适用 hook                                              | 效果                           |
+| ------------ | ------------------------------------------------------ | ------------------------------ |
+| `continue`   | 所有拦截型                                             | 放行，不做修改                 |
+| `modify`     | `before_llm`, `before_tool`, `after_llm`, `after_tool` | 改写请求/响应后放行            |
+| `respond`    | `before_tool`                                          | 直接返回工具结果，跳过实际执行 |
+| `deny_tool`  | `before_tool`                                          | 拒绝执行该工具                 |
+| `abort_turn` | 所有拦截型                                             | 中止当前 turn，返回错误        |
+| `hard_abort` | 所有拦截型                                             | 强制终止整个 agent loop        |
 
 ---
 

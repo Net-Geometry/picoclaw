@@ -45,11 +45,11 @@ Handshake must be completed at startup, otherwise the hook process will be termi
 }
 ```
 
-| Field | Description |
-|-------|-------------|
-| `name` | hook name (from configuration) |
-| `version` | protocol version, currently `1` |
-| `modes` | capability modes supported by the hook |
+| Field     | Description                            |
+| --------- | -------------------------------------- |
+| `name`    | hook name (from configuration)         |
+| `version` | protocol version, currently `1`        |
+| `modes`   | capability modes supported by the hook |
 
 ### Response
 
@@ -111,15 +111,15 @@ Triggered before sending request to LLM. Can be used to inject tools.
 }
 ```
 
-| Field | Description |
-|-------|-------------|
-| `meta` | event metadata for tracing |
-| `model` | requested model name |
-| `messages` | conversation history |
-| `tools` | list of available tool definitions |
-| `options` | LLM parameters (temperature, max_tokens, etc.) |
-| `channel` | request source channel |
-| `chat_id` | session ID |
+| Field      | Description                                    |
+| ---------- | ---------------------------------------------- |
+| `meta`     | event metadata for tracing                     |
+| `model`    | requested model name                           |
+| `messages` | conversation history                           |
+| `tools`    | list of available tool definitions             |
+| `options`  | LLM parameters (temperature, max_tokens, etc.) |
+| `channel`  | request source channel                         |
+| `chat_id`  | session ID                                     |
 
 ### Response (Tool Injection Example)
 
@@ -160,10 +160,10 @@ Triggered before sending request to LLM. Can be used to inject tools.
 }
 ```
 
-| Field | Description |
-|-------|-------------|
-| `action` | decision action (see table below) |
-| `request` | modified request object |
+| Field     | Description                       |
+| --------- | --------------------------------- |
+| `action`  | decision action (see table below) |
+| `request` | modified request object           |
 
 ---
 
@@ -246,9 +246,9 @@ Triggered before tool execution. Can modify tool name and arguments, deny execut
 }
 ```
 
-| Field | Description |
-|-------|-------------|
-| `tool` | tool name |
+| Field       | Description    |
+| ----------- | -------------- |
+| `tool`      | tool name      |
 | `arguments` | tool arguments |
 
 ### Response (Modify Arguments)
@@ -311,11 +311,11 @@ The `respond` action allows hooks to return tool results directly, skipping actu
 2. **Tool result caching**: Return cached results for repeated calls
 3. **Tool mocking**: Return mock results during testing
 
-| Field | Description |
-|-------|-------------|
-| `action` | must be `respond` |
-| `call` | modified call information (optional) |
-| `result` | tool result to return directly |
+| Field    | Description                          |
+| -------- | ------------------------------------ |
+| `action` | must be `respond`                    |
+| `call`   | modified call information (optional) |
+| `result` | tool result to return directly       |
 
 ---
 
@@ -357,17 +357,17 @@ Triggered after tool execution completes. Can modify the result returned to LLM.
 }
 ```
 
-| Field | Description |
-|-------|-------------|
-| `result.for_llm` | content returned to LLM |
-| `result.for_user` | content sent to user |
-| `result.silent` | whether silent (not sent to user) |
-| `result.is_error` | whether it's an error |
-| `result.async` | whether executed asynchronously |
-| `result.media` | list of media references |
-| `result.artifact_tags` | local artifact path tags |
+| Field                     | Description                       |
+| ------------------------- | --------------------------------- |
+| `result.for_llm`          | content returned to LLM           |
+| `result.for_user`         | content sent to user              |
+| `result.silent`           | whether silent (not sent to user) |
+| `result.is_error`         | whether it's an error             |
+| `result.async`            | whether executed asynchronously   |
+| `result.media`            | list of media references          |
+| `result.artifact_tags`    | local artifact path tags          |
 | `result.response_handled` | whether response has been handled |
-| `duration` | execution time (nanoseconds) |
+| `duration`                | execution time (nanoseconds)      |
 
 ### Response
 
@@ -437,21 +437,28 @@ Approval hook for deciding whether to allow execution of sensitive tools.
 
 ---
 
-## 7. `hook.event` (notification)
+## 7. `hook.runtime_event` (notification)
 
-Observer event, broadcast only, no response required. `id` is `0` or absent.
+Runtime observer event, broadcast only, no response required. `id` is `0` or absent.
 
 ```json
 {
   "jsonrpc": "2.0",
-  "method": "hook.event",
+  "method": "hook.runtime_event",
   "params": {
-    "Kind": "tool_exec_start",
-    "Meta": {
-      "AgentID": "agent-1",
-      "TurnID": "turn-1"
+    "kind": "agent.tool.exec_start",
+    "source": {
+      "component": "agent",
+      "name": "agent-1"
     },
-    "Payload": {
+    "scope": {
+      "agent_id": "agent-1",
+      "session_key": "session-1",
+      "turn_id": "turn-1",
+      "channel": "cli",
+      "chat_id": "chat-1"
+    },
+    "payload": {
       "Tool": "echo_text",
       "Arguments": {"text": "hello"}
     }
@@ -460,25 +467,27 @@ Observer event, broadcast only, no response required. `id` is `0` or absent.
 ```
 
 Common `Kind` values:
-- `turn_start` / `turn_end`
-- `llm_request` / `llm_response`
-- `tool_exec_start` / `tool_exec_end` / `tool_exec_skipped`
-- `steering_injected`
-- `interrupt_received`
-- `error`
+- `agent.turn.start` / `agent.turn.end`
+- `agent.llm.request` / `agent.llm.response`
+- `agent.tool.exec_start` / `agent.tool.exec_end` / `agent.tool.exec_skipped`
+- `agent.steering.injected`
+- `agent.interrupt.received`
+- `agent.error`
+
+Legacy observe configuration names such as `turn_end` and `tool_exec_start` are still accepted and normalized to runtime event names. New process hook notifications use `hook.runtime_event`.
 
 ---
 
 ## Action Options
 
-| action | Applicable hooks | Effect |
-|--------|-----------------|--------|
-| `continue` | All interceptor types | Pass through without modification |
-| `modify` | `before_llm`, `before_tool`, `after_llm`, `after_tool` | Modify request/response and pass through |
-| `respond` | `before_tool` | Return tool result directly, skip actual execution. **Note: AfterTool is NOT called (design decision - respond provides final answer).** |
-| `deny_tool` | `before_tool` | Deny tool execution |
-| `abort_turn` | All interceptor types | Abort current turn, return error |
-| `hard_abort` | All interceptor types | Force stop entire agent loop |
+| action       | Applicable hooks                                       | Effect                                                                                                                                   |
+| ------------ | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `continue`   | All interceptor types                                  | Pass through without modification                                                                                                        |
+| `modify`     | `before_llm`, `before_tool`, `after_llm`, `after_tool` | Modify request/response and pass through                                                                                                 |
+| `respond`    | `before_tool`                                          | Return tool result directly, skip actual execution. **Note: AfterTool is NOT called (design decision - respond provides final answer).** |
+| `deny_tool`  | `before_tool`                                          | Deny tool execution                                                                                                                      |
+| `abort_turn` | All interceptor types                                  | Abort current turn, return error                                                                                                         |
+| `hard_abort` | All interceptor types                                  | Force stop entire agent loop                                                                                                             |
 
 ---
 

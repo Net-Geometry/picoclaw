@@ -33,7 +33,7 @@ export function ModelSelector({
     <Select value={defaultModelName} onValueChange={onValueChange}>
       <SelectTrigger
         size="sm"
-        className="text-foreground/90 hover:text-foreground border-border/80 focus-visible:border-input bg-background h-8 w-full min-w-[180px] shadow-none focus-visible:ring-0 sm:w-[260px]"
+        className="text-muted-foreground hover:text-foreground focus-visible:border-input h-8 max-w-[160px] min-w-[80px] bg-transparent shadow-none focus-visible:ring-0 sm:max-w-[220px]"
       >
         <SelectValue placeholder={t("chat.noModel")} />
       </SelectTrigger>

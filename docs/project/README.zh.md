@@ -289,24 +289,6 @@ macOS 可能会在首次启动时拦截 `picoclaw-launcher`，因为它从互联
 
 </details>
 
-### 💻 TUI Launcher（推荐无头环境 / SSH）
-
-TUI（终端 UI）Launcher 提供功能完整的终端配置与管理界面，适合服务器、树莓派等无显示器环境。
-
-```bash
-picoclaw-launcher-tui
-```
-
-<p align="center">
-<img src="../../assets/launcher-tui.jpg" alt="TUI Launcher" width="600">
-</p>
-
-**开始使用：**
-
-通过 TUI 菜单：**1)** 配置 Provider -> **2)** 配置 Channel -> **3)** 启动 Gateway -> **4)** 开始聊天！
-
-详细 TUI 文档请参阅 [docs.picoclaw.io](https://docs.picoclaw.io)。
-
 <a id="-run-on-old-android-phones"></a>
 ### 📱 Android
 
@@ -397,30 +379,30 @@ picoclaw gateway
 
 PicoClaw 通过 `model_list` 配置支持 30+ LLM Provider，使用 `协议/模型` 格式：
 
-| Provider | 协议 | API Key | 备注 |
-|----------|------|---------|------|
-| [OpenAI](https://platform.openai.com/api-keys) | `openai/` | 必填 | GPT-5.4、GPT-4o、o3 等 |
-| [Anthropic](https://console.anthropic.com/settings/keys) | `anthropic/` | 必填 | Claude Opus 4.6、Sonnet 4.6 等 |
-| [Google Gemini](https://aistudio.google.com/apikey) | `gemini/` | 必填 | Gemini 3 Flash、2.5 Pro 等 |
-| [OpenRouter](https://openrouter.ai/keys) | `openrouter/` | 必填 | 200+ 模型，统一 API |
-| [智谱 (GLM)](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) | `zhipu/` | 必填 | GLM-4.7、GLM-5 等 |
-| [DeepSeek](https://platform.deepseek.com/api_keys) | `deepseek/` | 必填 | DeepSeek-V3、DeepSeek-R1 |
-| [火山引擎](https://console.volcengine.com) | `volcengine/` | 必填 | 豆包、Ark 系列模型 |
-| [Qwen](https://dashscope.console.aliyun.com/apiKey) | `qwen/` | 必填 | Qwen3、Qwen-Max 等 |
-| [Groq](https://console.groq.com/keys) | `groq/` | 必填 | 快速推理（Llama、Mixtral） |
-| [Moonshot (Kimi)](https://platform.moonshot.cn/console/api-keys) | `moonshot/` | 必填 | Kimi 系列模型 |
-| [Minimax](https://platform.minimaxi.com/user-center/basic-information/interface-key) | `minimax/` | 必填 | MiniMax 系列模型 |
-| [Mistral](https://console.mistral.ai/api-keys) | `mistral/` | 必填 | Mistral Large、Codestral |
-| [NVIDIA NIM](https://build.nvidia.com/) | `nvidia/` | 必填 | NVIDIA 托管模型 |
-| [Cerebras](https://cloud.cerebras.ai/) | `cerebras/` | 必填 | 快速推理 |
-| [Novita AI](https://novita.ai/) | `novita/` | 必填 | 多种开源模型 |
-| [小米 MiMo](https://platform.xiaomimimo.com/) | `mimo/` | 必填 | MiMo 系列模型 |
-| [Ollama](https://ollama.com/) | `ollama/` | 无需 | 本地模型，自托管 |
-| [vLLM](https://docs.vllm.ai/) | `vllm/` | 无需 | 本地部署，兼容 OpenAI |
-| [LiteLLM](https://docs.litellm.ai/) | `litellm/` | 视情况 | 100+ Provider 代理 |
-| [Azure OpenAI](https://portal.azure.com/) | `azure/` | 必填 | 企业级 Azure 部署 |
-| [GitHub Copilot](https://github.com/features/copilot) | `github-copilot/` | OAuth | 设备码登录 |
-| [Antigravity](https://console.cloud.google.com/) | `antigravity/` | OAuth | Google Cloud AI |
+| Provider                                                                             | 协议              | API Key | 备注                           |
+| ------------------------------------------------------------------------------------ | ----------------- | ------- | ------------------------------ |
+| [OpenAI](https://platform.openai.com/api-keys)                                       | `openai/`         | 必填    | GPT-5.4、GPT-4o、o3 等         |
+| [Anthropic](https://console.anthropic.com/settings/keys)                             | `anthropic/`      | 必填    | Claude Opus 4.6、Sonnet 4.6 等 |
+| [Google Gemini](https://aistudio.google.com/apikey)                                  | `gemini/`         | 必填    | Gemini 3 Flash、2.5 Pro 等     |
+| [OpenRouter](https://openrouter.ai/keys)                                             | `openrouter/`     | 必填    | 200+ 模型，统一 API            |
+| [智谱 (GLM)](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys)                  | `zhipu/`          | 必填    | GLM-4.7、GLM-5 等              |
+| [DeepSeek](https://platform.deepseek.com/api_keys)                                   | `deepseek/`       | 必填    | DeepSeek-V3、DeepSeek-R1       |
+| [火山引擎](https://console.volcengine.com)                                           | `volcengine/`     | 必填    | 豆包、Ark 系列模型             |
+| [Qwen](https://dashscope.console.aliyun.com/apiKey)                                  | `qwen/`           | 必填    | Qwen3、Qwen-Max 等             |
+| [Groq](https://console.groq.com/keys)                                                | `groq/`           | 必填    | 快速推理（Llama、Mixtral）     |
+| [Moonshot (Kimi)](https://platform.moonshot.cn/console/api-keys)                     | `moonshot/`       | 必填    | Kimi 系列模型                  |
+| [Minimax](https://platform.minimaxi.com/user-center/basic-information/interface-key) | `minimax/`        | 必填    | MiniMax 系列模型               |
+| [Mistral](https://console.mistral.ai/api-keys)                                       | `mistral/`        | 必填    | Mistral Large、Codestral       |
+| [NVIDIA NIM](https://build.nvidia.com/)                                              | `nvidia/`         | 必填    | NVIDIA 托管模型                |
+| [Cerebras](https://cloud.cerebras.ai/)                                               | `cerebras/`       | 必填    | 快速推理                       |
+| [Novita AI](https://novita.ai/)                                                      | `novita/`         | 必填    | 多种开源模型                   |
+| [小米 MiMo](https://platform.xiaomimimo.com/)                                        | `mimo/`           | 必填    | MiMo 系列模型                  |
+| [Ollama](https://ollama.com/)                                                        | `ollama/`         | 无需    | 本地模型，自托管               |
+| [vLLM](https://docs.vllm.ai/)                                                        | `vllm/`           | 无需    | 本地部署，兼容 OpenAI          |
+| [LiteLLM](https://docs.litellm.ai/)                                                  | `litellm/`        | 视情况  | 100+ Provider 代理             |
+| [Azure OpenAI](https://portal.azure.com/)                                            | `azure/`          | 必填    | 企业级 Azure 部署              |
+| [GitHub Copilot](https://github.com/features/copilot)                                | `github-copilot/` | OAuth   | 设备码登录                     |
+| [Antigravity](https://console.cloud.google.com/)                                     | `antigravity/`    | OAuth   | Google Cloud AI                |
 
 <details>
 <summary><b>本地部署（Ollama、vLLM 等）</b></summary>
@@ -459,25 +441,25 @@ PicoClaw 通过 `model_list` 配置支持 30+ LLM Provider，使用 `协议/模�
 
 通过 18+ 消息平台与你的 PicoClaw 对话：
 
-| Channel | 配置难度 | 协议 | 文档 |
-|---------|----------|------|------|
-| **Telegram** | 简单（bot token） | 长轮询 | [指南](../channels/telegram/README.zh.md) |
-| **Discord** | 简单（bot token + intents） | WebSocket | [指南](../channels/discord/README.zh.md) |
-| **WhatsApp** | 简单（扫码或 bridge URL） | 原生 / Bridge | [指南](../guides/chat-apps.zh.md#whatsapp) |
-| **微信 (Weixin)** | 简单（扫码登录） | iLink API | [指南](../guides/chat-apps.zh.md#weixin) |
-| **QQ** | 简单（AppID + AppSecret） | WebSocket | [指南](../channels/qq/README.zh.md) |
-| **Slack** | 简单（bot + app token） | Socket Mode | [指南](../channels/slack/README.zh.md) |
-| **Matrix** | 中等（homeserver + token） | Sync API | [指南](../channels/matrix/README.zh.md) |
-| **钉钉** | 中等（client credentials） | Stream | [指南](../channels/dingtalk/README.zh.md) |
-| **飞书 / Lark** | 中等（App ID + Secret） | WebSocket/SDK | [指南](../channels/feishu/README.zh.md) |
-| **LINE** | 中等（credentials + webhook） | Webhook | [指南](../channels/line/README.zh.md) |
-| **企业微信** | 简单（扫码登录或手动配置） | WebSocket | [指南](../channels/wecom/README.zh.md) |
-| **VK** | 简单（群组 token） | Long Poll | [指南](../channels/vk/README.md) |
-| **IRC** | 中等（server + nick） | IRC 协议 | [指南](../guides/chat-apps.zh.md#irc) |
-| **OneBot** | 中等（WebSocket URL） | OneBot v11 | [指南](../channels/onebot/README.zh.md) |
-| **MaixCam** | 简单（启用即可） | TCP socket | [指南](../channels/maixcam/README.zh.md) |
-| **Pico** | 简单（启用即可） | 原生协议 | 内置 |
-| **Pico Client** | 简单（WebSocket URL） | WebSocket | 内置 |
+| Channel           | 配置难度                      | 协议          | 文档                                       |
+| ----------------- | ----------------------------- | ------------- | ------------------------------------------ |
+| **Telegram**      | 简单（bot token）             | 长轮询        | [指南](../channels/telegram/README.zh.md)  |
+| **Discord**       | 简单（bot token + intents）   | WebSocket     | [指南](../channels/discord/README.zh.md)   |
+| **WhatsApp**      | 简单（扫码或 bridge URL）     | 原生 / Bridge | [指南](../guides/chat-apps.zh.md#whatsapp) |
+| **微信 (Weixin)** | 简单（扫码登录）              | iLink API     | [指南](../guides/chat-apps.zh.md#weixin)   |
+| **QQ**            | 简单（AppID + AppSecret）     | WebSocket     | [指南](../channels/qq/README.zh.md)        |
+| **Slack**         | 简单（bot + app token）       | Socket Mode   | [指南](../channels/slack/README.zh.md)     |
+| **Matrix**        | 中等（homeserver + token）    | Sync API      | [指南](../channels/matrix/README.zh.md)    |
+| **钉钉**          | 中等（client credentials）    | Stream        | [指南](../channels/dingtalk/README.zh.md)  |
+| **飞书 / Lark**   | 中等（App ID + Secret）       | WebSocket/SDK | [指南](../channels/feishu/README.zh.md)    |
+| **LINE**          | 中等（credentials + webhook） | Webhook       | [指南](../channels/line/README.zh.md)      |
+| **企业微信**      | 简单（扫码登录或手动配置）    | WebSocket     | [指南](../channels/wecom/README.zh.md)     |
+| **VK**            | 简单（群组 token）            | Long Poll     | [指南](../channels/vk/README.md)           |
+| **IRC**           | 中等（server + nick）         | IRC 协议      | [指南](../guides/chat-apps.zh.md#irc)      |
+| **OneBot**        | 中等（WebSocket URL）         | OneBot v11    | [指南](../channels/onebot/README.zh.md)    |
+| **MaixCam**       | 简单（启用即可）              | TCP socket    | [指南](../channels/maixcam/README.zh.md)   |
+| **Pico**          | 简单（启用即可）              | 原生协议      | 内置                                       |
+| **Pico Client**   | 简单（WebSocket URL）         | WebSocket     | 内置                                       |
 
 > 所有基于 Webhook 的 Channel 共用同一个 Gateway HTTP 服务器（`gateway.host`:`gateway.port`，默认 `127.0.0.1:18790`）。飞书使用 WebSocket/SDK 模式，不使用共享 HTTP 服务器。
 
@@ -491,15 +473,15 @@ PicoClaw 通过 `model_list` 配置支持 30+ LLM Provider，使用 `协议/模�
 
 PicoClaw 可以搜索网络以提供最新信息。在 `tools.web` 中配置：
 
-| 搜索引擎 | API Key | 免费额度 | 链接 |
-|---------|---------|---------|------|
-| [百度搜索](https://cloud.baidu.com/doc/qianfan-api/s/Wmbq4z7e5) | 必填 | 1000 次/天 | AI 搜索，国内首选 |
-| [Tavily](https://tavily.com) | 必填 | 1000 次/月 | 专为 AI Agent 优化 |
-| [GLM Search](https://open.bigmodel.cn/) | 必填 | 视情况 | 智谱网络搜索 |
-| DuckDuckGo | 无需 | 无限制 | 内置备用（国内访问困难） |
-| [Perplexity](https://www.perplexity.ai) | 必填 | 付费 | AI 驱动搜索（国内访问困难） |
-| [Brave Search](https://brave.com/search/api) | 必填 | 2000 次/月 | 快速且注重隐私（国内访问困难） |
-| [SearXNG](https://github.com/searxng/searxng) | 无需 | 自托管 | 免费元搜索引擎 |
+| 搜索引擎                                                        | API Key | 免费额度   | 链接                           |
+| --------------------------------------------------------------- | ------- | ---------- | ------------------------------ |
+| [百度搜索](https://cloud.baidu.com/doc/qianfan-api/s/Wmbq4z7e5) | 必填    | 1000 次/天 | AI 搜索，国内首选              |
+| [Tavily](https://tavily.com)                                    | 必填    | 1000 次/月 | 专为 AI Agent 优化             |
+| [GLM Search](https://open.bigmodel.cn/)                         | 必填    | 视情况     | 智谱网络搜索                   |
+| DuckDuckGo                                                      | 无需    | 无限制     | 内置备用（国内访问困难）       |
+| [Perplexity](https://www.perplexity.ai)                         | 必填    | 付费       | AI 驱动搜索（国内访问困难）    |
+| [Brave Search](https://brave.com/search/api)                    | 必填    | 2000 次/月 | 快速且注重隐私（国内访问困难） |
+| [SearXNG](https://github.com/searxng/searxng)                   | 无需    | 自托管     | 免费元搜索引擎                 |
 
 ### ⚙️ 其他工具
 
@@ -573,24 +555,24 @@ PicoClaw 原生支持 [MCP](https://modelcontextprotocol.io/) — 连接任意 M
 
 ## 🖥️ CLI 命令行参考
 
-| 命令                       | 说明                   |
-| ------------------------- | ---------------------- |
-| `picoclaw onboard`        | 初始化配置与工作区       |
-| `picoclaw auth weixin` | 扫码连接微信个人号 |
-| `picoclaw agent -m "..."` | 与 Agent 对话           |
-| `picoclaw agent`          | 交互式对话模式           |
-| `picoclaw gateway`        | 启动网关                |
-| `picoclaw status`         | 查看状态                |
-| `picoclaw version`        | 查看版本信息             |
-| `picoclaw model`          | 查看或切换默认模型       |
-| `picoclaw cron list`      | 列出所有定时任务         |
-| `picoclaw cron add ...`   | 添加定时任务             |
-| `picoclaw cron disable`   | 禁用定时任务             |
-| `picoclaw cron remove`    | 删除定时任务             |
-| `picoclaw skills list`    | 列出已安装 Skills        |
-| `picoclaw skills install` | 安装 Skill              |
-| `picoclaw migrate`        | 从旧版本迁移数据         |
-| `picoclaw auth login`     | 认证 Provider           |
+| 命令                      | 说明               |
+| ------------------------- | ------------------ |
+| `picoclaw onboard`        | 初始化配置与工作区 |
+| `picoclaw auth weixin`    | 扫码连接微信个人号 |
+| `picoclaw agent -m "..."` | 与 Agent 对话      |
+| `picoclaw agent`          | 交互式对话模式     |
+| `picoclaw gateway`        | 启动网关           |
+| `picoclaw status`         | 查看状态           |
+| `picoclaw version`        | 查看版本信息       |
+| `picoclaw model`          | 查看或切换默认模型 |
+| `picoclaw cron list`      | 列出所有定时任务   |
+| `picoclaw cron add ...`   | 添加定时任务       |
+| `picoclaw cron disable`   | 禁用定时任务       |
+| `picoclaw cron remove`    | 删除定时任务       |
+| `picoclaw skills list`    | 列出已安装 Skills  |
+| `picoclaw skills install` | 安装 Skill         |
+| `picoclaw migrate`        | 从旧版本迁移数据   |
+| `picoclaw auth login`     | 认证 Provider      |
 
 ### ⏰ 定时任务 / 提醒
 
@@ -604,19 +586,19 @@ PicoClaw 通过 `cron` 工具支持定时提醒和重复任务：
 
 详细指南请参阅以下文档，README 仅涵盖快速入门。
 
-| 主题 | 说明 |
-|------|------|
-| 🐳 [Docker 与快速开始](../guides/docker.zh.md) | Docker Compose 配置、Launcher/Agent 模式、快速开始 |
-| 💬 [聊天应用配置](../guides/chat-apps.zh.md) | 全部 17+ Channel 配置指南 |
-| ⚙️ [配置指南](../guides/configuration.zh.md) | 环境变量、工作区布局、安全沙箱 |
-| 🔌 [提供商与模型配置](../guides/providers.zh.md) | 30+ LLM Provider、模型路由、model_list 配置 |
-| 🔄 [异步任务与 Spawn](../guides/spawn-tasks.zh.md) | 快速任务、长任务与 Spawn、异步子 Agent 编排 |
-| 🪝 [Hook 系统](../architecture/hooks/README.zh.md) | 事件驱动 Hook：观察者、拦截器、审批 Hook |
-| 🎯 [Steering](../architecture/steering.md) | 在工具调用间向运行中的 Agent 注入消息 |
-| 🔀 [SubTurn](../architecture/subturn.md) | 子 Agent 协调、并发控制、生命周期管理 |
-| 🐛 [疑难解答](../operations/troubleshooting.zh.md) | 常见问题与解决方案 |
-| 🔧 [工具配置](../reference/tools_configuration.zh.md) | 工具启用/禁用、执行策略、MCP、Skills |
-| 📋 [硬件兼容列表](../guides/hardware-compatibility.zh.md) | 已测试板卡、最低要求 |
+| 主题                                                     | 说明                                               |
+| -------------------------------------------------------- | -------------------------------------------------- |
+| 🐳 [Docker 与快速开始](../guides/docker.zh.md)            | Docker Compose 配置、Launcher/Agent 模式、快速开始 |
+| 💬 [聊天应用配置](../guides/chat-apps.zh.md)              | 全部 17+ Channel 配置指南                          |
+| ⚙️ [配置指南](../guides/configuration.zh.md)              | 环境变量、工作区布局、安全沙箱                     |
+| 🔌 [提供商与模型配置](../guides/providers.zh.md)          | 30+ LLM Provider、模型路由、model_list 配置        |
+| 🔄 [异步任务与 Spawn](../guides/spawn-tasks.zh.md)        | 快速任务、长任务与 Spawn、异步子 Agent 编排        |
+| 🪝 [Hook 系统](../architecture/hooks/README.zh.md)        | 事件驱动 Hook：观察者、拦截器、审批 Hook           |
+| 🎯 [Steering](../architecture/steering.md)                | 在工具调用间向运行中的 Agent 注入消息              |
+| 🔀 [SubTurn](../architecture/subturn.md)                  | 子 Agent 协调、并发控制、生命周期管理              |
+| 🐛 [疑难解答](../operations/troubleshooting.zh.md)        | 常见问题与解决方案                                 |
+| 🔧 [工具配置](../reference/tools_configuration.zh.md)     | 工具启用/禁用、执行策略、MCP、Skills               |
+| 📋 [硬件兼容列表](../guides/hardware-compatibility.zh.md) | 已测试板卡、最低要求                               |
 
 ## 🤝 贡献与路线图
 

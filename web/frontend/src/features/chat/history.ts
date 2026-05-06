@@ -1,40 +1,42 @@
 import { getSessionHistory } from "@/api/sessions"
 import { normalizeUnixTimestamp } from "@/features/chat/state"
+import {
+  parseToolCallsValue,
+  toolCallsSignature,
+} from "@/features/chat/tool-calls"
 import type { ChatAttachment, ChatMessage } from "@/store/chat"
 
-function mimeTypeFromDataUrl(value: string): string | null {
-  if (!value.startsWith("data:")) {
-    return null
-  }
+function toChatAttachments({
+  media,
+  attachments,
+}: {
+  media?: string[]
+  attachments?: {
+    type?: "image" | "audio" | "video" | "file"
+    url: string
+    filename?: string
+    content_type?: string
+  }[]
+}): ChatAttachment[] | undefined {
+  const normalizedAttachments = attachments
+    ?.filter((attachment) => attachment.url)
+    .map(
+      (attachment) =>
+        ({
+          type: attachment.type ?? "file",
+          url: attachment.url,
+          filename: attachment.filename,
+          contentType: attachment.content_type,
+        }) satisfies ChatAttachment,
+    )
 
-  const payload = value.slice("data:".length)
-  const [header] = payload.split(",", 1)
-  const [mimeType] = header.split(";", 1)
-  const normalized = mimeType.trim().toLowerCase()
+  const legacyMediaAttachments = (media ?? [])
+    .filter((item) => item.startsWith("data:image/"))
+    .map((url) => ({ type: "image" as const, url }))
 
-  return normalized || null
-}
+  const merged = [...(normalizedAttachments ?? []), ...legacyMediaAttachments]
 
-function toChatAttachments(media?: string[]): ChatAttachment[] | undefined {
-  if (!media || media.length === 0) {
-    return undefined
-  }
-
-  const attachments = media
-    .filter((item) => item.startsWith("data:"))
-    .map((url) => {
-      const mimeType = mimeTypeFromDataUrl(url)
-      let type: ChatAttachment["type"] = "file"
-      if (mimeType?.startsWith("image/")) {
-        type = "image"
-      } else if (mimeType?.startsWith("audio/")) {
-        type = "audio"
-      }
-
-      return { type, url, mimeType: mimeType || undefined }
-    })
-
-  return attachments.length > 0 ? attachments : undefined
+  return merged.length > 0 ? merged : undefined
 }
 
 export async function loadSessionMessages(
@@ -47,8 +49,15 @@ export async function loadSessionMessages(
     id: `hist-${index}-${Date.now()}`,
     role: message.role,
     content: message.content,
-    kind: message.role === "assistant" ? "normal" : undefined,
-    attachments: toChatAttachments(message.media),
+    kind: message.role === "assistant" ? (message.kind ?? "normal") : undefined,
+    toolCalls:
+      message.role === "assistant"
+        ? parseToolCallsValue(message.tool_calls)
+        : undefined,
+    attachments: toChatAttachments({
+      media: message.media,
+      attachments: message.attachments,
+    }),
     timestamp: fallbackTime,
   }))
 }
@@ -69,12 +78,17 @@ function normalizeMessageTimestamp(timestamp: number | string): string {
 
 function messageSignature(message: ChatMessage): string {
   const attachmentSignature = (message.attachments ?? [])
-    .map((attachment) => `${attachment.type}\u0001${attachment.url}`)
+    .map(
+      (attachment) =>
+        `${attachment.type}\u0001${attachment.url}\u0001${attachment.filename ?? ""}`,
+    )
     .join("\u0002")
 
   return `${message.role}\u0000${message.content}\u0000${normalizeMessageTimestamp(
     message.timestamp,
-  )}\u0000${message.kind ?? ""}\u0000${attachmentSignature}`
+  )}\u0000${message.kind ?? ""}\u0000${attachmentSignature}\u0000${toolCallsSignature(
+    message.toolCalls,
+  )}`
 }
 
 function comparableTimestamp(timestamp: number | string): number {

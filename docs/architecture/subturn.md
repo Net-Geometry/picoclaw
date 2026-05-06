@@ -21,17 +21,17 @@ By using a SubTurn, an agent can break down a problem and run a separate LLM inv
 
 When spawning a SubTurn, you must provide a `SubTurnConfig`:
 
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `Model` | `string` | The LLM model to use for the sub-turn (e.g., `gpt-4o-mini`). **Required.** |
-| `Tools` | `[]tools.Tool` | Tools granted to the sub-turn. If empty, it inherits the parent's tools. |
-| `SystemPrompt` | `string` | The task description for the sub-turn. Sent as the first user message to the LLM (not as a system prompt override). |
-| `ActualSystemPrompt` | `string` | Optional explicit system prompt to replace the agent's default. Leave empty to inherit the parent agent's system prompt. |
-| `MaxTokens` | `int` | Maximum tokens for the generated response. |
-| `Async` | `bool` | Controls the result delivery mode (Synchronous vs. Asynchronous). |
-| `Critical` | `bool` | If `true`, the sub-turn continues running even if the parent finishes gracefully. |
-| `Timeout` | `time.Duration` | Maximum execution time (default: 5 minutes). |
-| `MaxContextRunes`| `int` | Soft context limit. `0` = auto-calculate (75% of model's context window, recommended), `-1` = no limit (disable soft truncation, rely only on hard context error recovery), `>0` = use specified rune limit. |
+| Field                | Type            | Description                                                                                                                                                                                                  |
+| :------------------- | :-------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Model`              | `string`        | The LLM model to use for the sub-turn (e.g., `gpt-4o-mini`). **Required.**                                                                                                                                   |
+| `Tools`              | `[]tools.Tool`  | Tools granted to the sub-turn. If empty, it inherits the parent's tools.                                                                                                                                     |
+| `SystemPrompt`       | `string`        | The task description for the sub-turn. Sent as the first user message to the LLM (not as a system prompt override).                                                                                          |
+| `ActualSystemPrompt` | `string`        | Optional explicit system prompt to replace the agent's default. Leave empty to inherit the parent agent's system prompt.                                                                                     |
+| `MaxTokens`          | `int`           | Maximum tokens for the generated response.                                                                                                                                                                   |
+| `Async`              | `bool`          | Controls the result delivery mode (Synchronous vs. Asynchronous).                                                                                                                                            |
+| `Critical`           | `bool`          | If `true`, the sub-turn continues running even if the parent finishes gracefully.                                                                                                                            |
+| `Timeout`            | `time.Duration` | Maximum execution time (default: 5 minutes).                                                                                                                                                                 |
+| `MaxContextRunes`    | `int`           | Soft context limit. `0` = auto-calculate (75% of model's context window, recommended), `-1` = no limit (disable soft truncation, rely only on hard context error recovery), `>0` = use specified rune limit. |
 
 > **Note:** The `Async` flag does **not** make the call non-blocking. It only controls whether the result is also delivered to the parent's `pendingResults` channel. Both modes block the caller until the sub-turn completes. For true non-blocking execution, the caller must spawn the sub-turn in a separate goroutine.
 
@@ -79,10 +79,10 @@ result, err := agent.SpawnSubTurn(ctx, cfg)
 
 SubTurns implement automatic retry mechanisms for transient errors:
 
-| Error Type | Max Retries | Recovery Action |
-|:-----------|:------------|:----------------|
-| Context Length Exceeded | 2 | Force compress history and retry |
-| Response Truncated (`finish_reason="truncated"`) | 2 | Inject recovery prompt and retry |
+| Error Type                                       | Max Retries | Recovery Action                  |
+| :----------------------------------------------- | :---------- | :------------------------------- |
+| Context Length Exceeded                          | 2           | Force compress history and retry |
+| Response Truncated (`finish_reason="truncated"`) | 2           | Inject recovery prompt and retry |
 
 ### Truncation Recovery
 When the LLM response is truncated (`finish_reason="truncated"`), SubTurn automatically:
@@ -135,16 +135,16 @@ The agent loop polls for async SubTurn results at two points per iteration:
 
 All active turns are registered in `AgentLoop.activeTurnStates` (`sync.Map`, keyed by session key). A reservation sentinel is stored atomically via `LoadOrStore` before the worker starts, then replaced with the real `*turnState` when `runTurn` registers. This prevents a TOCTOU race where multiple messages for the same session could spawn concurrent workers. The sentinel is cleaned up by the worker's deferred cleanup. This allows `HardAbort` and `/subagents` observability commands to find and operate on active turns.
 
-## Event Bus Integration
+## Runtime Event Integration
 
-SubTurns emit specific events to the PicoClaw `EventBus` for observability and debugging:
+SubTurns emit runtime events through `pkg/events` for observability and debugging:
 
-| Event Kind | When Emitted | Payload |
-|:------|:-------------|:--------|
-| `subturn_spawn` | Sub-turn successfully initialized | `SubTurnSpawnPayload{AgentID, Label, ParentTurnID}` |
-| `subturn_end` | Sub-turn finishes (success or error) | `SubTurnEndPayload{AgentID, Status}` |
-| `subturn_result_delivered` | Async result successfully delivered to parent | `SubTurnResultDeliveredPayload{TargetChannel, TargetChatID, ContentLen}` |
-| `subturn_orphan` | Result cannot be delivered (parent finished or channel full) | `SubTurnOrphanPayload{ParentTurnID, ChildTurnID, Reason}` |
+| Event Kind                       | When Emitted                                                 | Payload                                                                  |
+| :------------------------------- | :----------------------------------------------------------- | :----------------------------------------------------------------------- |
+| `agent.subturn.spawn`            | Sub-turn successfully initialized                            | `SubTurnSpawnPayload{AgentID, Label, ParentTurnID}`                      |
+| `agent.subturn.end`              | Sub-turn finishes (success or error)                         | `SubTurnEndPayload{AgentID, Status}`                                     |
+| `agent.subturn.result_delivered` | Async result successfully delivered to parent                | `SubTurnResultDeliveredPayload{TargetChannel, TargetChatID, ContentLen}` |
+| `agent.subturn.orphan`           | Result cannot be delivered (parent finished or channel full) | `SubTurnOrphanPayload{ParentTurnID, ChildTurnID, Reason}`                |
 
 ## API Reference
 
@@ -194,9 +194,9 @@ Resumes an idle agent turn by dequeuing steering messages for the given session 
 
 SubTurn relies on context values for proper operation:
 
-| Context Key | Purpose |
-|:------------|:--------|
-| `agentLoopKey` | Stores `*AgentLoop` for tool access and SubTurn spawning |
+| Context Key    | Purpose                                                        |
+| :------------- | :------------------------------------------------------------- |
+| `agentLoopKey` | Stores `*AgentLoop` for tool access and SubTurn spawning       |
 | `turnStateKey` | Stores `*turnState` for hierarchy tracking and result delivery |
 
 ### Injecting Dependencies
@@ -217,12 +217,12 @@ ctx = withTurnState(ctx, turnState)
 
 ## Error Types
 
-| Error | Condition |
-|:------|:----------|
-| `ErrDepthLimitExceeded` | SubTurn depth exceeds 3 levels |
-| `ErrInvalidSubTurnConfig` | Required field `Model` is empty |
-| `ErrConcurrencyTimeout` | All 5 concurrency slots occupied for 30+ seconds |
-| Context errors | Parent context cancelled during semaphore acquisition |
+| Error                     | Condition                                             |
+| :------------------------ | :---------------------------------------------------- |
+| `ErrDepthLimitExceeded`   | SubTurn depth exceeds 3 levels                        |
+| `ErrInvalidSubTurnConfig` | Required field `Model` is empty                       |
+| `ErrConcurrencyTimeout`   | All 5 concurrency slots occupied for 30+ seconds      |
+| Context errors            | Parent context cancelled during semaphore acquisition |
 
 ## Thread Safety
 
@@ -240,13 +240,13 @@ An orphan result occurs when:
 2. The `pendingResults` channel is full (buffer size: 16)
 
 When a result becomes orphan:
-- `SubTurnOrphanResultEvent` is emitted to EventBus
+- `agent.subturn.orphan` is emitted to the runtime event bus
 - The result is **NOT** delivered to the LLM context
 - External systems can listen to this event for custom handling
 
 ### Preventing Orphan Results
 - Use `Critical: true` for important SubTurns that must complete
-- Monitor `SubTurnOrphanResultEvent` for observability
+- Monitor `agent.subturn.orphan` for observability
 - Consider the 16-buffer limit when spawning many async SubTurns
 
 ## Tool Inheritance
@@ -272,12 +272,12 @@ cfg := agent.SubTurnConfig{
 
 ## Reference
 
-| Constant | Value |
-|:---------|:------|
-| `maxSubTurnDepth` | 3 |
-| `maxConcurrentSubTurns` | 5 |
-| `concurrencyTimeout` | 30s |
-| `defaultSubTurnTimeout` | 5m |
-| `maxEphemeralHistorySize` | 50 messages |
-| `pendingResults` buffer | 16 |
+| Constant                  | Value                       |
+| :------------------------ | :-------------------------- |
+| `maxSubTurnDepth`         | 3                           |
+| `maxConcurrentSubTurns`   | 5                           |
+| `concurrencyTimeout`      | 30s                         |
+| `defaultSubTurnTimeout`   | 5m                          |
+| `maxEphemeralHistorySize` | 50 messages                 |
+| `pendingResults` buffer   | 16                          |
 | `MaxContextRunes` default | 75% of model context window |

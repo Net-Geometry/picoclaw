@@ -4,9 +4,6 @@ import { useEffect, useRef, useState } from "react"
 import { clearGatewayLogs, getGatewayLogs } from "@/api/gateway"
 import { gatewayAtom } from "@/store/gateway"
 
-const ACTIVE_POLL_INTERVAL_MS = 500
-const IDLE_POLL_INTERVAL_MS = 1000
-
 export function useGatewayLogs() {
   const [logs, setLogs] = useState<string[]>([])
   const [clearing, setClearing] = useState(false)
@@ -45,7 +42,7 @@ export function useGatewayLogs() {
         )
       ) {
         if (mounted) {
-          timeout = setTimeout(fetchLogs, IDLE_POLL_INTERVAL_MS)
+          timeout = setTimeout(fetchLogs, 1000)
         }
         return
       }
@@ -80,7 +77,7 @@ export function useGatewayLogs() {
         // Ignore simple fetch errors during polling.
       } finally {
         if (mounted) {
-          timeout = setTimeout(fetchLogs, ACTIVE_POLL_INTERVAL_MS)
+          timeout = setTimeout(fetchLogs, 1000)
         }
       }
     }

@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/sipeed/picoclaw/pkg/bus"
+	runtimeevents "github.com/sipeed/picoclaw/pkg/events"
 	"github.com/sipeed/picoclaw/pkg/logger"
 	"github.com/sipeed/picoclaw/pkg/providers"
 	"github.com/sipeed/picoclaw/pkg/session"
@@ -187,6 +188,7 @@ func (al *AgentLoop) enqueueSteeringMessage(scope, agentID string, msg providers
 		return fmt.Errorf("steering queue is not initialized")
 	}
 
+	msg = steeringPromptMessage(msg)
 	if err := al.steering.pushScope(scope, msg); err != nil {
 		logger.WarnCF("agent", "Failed to enqueue steering message", map[string]any{
 			"error": err.Error(),
@@ -205,7 +207,7 @@ func (al *AgentLoop) enqueueSteeringMessage(scope, agentID string, msg providers
 		"scope":       normalizeSteeringScope(scope),
 	})
 
-	meta := EventMeta{
+	meta := HookMeta{
 		Source:    "Steer",
 		TracePath: "turn.interrupt.received",
 	}
@@ -229,7 +231,7 @@ func (al *AgentLoop) enqueueSteeringMessage(scope, agentID string, msg providers
 	}
 
 	al.emitEvent(
-		EventKindInterruptReceived,
+		runtimeevents.KindAgentInterruptReceived,
 		meta,
 		InterruptReceivedPayload{
 			Kind:       InterruptKindSteering,
@@ -409,7 +411,7 @@ func (al *AgentLoop) InterruptGraceful(hint string) error {
 	}
 
 	al.emitEvent(
-		EventKindInterruptReceived,
+		runtimeevents.KindAgentInterruptReceived,
 		ts.eventMeta("InterruptGraceful", "turn.interrupt.received"),
 		InterruptReceivedPayload{
 			Kind:    InterruptKindGraceful,
@@ -437,7 +439,7 @@ func (al *AgentLoop) InterruptHard() error {
 	}
 
 	al.emitEvent(
-		EventKindInterruptReceived,
+		runtimeevents.KindAgentInterruptReceived,
 		ts.eventMeta("InterruptHard", "turn.interrupt.received"),
 		InterruptReceivedPayload{
 			Kind: InterruptKindHard,

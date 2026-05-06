@@ -21,13 +21,13 @@ The Telegram channel uses long polling via the Telegram Bot API for bot-based co
 }
 ```
 
-| Field            | Type   | Required | Description                                                        |
-| ---------------- | ------ | -------- | ------------------------------------------------------------------ |
-| enabled          | bool   | Yes      | Whether to enable the Telegram channel                             |
-| token            | string | Yes      | Telegram Bot API Token                                             |
-| allow_from       | array  | No       | Allowlist of user IDs; empty means all users are allowed           |
-| proxy            | string | No       | Proxy URL for connecting to the Telegram API (e.g. http://127.0.0.1:7890) |
-| use_markdown_v2 | bool   | No       | Enable Telegram MarkdownV2 formatting                              |
+| Field           | Type   | Required | Description                                                               |
+| --------------- | ------ | -------- | ------------------------------------------------------------------------- |
+| enabled         | bool   | Yes      | Whether to enable the Telegram channel                                    |
+| token           | string | Yes      | Telegram Bot API Token                                                    |
+| allow_from      | array  | No       | Allowlist of user IDs; empty means all users are allowed                  |
+| proxy           | string | No       | Proxy URL for connecting to the Telegram API (e.g. http://127.0.0.1:7890) |
+| use_markdown_v2 | bool   | No       | Enable Telegram MarkdownV2 formatting                                     |
 
 ## Setup
 
@@ -44,6 +44,8 @@ Telegram auto-registers PicoClaw's top-level bot commands at startup, including 
 Skill-related commands:
 
 - `/list skills` lists the installed skills visible to the current agent.
+- `/list mcp` lists configured MCP servers and whether they are deferred/connected.
+- `/show mcp <server>` lists the active tools for a connected MCP server.
 - `/use <skill> <message>` forces a skill for a single request.
 - `/use <skill>` arms the skill for your next message in the same chat.
 - `/use clear` clears a pending skill override.
@@ -52,6 +54,8 @@ Examples:
 
 ```text
 /list skills
+/list mcp
+/show mcp github
 /use git explain how to squash the last 3 commits
 /use git
 explain how to squash the last 3 commits

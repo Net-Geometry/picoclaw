@@ -10,10 +10,10 @@
 
 環境変数を使用してデフォルトパスを上書きできます。ポータブルインストール、コンテナ化デプロイ、または picoclaw をシステムサービスとして実行する場合に便利です。これらの変数は独立しており、異なるパスを制御します。
 
-| 変数              | 説明                                                                                                                             | デフォルトパス            |
-|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------|---------------------------|
-| `PICOCLAW_CONFIG` | 設定ファイルのパスを上書きします。picoclaw がどの `config.json` を読み込むかを直接指定し、他のすべての場所を無視します。 | `~/.picoclaw/config.json` |
-| `PICOCLAW_HOME`   | picoclaw データのルートディレクトリを上書きします。`workspace` やその他のデータディレクトリのデフォルト場所を変更します。          | `~/.picoclaw`             |
+| 変数              | 説明                                                                                                                      | デフォルトパス            |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `PICOCLAW_CONFIG` | 設定ファイルのパスを上書きします。picoclaw がどの `config.json` を読み込むかを直接指定し、他のすべての場所を無視します。  | `~/.picoclaw/config.json` |
+| `PICOCLAW_HOME`   | picoclaw データのルートディレクトリを上書きします。`workspace` やその他のデータディレクトリのデフォルト場所を変更します。 | `~/.picoclaw`             |
 
 **例：**
 
@@ -125,9 +125,9 @@ PicoClaw はデフォルトでサンドボックス環境で実行されます�
 }
 ```
 
-| オプション              | デフォルト値            | 説明                                  |
-| ----------------------- | ----------------------- | ------------------------------------- |
-| `workspace`             | `~/.picoclaw/workspace` | Agent の作業ディレクトリ              |
+| オプション              | デフォルト値            | 説明                                              |
+| ----------------------- | ----------------------- | ------------------------------------------------- |
+| `workspace`             | `~/.picoclaw/workspace` | Agent の作業ディレクトリ                          |
 | `restrict_to_workspace` | `true`                  | ファイル/コマンドアクセスをワークスペース内に制限 |
 
 #### 保護されたツール
@@ -156,19 +156,19 @@ PicoClaw はデフォルトでサンドボックス環境で実行されます�
 
 ### ファイルアクセス制御
 
-| 設定キー | 型 | デフォルト値 | 説明 |
-|----------|------|-------------|------|
-| `tools.allow_read_paths` | string[] | `[]` | ワークスペース外で読み取りを許可する追加パス |
-| `tools.allow_write_paths` | string[] | `[]` | ワークスペース外で書き込みを許可する追加パス |
+| 設定キー                  | 型       | デフォルト値 | 説明                                         |
+| ------------------------- | -------- | ------------ | -------------------------------------------- |
+| `tools.allow_read_paths`  | string[] | `[]`         | ワークスペース外で読み取りを許可する追加パス |
+| `tools.allow_write_paths` | string[] | `[]`         | ワークスペース外で書き込みを許可する追加パス |
 
 ### Exec セキュリティ設定
 
-| 設定キー | 型 | デフォルト値 | 説明 |
-|----------|------|-------------|------|
-| `tools.exec.allow_remote` | bool | `false` | リモートチャネル（Telegram/Discord など）からの exec ツール実行を許可 |
-| `tools.exec.enable_deny_patterns` | bool | `true` | 危険なコマンドのインターセプトを有効化 |
-| `tools.exec.custom_deny_patterns` | string[] | `[]` | カスタムブロック正規表現パターン |
-| `tools.exec.custom_allow_patterns` | string[] | `[]` | カスタム許可正規表現パターン |
+| 設定キー                           | 型       | デフォルト値 | 説明                                                                  |
+| ---------------------------------- | -------- | ------------ | --------------------------------------------------------------------- |
+| `tools.exec.allow_remote`          | bool     | `false`      | リモートチャネル（Telegram/Discord など）からの exec ツール実行を許可 |
+| `tools.exec.enable_deny_patterns`  | bool     | `true`       | 危険なコマンドのインターセプトを有効化                                |
+| `tools.exec.custom_deny_patterns`  | string[] | `[]`         | カスタムブロック正規表現パターン                                      |
+| `tools.exec.custom_allow_patterns` | string[] | `[]`         | カスタム許可正規表現パターン                                          |
 
 > **セキュリティ注意:** Symlink 保護はデフォルトで有効です。すべてのファイルパスはホワイトリストマッチング前に `filepath.EvalSymlinks` で解決され、シンボリックリンクエスケープ攻撃を防止します。
 
@@ -224,11 +224,11 @@ export PICOCLAW_AGENTS_DEFAULTS_RESTRICT_TO_WORKSPACE=false
 
 `restrict_to_workspace` 設定はすべての実行パスで一貫して適用されます：
 
-| 実行パス         | セキュリティ境界             |
-| ---------------- | ---------------------------- |
-| メイン Agent     | `restrict_to_workspace` ✅   |
-| サブ Agent / Spawn | 同じ制限を継承 ✅           |
-| ハートビートタスク | 同じ制限を継承 ✅           |
+| 実行パス           | セキュリティ境界          |
+| ------------------ | ------------------------- |
+| メイン Agent       | `restrict_to_workspace` ✅ |
+| サブ Agent / Spawn | 同じ制限を継承 ✅          |
+| ハートビートタスク | 同じ制限を継承 ✅          |
 
 すべてのパスは同じワークスペース制限を共有しており、サブ Agent やスケジュールタスクを通じてセキュリティ境界を回避することはできません。
 
@@ -265,12 +265,12 @@ Agent は 30 分ごと（設定可能）にこのファイルを読み取り、�
 
 **主な動作：**
 
-| 特性             | 説明                                         |
-| ---------------- | -------------------------------------------- |
-| **spawn**        | 非同期サブ Agent を作成、メインハートビートをブロックしない |
-| **独立コンテキスト** | サブ Agent は独自のコンテキストを持ち、セッション履歴なし |
-| **message tool** | サブ Agent は message ツールでユーザーと直接通信 |
-| **ノンブロッキング** | spawn 後、ハートビートは次のタスクに進む     |
+| 特性                 | 説明                                                        |
+| -------------------- | ----------------------------------------------------------- |
+| **spawn**            | 非同期サブ Agent を作成、メインハートビートをブロックしない |
+| **独立コンテキスト** | サブ Agent は独自のコンテキストを持ち、セッション履歴なし   |
+| **message tool**     | サブ Agent は message ツールでユーザーと直接通信            |
+| **ノンブロッキング** | spawn 後、ハートビートは次のタスクに進む                    |
 
 **設定：**
 
@@ -283,10 +283,10 @@ Agent は 30 分ごと（設定可能）にこのファイルを読み取り、�
 }
 ```
 
-| オプション | デフォルト値 | 説明                           |
-| ---------- | ------------ | ------------------------------ |
-| `enabled`  | `true`       | ハートビートの有効/無効        |
-| `interval` | `30`         | チェック間隔（分単位、最小: 5）|
+| オプション | デフォルト値 | 説明                            |
+| ---------- | ------------ | ------------------------------- |
+| `enabled`  | `true`       | ハートビートの有効/無効         |
+| `interval` | `30`         | チェック間隔（分単位、最小: 5） |
 
 **環境変数:**
 
@@ -314,19 +314,19 @@ HEARTBEAT_OK を返信        ユーザーが直接結果を受信
 > [!NOTE]
 > Groq は Whisper による無料音声文字起こしを提供します。設定すると、任意のチャンネルの音声メッセージが Agent レベルで自動的に文字起こしされます。
 
-| Provider     | 用途                                    | API キー取得                                                 |
-| ------------ | --------------------------------------- | ------------------------------------------------------------ |
-| `gemini`     | LLM（Gemini 直接）                      | [aistudio.google.com](https://aistudio.google.com)           |
-| `zhipu`      | LLM（Zhipu 直接）                       | [bigmodel.cn](https://bigmodel.cn)                           |
-| `volcengine` | LLM（Volcengine 直接）                  | [volcengine.com](https://www.volcengine.com/activity/codingplan?utm_campaign=PicoClaw&utm_content=PicoClaw&utm_medium=devrel&utm_source=OWO&utm_term=PicoClaw) |
-| `openrouter` | LLM（推奨、全モデルにアクセス可能）     | [openrouter.ai](https://openrouter.ai)                       |
-| `anthropic`  | LLM（Claude 直接）                      | [console.anthropic.com](https://console.anthropic.com)       |
-| `openai`     | LLM（GPT 直接）                         | [platform.openai.com](https://platform.openai.com)           |
-| `deepseek`   | LLM（DeepSeek 直接）                    | [platform.deepseek.com](https://platform.deepseek.com)       |
-| `qwen`       | LLM（Qwen 直接）                        | [dashscope.console.aliyun.com](https://dashscope.console.aliyun.com) |
-| `groq`       | LLM + **音声文字起こし**（Whisper）     | [console.groq.com](https://console.groq.com)                 |
-| `cerebras`   | LLM（Cerebras 直接）                    | [cerebras.ai](https://cerebras.ai)                           |
-| `vivgrid`    | LLM（Vivgrid 直接）                     | [vivgrid.com](https://vivgrid.com)                           |
+| Provider     | 用途                                | API キー取得                                                                                                                                                   |
+| ------------ | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gemini`     | LLM（Gemini 直接）                  | [aistudio.google.com](https://aistudio.google.com)                                                                                                             |
+| `zhipu`      | LLM（Zhipu 直接）                   | [bigmodel.cn](https://bigmodel.cn)                                                                                                                             |
+| `volcengine` | LLM（Volcengine 直接）              | [volcengine.com](https://www.volcengine.com/activity/codingplan?utm_campaign=PicoClaw&utm_content=PicoClaw&utm_medium=devrel&utm_source=OWO&utm_term=PicoClaw) |
+| `openrouter` | LLM（推奨、全モデルにアクセス可能） | [openrouter.ai](https://openrouter.ai)                                                                                                                         |
+| `anthropic`  | LLM（Claude 直接）                  | [console.anthropic.com](https://console.anthropic.com)                                                                                                         |
+| `openai`     | LLM（GPT 直接）                     | [platform.openai.com](https://platform.openai.com)                                                                                                             |
+| `deepseek`   | LLM（DeepSeek 直接）                | [platform.deepseek.com](https://platform.deepseek.com)                                                                                                         |
+| `qwen`       | LLM（Qwen 直接）                    | [dashscope.console.aliyun.com](https://dashscope.console.aliyun.com)                                                                                           |
+| `groq`       | LLM + **音声文字起こし**（Whisper） | [console.groq.com](https://console.groq.com)                                                                                                                   |
+| `cerebras`   | LLM（Cerebras 直接）                | [cerebras.ai](https://cerebras.ai)                                                                                                                             |
+| `vivgrid`    | LLM（Vivgrid 直接）                 | [vivgrid.com](https://vivgrid.com)                                                                                                                             |
 
 ### モデル設定 (model_list)
 
@@ -334,19 +334,19 @@ HEARTBEAT_OK を返信        ユーザーが直接結果を受信
 
 #### サポートされている全 Vendor
 
-| Vendor                  | `model` プレフィックス | デフォルト API Base                                 | プロトコル | API Key                                                          |
-| ----------------------- | ---------------------- | --------------------------------------------------- | ---------- | ---------------------------------------------------------------- |
-| **OpenAI**              | `openai/`              | `https://api.openai.com/v1`                         | OpenAI     | [取得](https://platform.openai.com)                              |
-| **Anthropic**           | `anthropic/`           | `https://api.anthropic.com/v1`                      | Anthropic  | [取得](https://console.anthropic.com)                            |
-| **智谱 AI (GLM)**       | `zhipu/`               | `https://open.bigmodel.cn/api/paas/v4`              | OpenAI     | [取得](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys)    |
-| **DeepSeek**            | `deepseek/`            | `https://api.deepseek.com/v1`                       | OpenAI     | [取得](https://platform.deepseek.com)                            |
-| **Google Gemini**       | `gemini/`              | `https://generativelanguage.googleapis.com/v1beta`  | OpenAI     | [取得](https://aistudio.google.com/api-keys)                     |
-| **Groq**                | `groq/`                | `https://api.groq.com/openai/v1`                    | OpenAI     | [取得](https://console.groq.com)                                 |
-| **通義千問 (Qwen)**     | `qwen/`                | `https://dashscope.aliyuncs.com/compatible-mode/v1` | OpenAI     | [取得](https://dashscope.console.aliyun.com)                     |
-| **Ollama**              | `ollama/`              | `http://localhost:11434/v1`                         | OpenAI     | ローカル（キー不要）                                             |
-| **OpenRouter**          | `openrouter/`          | `https://openrouter.ai/api/v1`                      | OpenAI     | [取得](https://openrouter.ai/keys)                               |
+| Vendor                  | `model` プレフィックス | デフォルト API Base                                 | プロトコル | API Key                                                                                                                                              |
+| ----------------------- | ---------------------- | --------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **OpenAI**              | `openai/`              | `https://api.openai.com/v1`                         | OpenAI     | [取得](https://platform.openai.com)                                                                                                                  |
+| **Anthropic**           | `anthropic/`           | `https://api.anthropic.com/v1`                      | Anthropic  | [取得](https://console.anthropic.com)                                                                                                                |
+| **智谱 AI (GLM)**       | `zhipu/`               | `https://open.bigmodel.cn/api/paas/v4`              | OpenAI     | [取得](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys)                                                                                        |
+| **DeepSeek**            | `deepseek/`            | `https://api.deepseek.com/v1`                       | OpenAI     | [取得](https://platform.deepseek.com)                                                                                                                |
+| **Google Gemini**       | `gemini/`              | `https://generativelanguage.googleapis.com/v1beta`  | Gemini     | [取得](https://aistudio.google.com/api-keys)                                                                                                         |
+| **Groq**                | `groq/`                | `https://api.groq.com/openai/v1`                    | OpenAI     | [取得](https://console.groq.com)                                                                                                                     |
+| **通義千問 (Qwen)**     | `qwen/`                | `https://dashscope.aliyuncs.com/compatible-mode/v1` | OpenAI     | [取得](https://dashscope.console.aliyun.com)                                                                                                         |
+| **Ollama**              | `ollama/`              | `http://localhost:11434/v1`                         | OpenAI     | ローカル（キー不要）                                                                                                                                 |
+| **OpenRouter**          | `openrouter/`          | `https://openrouter.ai/api/v1`                      | OpenAI     | [取得](https://openrouter.ai/keys)                                                                                                                   |
 | **VolcEngine (Doubao)** | `volcengine/`          | `https://ark.cn-beijing.volces.com/api/v3`          | OpenAI     | [取得](https://www.volcengine.com/activity/codingplan?utm_campaign=PicoClaw&utm_content=PicoClaw&utm_medium=devrel&utm_source=OWO&utm_term=PicoClaw) |
-| **Antigravity**         | `antigravity/`         | Google Cloud                                        | Custom     | OAuth のみ                                                       |
+| **Antigravity**         | `antigravity/`         | Google Cloud                                        | Custom     | OAuth のみ                                                                                                                                           |
 
 #### ロードバランシング
 
@@ -370,8 +370,11 @@ HEARTBEAT_OK を返信        ユーザーが直接結果を受信
 PicoClaw はプロトコルファミリーで Provider をルーティングします：
 
 - **OpenAI 互換**：OpenRouter、Groq、Zhipu、vLLM スタイルのエンドポイントなど。
+- **Gemini ネイティブ**：Google Gemini のネイティブ `models/*:generateContent` / `models/*:streamGenerateContent` エンドポイント。
 - **Anthropic**：Claude ネイティブ API の動作。
 - **Codex/OAuth**：OpenAI OAuth/トークン認証ルート。
+
+これによりランタイムを軽量に保ちつつ、新しい OpenAI 互換バックエンドの追加をほぼ設定操作（`api_base` + `api_keys`）のみで実現します。
 
 ### スケジュールタスク / リマインダー
 
@@ -392,9 +395,9 @@ PicoClaw は `cron` ツールを通じて cron スタイルのスケジュール
 
 ### 高度なトピック
 
-| トピック | 説明 |
-| -------- | ---- |
-| [Hook システム](../architecture/hooks/README.md) | イベント駆動 Hook：オブザーバー、インターセプター、承認 Hook |
-| [Steering](../architecture/steering.md) | 実行中の Agent ループにメッセージを注入 |
-| [SubTurn](../architecture/subturn.md) | サブ Agent の調整、並行制御、ライフサイクル |
-| [コンテキスト管理](../architecture/agent-refactor/context.md) | コンテキスト境界検出、圧縮戦略 |
+| トピック                                                      | 説明                                                         |
+| ------------------------------------------------------------- | ------------------------------------------------------------ |
+| [Hook システム](../architecture/hooks/README.md)              | イベント駆動 Hook：オブザーバー、インターセプター、承認 Hook |
+| [Steering](../architecture/steering.md)                       | 実行中の Agent ループにメッセージを注入                      |
+| [SubTurn](../architecture/subturn.md)                         | サブ Agent の調整、並行制御、ライフサイクル                  |
+| [コンテキスト管理](../architecture/agent-refactor/context.md) | コンテキスト境界検出、圧縮戦略                               |

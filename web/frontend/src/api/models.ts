@@ -6,11 +6,10 @@ import { refreshGatewayState } from "@/store/gateway"
 export interface ModelInfo {
   index: number
   model_name: string
+  provider?: string
   model: string
   api_base?: string
   api_key: string
-  api_keys?: string[]
-  api_keys_count?: number
   proxy?: string
   auth_method?: string
   // Advanced fields
@@ -20,6 +19,7 @@ export interface ModelInfo {
   max_tokens_field?: string
   request_timeout?: number
   thinking_level?: string
+  tool_schema_transform?: string
   extra_body?: Record<string, unknown>
   custom_headers?: Record<string, string>
   // Meta

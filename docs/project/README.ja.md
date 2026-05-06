@@ -101,11 +101,11 @@ _*最近のバージョンでは急速な PR マージにより 10〜20MB にな
 
 <div align="center">
 
-|                                | OpenClaw      | NanoBot                  | **PicoClaw**                           |
-| ------------------------------ | ------------- | ------------------------ | -------------------------------------- |
-| **言語**                       | TypeScript    | Python                   | **Go**                                 |
-| **RAM**                        | >1GB          | >100MB                   | **< 10MB***                            |
-| **起動時間**</br>(0.8GHz コア) | >500秒        | >30秒                    | **<1秒**                               |
+|                                | OpenClaw      | NanoBot                  | **PicoClaw**                               |
+| ------------------------------ | ------------- | ------------------------ | ------------------------------------------ |
+| **言語**                       | TypeScript    | Python                   | **Go**                                     |
+| **RAM**                        | >1GB          | >100MB                   | **< 10MB***                                |
+| **起動時間**</br>(0.8GHz コア) | >500秒        | >30秒                    | **<1秒**                                   |
 | **コスト**                     | Mac Mini $599 | 大半の Linux ボード ~$50 | **あらゆる Linux ボード**</br>**最安 $10** |
 
 <img src="../../assets/compare.jpg" alt="PicoClaw" width="512">
@@ -289,24 +289,6 @@ docker compose -f docker/docker-compose.yml --profile launcher up -d
 
 </details>
 
-### 💻 TUI Launcher（ヘッドレス / SSH 向け推奨）
-
-TUI（Terminal UI）Launcher は設定と管理のためのフル機能ターミナルインターフェースを提供します。サーバー、Raspberry Pi、その他のヘッドレス環境に最適です。
-
-```bash
-picoclaw-launcher-tui
-```
-
-<p align="center">
-<img src="../../assets/launcher-tui.jpg" alt="TUI Launcher" width="600">
-</p>
-
-**始め方:**
-
-TUI メニューを使って：**1)** Provider を設定 → **2)** Channel を設定 → **3)** Gateway を起動 → **4)** チャット！
-
-TUI の詳細なドキュメントは [docs.picoclaw.io](https://docs.picoclaw.io) を参照してください。
-
 <a id="-run-on-old-android-phones"></a>
 ### 📱 Android
 
@@ -397,30 +379,30 @@ picoclaw gateway
 
 PicoClaw は `model_list` 設定を通じて 30 以上の LLM Provider をサポートしています。`protocol/model` 形式を使用してください：
 
-| Provider | Protocol | API キー | 備考 |
-|----------|----------|---------|------|
-| [OpenAI](https://platform.openai.com/api-keys) | `openai/` | 必須 | GPT-5.4、GPT-4o、o3 など |
-| [Anthropic](https://console.anthropic.com/settings/keys) | `anthropic/` | 必須 | Claude Opus 4.6、Sonnet 4.6 など |
-| [Google Gemini](https://aistudio.google.com/apikey) | `gemini/` | 必須 | Gemini 3 Flash、2.5 Pro など |
-| [OpenRouter](https://openrouter.ai/keys) | `openrouter/` | 必須 | 200 以上のモデル、統合 API |
-| [Zhipu (GLM)](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) | `zhipu/` | 必須 | GLM-4.7、GLM-5 など |
-| [DeepSeek](https://platform.deepseek.com/api_keys) | `deepseek/` | 必須 | DeepSeek-V3、DeepSeek-R1 |
-| [Volcengine](https://console.volcengine.com) | `volcengine/` | 必須 | Doubao、Ark モデル |
-| [Qwen](https://dashscope.console.aliyun.com/apiKey) | `qwen/` | 必須 | Qwen3、Qwen-Max など |
-| [Groq](https://console.groq.com/keys) | `groq/` | 必須 | 高速推論（Llama、Mixtral） |
-| [Moonshot (Kimi)](https://platform.moonshot.cn/console/api-keys) | `moonshot/` | 必須 | Kimi モデル |
-| [Minimax](https://platform.minimaxi.com/user-center/basic-information/interface-key) | `minimax/` | 必須 | MiniMax モデル |
-| [Mistral](https://console.mistral.ai/api-keys) | `mistral/` | 必須 | Mistral Large、Codestral |
-| [NVIDIA NIM](https://build.nvidia.com/) | `nvidia/` | 必須 | NVIDIA ホスティングモデル |
-| [Cerebras](https://cloud.cerebras.ai/) | `cerebras/` | 必須 | 高速推論 |
-| [Novita AI](https://novita.ai/) | `novita/` | 必須 | 各種オープンモデル |
-| [Xiaomi MiMo](https://platform.xiaomimimo.com/) | `mimo/` | 必須 | MiMo モデル |
-| [Ollama](https://ollama.com/) | `ollama/` | 不要 | ローカルモデル、セルフホスト |
-| [vLLM](https://docs.vllm.ai/) | `vllm/` | 不要 | ローカルデプロイ、OpenAI 互換 |
-| [LiteLLM](https://docs.litellm.ai/) | `litellm/` | 場合による | 100 以上の Provider のプロキシ |
-| [Azure OpenAI](https://portal.azure.com/) | `azure/` | 必須 | エンタープライズ Azure デプロイ |
-| [GitHub Copilot](https://github.com/features/copilot) | `github-copilot/` | OAuth | デバイスコードログイン |
-| [Antigravity](https://console.cloud.google.com/) | `antigravity/` | OAuth | Google Cloud AI |
+| Provider                                                                             | Protocol          | API キー   | 備考                             |
+| ------------------------------------------------------------------------------------ | ----------------- | ---------- | -------------------------------- |
+| [OpenAI](https://platform.openai.com/api-keys)                                       | `openai/`         | 必須       | GPT-5.4、GPT-4o、o3 など         |
+| [Anthropic](https://console.anthropic.com/settings/keys)                             | `anthropic/`      | 必須       | Claude Opus 4.6、Sonnet 4.6 など |
+| [Google Gemini](https://aistudio.google.com/apikey)                                  | `gemini/`         | 必須       | Gemini 3 Flash、2.5 Pro など     |
+| [OpenRouter](https://openrouter.ai/keys)                                             | `openrouter/`     | 必須       | 200 以上のモデル、統合 API       |
+| [Zhipu (GLM)](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys)                 | `zhipu/`          | 必須       | GLM-4.7、GLM-5 など              |
+| [DeepSeek](https://platform.deepseek.com/api_keys)                                   | `deepseek/`       | 必須       | DeepSeek-V3、DeepSeek-R1         |
+| [Volcengine](https://console.volcengine.com)                                         | `volcengine/`     | 必須       | Doubao、Ark モデル               |
+| [Qwen](https://dashscope.console.aliyun.com/apiKey)                                  | `qwen/`           | 必須       | Qwen3、Qwen-Max など             |
+| [Groq](https://console.groq.com/keys)                                                | `groq/`           | 必須       | 高速推論（Llama、Mixtral）       |
+| [Moonshot (Kimi)](https://platform.moonshot.cn/console/api-keys)                     | `moonshot/`       | 必須       | Kimi モデル                      |
+| [Minimax](https://platform.minimaxi.com/user-center/basic-information/interface-key) | `minimax/`        | 必須       | MiniMax モデル                   |
+| [Mistral](https://console.mistral.ai/api-keys)                                       | `mistral/`        | 必須       | Mistral Large、Codestral         |
+| [NVIDIA NIM](https://build.nvidia.com/)                                              | `nvidia/`         | 必須       | NVIDIA ホスティングモデル        |
+| [Cerebras](https://cloud.cerebras.ai/)                                               | `cerebras/`       | 必須       | 高速推論                         |
+| [Novita AI](https://novita.ai/)                                                      | `novita/`         | 必須       | 各種オープンモデル               |
+| [Xiaomi MiMo](https://platform.xiaomimimo.com/)                                      | `mimo/`           | 必須       | MiMo モデル                      |
+| [Ollama](https://ollama.com/)                                                        | `ollama/`         | 不要       | ローカルモデル、セルフホスト     |
+| [vLLM](https://docs.vllm.ai/)                                                        | `vllm/`           | 不要       | ローカルデプロイ、OpenAI 互換    |
+| [LiteLLM](https://docs.litellm.ai/)                                                  | `litellm/`        | 場合による | 100 以上の Provider のプロキシ   |
+| [Azure OpenAI](https://portal.azure.com/)                                            | `azure/`          | 必須       | エンタープライズ Azure デプロイ  |
+| [GitHub Copilot](https://github.com/features/copilot)                                | `github-copilot/` | OAuth      | デバイスコードログイン           |
+| [Antigravity](https://console.cloud.google.com/)                                     | `antigravity/`    | OAuth      | Google Cloud AI                  |
 
 <details>
 <summary><b>ローカルデプロイ（Ollama、vLLM など）</b></summary>
@@ -459,24 +441,24 @@ Provider の完全な設定詳細は [Provider とモデル](../guides/providers
 
 17 以上のメッセージングプラットフォームで PicoClaw と会話できます：
 
-| Channel | セットアップ | Protocol | ドキュメント |
-|---------|------------|----------|------------|
-| **Telegram** | 簡単（bot トークン） | Long polling | [ガイド](../channels/telegram/README.ja.md) |
-| **Discord** | 簡単（bot トークン + intents） | WebSocket | [ガイド](../channels/discord/README.ja.md) |
-| **WhatsApp** | 簡単（QR スキャンまたは bridge URL） | Native / Bridge | [ガイド](../guides/chat-apps.ja.md#whatsapp) |
-| **微信 (Weixin)** | 簡単（QR スキャン） | iLink API | [ガイド](../guides/chat-apps.ja.md#weixin) |
-| **QQ** | 簡単（AppID + AppSecret） | WebSocket | [ガイド](../channels/qq/README.ja.md) |
-| **Slack** | 簡単（bot + app トークン） | Socket Mode | [ガイド](../channels/slack/README.ja.md) |
-| **Matrix** | 中級（homeserver + トークン） | Sync API | [ガイド](../channels/matrix/README.ja.md) |
-| **DingTalk** | 中級（クライアント認証情報） | Stream | [ガイド](../channels/dingtalk/README.ja.md) |
-| **Feishu / Lark** | 中級（App ID + Secret） | WebSocket/SDK | [ガイド](../channels/feishu/README.ja.md) |
-| **LINE** | 中級（認証情報 + webhook） | Webhook | [ガイド](../channels/line/README.ja.md) |
-| **WeCom** | 簡単（QR ログインまたは手動） | WebSocket | [ガイド](../channels/wecom/README.ja.md) |
-| **IRC** | 中級（サーバー + nick） | IRC protocol | [ガイド](../guides/chat-apps.ja.md#irc) |
-| **OneBot** | 中級（WebSocket URL） | OneBot v11 | [ガイド](../channels/onebot/README.ja.md) |
-| **MaixCam** | 簡単（有効化） | TCP socket | [ガイド](../channels/maixcam/README.ja.md) |
-| **Pico** | 簡単（有効化） | Native protocol | 内蔵 |
-| **Pico Client** | 簡単（WebSocket URL） | WebSocket | 内蔵 |
+| Channel           | セットアップ                         | Protocol        | ドキュメント                                 |
+| ----------------- | ------------------------------------ | --------------- | -------------------------------------------- |
+| **Telegram**      | 簡単（bot トークン）                 | Long polling    | [ガイド](../channels/telegram/README.ja.md)  |
+| **Discord**       | 簡単（bot トークン + intents）       | WebSocket       | [ガイド](../channels/discord/README.ja.md)   |
+| **WhatsApp**      | 簡単（QR スキャンまたは bridge URL） | Native / Bridge | [ガイド](../guides/chat-apps.ja.md#whatsapp) |
+| **微信 (Weixin)** | 簡単（QR スキャン）                  | iLink API       | [ガイド](../guides/chat-apps.ja.md#weixin)   |
+| **QQ**            | 簡単（AppID + AppSecret）            | WebSocket       | [ガイド](../channels/qq/README.ja.md)        |
+| **Slack**         | 簡単（bot + app トークン）           | Socket Mode     | [ガイド](../channels/slack/README.ja.md)     |
+| **Matrix**        | 中級（homeserver + トークン）        | Sync API        | [ガイド](../channels/matrix/README.ja.md)    |
+| **DingTalk**      | 中級（クライアント認証情報）         | Stream          | [ガイド](../channels/dingtalk/README.ja.md)  |
+| **Feishu / Lark** | 中級（App ID + Secret）              | WebSocket/SDK   | [ガイド](../channels/feishu/README.ja.md)    |
+| **LINE**          | 中級（認証情報 + webhook）           | Webhook         | [ガイド](../channels/line/README.ja.md)      |
+| **WeCom**         | 簡単（QR ログインまたは手動）        | WebSocket       | [ガイド](../channels/wecom/README.ja.md)     |
+| **IRC**           | 中級（サーバー + nick）              | IRC protocol    | [ガイド](../guides/chat-apps.ja.md#irc)      |
+| **OneBot**        | 中級（WebSocket URL）                | OneBot v11      | [ガイド](../channels/onebot/README.ja.md)    |
+| **MaixCam**       | 簡単（有効化）                       | TCP socket      | [ガイド](../channels/maixcam/README.ja.md)   |
+| **Pico**          | 簡単（有効化）                       | Native protocol | 内蔵                                         |
+| **Pico Client**   | 簡単（WebSocket URL）                | WebSocket       | 内蔵                                         |
 
 > webhook ベースのすべての Channel は単一の Gateway HTTP サーバー（`gateway.host`:`gateway.port`、デフォルト `127.0.0.1:18790`）を共有します。Feishu は WebSocket/SDK モードを使用し、共有 HTTP サーバーを使用しません。
 
@@ -490,15 +472,15 @@ Channel の詳細なセットアップ手順は [チャットアプリ設定](..
 
 PicoClaw は最新情報を提供するために Web を検索できます。`tools.web` で設定してください：
 
-| 検索エンジン | API キー | 無料枠 | リンク |
-|------------|---------|--------|-------|
-| DuckDuckGo | 不要 | 無制限 | 内蔵フォールバック |
-| [Baidu Search](https://cloud.baidu.com/doc/qianfan-api/s/Wmbq4z7e5) | 必須 | 1000 クエリ/日 | AI 搭載、中国語に最適化 |
-| [Tavily](https://tavily.com) | 必須 | 1000 クエリ/月 | AI Agent 向けに最適化 |
-| [Brave Search](https://brave.com/search/api) | 必須 | 2000 クエリ/月 | 高速でプライベート |
-| [Perplexity](https://www.perplexity.ai) | 必須 | 有料 | AI 搭載検索 |
-| [SearXNG](https://github.com/searxng/searxng) | 不要 | セルフホスト | 無料メタ検索エンジン |
-| [GLM Search](https://open.bigmodel.cn/) | 必須 | 場合による | Zhipu Web 検索 |
+| 検索エンジン                                                        | API キー | 無料枠         | リンク                  |
+| ------------------------------------------------------------------- | -------- | -------------- | ----------------------- |
+| DuckDuckGo                                                          | 不要     | 無制限         | 内蔵フォールバック      |
+| [Baidu Search](https://cloud.baidu.com/doc/qianfan-api/s/Wmbq4z7e5) | 必須     | 1000 クエリ/日 | AI 搭載、中国語に最適化 |
+| [Tavily](https://tavily.com)                                        | 必須     | 1000 クエリ/月 | AI Agent 向けに最適化   |
+| [Brave Search](https://brave.com/search/api)                        | 必須     | 2000 クエリ/月 | 高速でプライベート      |
+| [Perplexity](https://www.perplexity.ai)                             | 必須     | 有料           | AI 搭載検索             |
+| [SearXNG](https://github.com/searxng/searxng)                       | 不要     | セルフホスト   | 無料メタ検索エンジン    |
+| [GLM Search](https://open.bigmodel.cn/)                             | 必須     | 場合による     | Zhipu Web 検索          |
 
 ### ⚙️ その他のツール
 
@@ -567,22 +549,22 @@ CLI または統合チャットアプリからメッセージを 1 つ送るだ�
 
 | コマンド                  | 説明                           |
 | ------------------------- | ------------------------------ |
-| `picoclaw onboard`        | 設定＆ワークスペースの初期化     |
-| `picoclaw auth weixin` | WeChat アカウントを QR で接続 |
-| `picoclaw agent -m "..."` | Agent とチャット                |
-| `picoclaw agent`          | インタラクティブチャットモード   |
-| `picoclaw gateway`        | Gateway を起動                  |
-| `picoclaw status`         | ステータスを表示                |
-| `picoclaw version`        | バージョン情報を表示            |
-| `picoclaw model`          | デフォルトモデルの表示・切替    |
-| `picoclaw cron list`      | スケジュールジョブ一覧          |
-| `picoclaw cron add ...`   | スケジュールジョブを追加         |
-| `picoclaw cron disable`   | スケジュールジョブを無効化       |
-| `picoclaw cron remove`    | スケジュールジョブを削除         |
-| `picoclaw skills list`    | インストール済み Skill 一覧      |
-| `picoclaw skills install` | Skill をインストール             |
-| `picoclaw migrate`        | 旧バージョンからデータを移行     |
-| `picoclaw auth login`     | Provider への認証               |
+| `picoclaw onboard`        | 設定＆ワークスペースの初期化   |
+| `picoclaw auth weixin`    | WeChat アカウントを QR で接続  |
+| `picoclaw agent -m "..."` | Agent とチャット               |
+| `picoclaw agent`          | インタラクティブチャットモード |
+| `picoclaw gateway`        | Gateway を起動                 |
+| `picoclaw status`         | ステータスを表示               |
+| `picoclaw version`        | バージョン情報を表示           |
+| `picoclaw model`          | デフォルトモデルの表示・切替   |
+| `picoclaw cron list`      | スケジュールジョブ一覧         |
+| `picoclaw cron add ...`   | スケジュールジョブを追加       |
+| `picoclaw cron disable`   | スケジュールジョブを無効化     |
+| `picoclaw cron remove`    | スケジュールジョブを削除       |
+| `picoclaw skills list`    | インストール済み Skill 一覧    |
+| `picoclaw skills install` | Skill をインストール           |
+| `picoclaw migrate`        | 旧バージョンからデータを移行   |
+| `picoclaw auth login`     | Provider への認証              |
 
 ### ⏰ スケジュールタスク / リマインダー
 
@@ -596,19 +578,19 @@ PicoClaw は `cron` ツールによるスケジュールリマインダーと定
 
 この README を超えた詳細なガイドについては：
 
-| トピック | 説明 |
-|---------|------|
-| [Docker & クイックスタート](../guides/docker.ja.md) | Docker Compose セットアップ、Launcher/Agent モード |
-| [チャットアプリ](../guides/chat-apps.ja.md) | 17 以上の Channel セットアップガイド |
-| [設定](../guides/configuration.ja.md) | 環境変数、ワークスペース構成、セキュリティサンドボックス |
-| [Provider とモデル](../guides/providers.ja.md) | 30 以上の LLM Provider、モデルルーティング、model_list 設定 |
-| [Spawn & 非同期タスク](../guides/spawn-tasks.ja.md) | クイックタスク、spawn による長時間タスク、非同期サブエージェントオーケストレーション |
-| [Hook システム](../architecture/hooks/README.md) | イベント駆動 Hook：オブザーバー、インターセプター、承認 Hook |
-| [Steering](../architecture/steering.md) | 実行中の Agent ループにメッセージを注入 |
-| [SubTurn](../architecture/subturn.md) | サブ Agent の調整、並行制御、ライフサイクル |
-| [トラブルシューティング](../operations/troubleshooting.ja.md) | よくある問題と解決策 |
-| [ツール設定](../reference/tools_configuration.ja.md) | ツールごとの有効/無効、exec ポリシー、MCP、Skill |
-| [ハードウェア互換性](../guides/hardware-compatibility.ja.md) | テスト済みボード、最小要件 |
+| トピック                                                      | 説明                                                                                 |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| [Docker & クイックスタート](../guides/docker.ja.md)           | Docker Compose セットアップ、Launcher/Agent モード                                   |
+| [チャットアプリ](../guides/chat-apps.ja.md)                   | 17 以上の Channel セットアップガイド                                                 |
+| [設定](../guides/configuration.ja.md)                         | 環境変数、ワークスペース構成、セキュリティサンドボックス                             |
+| [Provider とモデル](../guides/providers.ja.md)                | 30 以上の LLM Provider、モデルルーティング、model_list 設定                          |
+| [Spawn & 非同期タスク](../guides/spawn-tasks.ja.md)           | クイックタスク、spawn による長時間タスク、非同期サブエージェントオーケストレーション |
+| [Hook システム](../architecture/hooks/README.md)              | イベント駆動 Hook：オブザーバー、インターセプター、承認 Hook                         |
+| [Steering](../architecture/steering.md)                       | 実行中の Agent ループにメッセージを注入                                              |
+| [SubTurn](../architecture/subturn.md)                         | サブ Agent の調整、並行制御、ライフサイクル                                          |
+| [トラブルシューティング](../operations/troubleshooting.ja.md) | よくある問題と解決策                                                                 |
+| [ツール設定](../reference/tools_configuration.ja.md)          | ツールごとの有効/無効、exec ポリシー、MCP、Skill                                     |
+| [ハードウェア互換性](../guides/hardware-compatibility.ja.md)  | テスト済みボード、最小要件                                                           |
 
 ## 🤝 コントリビュート＆ロードマップ
 

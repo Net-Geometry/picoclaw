@@ -65,7 +65,6 @@ var (
 	oauthPollDeviceCodeOnce       = auth.PollDeviceCodeOnce
 	oauthExchangeCodeForTokens    = auth.ExchangeCodeForTokens
 	oauthGetCredential            = auth.GetCredential
-	oauthListCredentials          = auth.ListCredentials
 	oauthSetCredential            = auth.SetCredential
 	oauthDeleteCredential         = auth.DeleteCredential
 	oauthLoadConfig               = config.LoadConfig
@@ -93,17 +92,16 @@ type oauthFlow struct {
 }
 
 type oauthProviderStatus struct {
-	Provider        string   `json:"provider"`
-	DisplayName     string   `json:"display_name"`
-	Methods         []string `json:"methods"`
-	LoggedIn        bool     `json:"logged_in"`
-	CredentialCount int      `json:"credential_count,omitempty"`
-	Status          string   `json:"status"`
-	AuthMethod      string   `json:"auth_method,omitempty"`
-	ExpiresAt       string   `json:"expires_at,omitempty"`
-	AccountID       string   `json:"account_id,omitempty"`
-	Email           string   `json:"email,omitempty"`
-	ProjectID       string   `json:"project_id,omitempty"`
+	Provider    string   `json:"provider"`
+	DisplayName string   `json:"display_name"`
+	Methods     []string `json:"methods"`
+	LoggedIn    bool     `json:"logged_in"`
+	Status      string   `json:"status"`
+	AuthMethod  string   `json:"auth_method,omitempty"`
+	ExpiresAt   string   `json:"expires_at,omitempty"`
+	AccountID   string   `json:"account_id,omitempty"`
+	Email       string   `json:"email,omitempty"`
+	ProjectID   string   `json:"project_id,omitempty"`
 }
 
 type oauthFlowResponse struct {
@@ -132,11 +130,6 @@ func (h *Handler) handleListOAuthProviders(w http.ResponseWriter, r *http.Reques
 	providersResp := make([]oauthProviderStatus, 0, len(oauthProviderOrder))
 
 	for _, provider := range oauthProviderOrder {
-		creds, err := oauthListCredentials(provider)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("failed to load credentials: %v", err), http.StatusInternalServerError)
-			return
-		}
 		cred, err := oauthGetCredential(provider)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("failed to load credentials: %v", err), http.StatusInternalServerError)
@@ -144,11 +137,10 @@ func (h *Handler) handleListOAuthProviders(w http.ResponseWriter, r *http.Reques
 		}
 
 		item := oauthProviderStatus{
-			Provider:        provider,
-			DisplayName:     oauthProviderLabels[provider],
-			Methods:         oauthProviderMethods[provider],
-			CredentialCount: len(creds),
-			Status:          "not_logged_in",
+			Provider:    provider,
+			DisplayName: oauthProviderLabels[provider],
+			Methods:     oauthProviderMethods[provider],
+			Status:      "not_logged_in",
 		}
 		if cred != nil {
 			item.LoggedIn = true
@@ -754,7 +746,7 @@ func (h *Handler) syncProviderAuthMethod(provider, authMethod string) error {
 
 	found := false
 	for i := range cfg.ModelList {
-		if modelBelongsToProvider(provider, cfg.ModelList[i].Model) {
+		if modelBelongsToProvider(provider, cfg.ModelList[i]) {
 			cfg.ModelList[i].AuthMethod = authMethod
 			found = true
 		}
@@ -767,18 +759,15 @@ func (h *Handler) syncProviderAuthMethod(provider, authMethod string) error {
 	return oauthSaveConfig(h.configPath, cfg)
 }
 
-func modelBelongsToProvider(provider, model string) bool {
-	lower := strings.ToLower(strings.TrimSpace(model))
+func modelBelongsToProvider(provider string, modelCfg *config.ModelConfig) bool {
+	protocol, _ := providers.ExtractProtocol(modelCfg)
 	switch provider {
 	case oauthProviderOpenAI:
-		return lower == "openai" || strings.HasPrefix(lower, "openai/")
+		return protocol == "openai"
 	case oauthProviderAnthropic:
-		return lower == "anthropic" || strings.HasPrefix(lower, "anthropic/")
+		return protocol == "anthropic"
 	case oauthProviderGoogleAntigravity:
-		return lower == "antigravity" ||
-			lower == "google-antigravity" ||
-			strings.HasPrefix(lower, "antigravity/") ||
-			strings.HasPrefix(lower, "google-antigravity/")
+		return protocol == "antigravity" || protocol == "google-antigravity"
 	default:
 		return false
 	}
@@ -789,19 +778,22 @@ func defaultModelConfigForProvider(provider, authMethod string) *config.ModelCon
 	case oauthProviderOpenAI:
 		return &config.ModelConfig{
 			ModelName:  "gpt-5.4",
-			Model:      "openai/gpt-5.4",
+			Provider:   "openai",
+			Model:      "gpt-5.4",
 			AuthMethod: authMethod,
 		}
 	case oauthProviderAnthropic:
 		return &config.ModelConfig{
 			ModelName:  "claude-sonnet-4.6",
-			Model:      "anthropic/claude-sonnet-4.6",
+			Provider:   "anthropic",
+			Model:      "claude-sonnet-4.6",
 			AuthMethod: authMethod,
 		}
 	case oauthProviderGoogleAntigravity:
 		return &config.ModelConfig{
 			ModelName:  "gemini-flash",
-			Model:      "antigravity/gemini-3-flash",
+			Provider:   "antigravity",
+			Model:      "gemini-3-flash",
 			AuthMethod: authMethod,
 		}
 	default:
