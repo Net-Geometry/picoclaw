@@ -77,6 +77,9 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	// Session history
 	h.registerSessionRoutes(mux)
 
+	// Chat send/stream endpoints (including Manus proxy)
+	h.registerChatRoutes(mux)
+
 	// OAuth login and credential management
 	h.registerOAuthRoutes(mux)
 
@@ -85,6 +88,10 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 
 	// Channel catalog (for frontend navigation/config pages)
 	h.registerChannelRoutes(mux)
+	h.registerUIRoutes(mux)
+	h.registerAgentRoutes(mux)
+	h.registerProjectRoutes(mux)
+	h.registerCronRoutes(mux)
 
 	// Skills and tools support/actions
 	h.registerSkillRoutes(mux)

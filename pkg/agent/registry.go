@@ -14,6 +14,7 @@ import (
 // AgentRegistry manages multiple agent instances and routes messages to them.
 type AgentRegistry struct {
 	agents   map[string]*AgentInstance
+	passive  map[string]bool
 	resolver *routing.RouteResolver
 	mu       sync.RWMutex
 }
@@ -25,6 +26,7 @@ func NewAgentRegistry(
 ) *AgentRegistry {
 	registry := &AgentRegistry{
 		agents:   make(map[string]*AgentInstance),
+		passive:  make(map[string]bool),
 		resolver: routing.NewRouteResolver(cfg),
 	}
 
@@ -36,6 +38,7 @@ func NewAgentRegistry(
 		}
 		instance := NewAgentInstance(implicitAgent, &cfg.Agents.Defaults, cfg, provider)
 		registry.agents["main"] = instance
+		registry.passive["main"] = implicitAgent.IsPassive()
 		logger.InfoCF("agent", "Created implicit main agent (no agents.list configured)", nil)
 	} else {
 		for i := range agentConfigs {
@@ -43,6 +46,7 @@ func NewAgentRegistry(
 			id := routing.NormalizeAgentID(ac.ID)
 			instance := NewAgentInstance(ac, &cfg.Agents.Defaults, cfg, provider)
 			registry.agents[id] = instance
+			registry.passive[id] = ac.IsPassive()
 			logger.InfoCF("agent", "Registered agent",
 				map[string]any{
 					"agent_id":  id,
@@ -79,6 +83,14 @@ func (r *AgentRegistry) ListAgentIDs() []string {
 		ids = append(ids, id)
 	}
 	return ids
+}
+
+// IsPassiveAgent reports whether an agent is configured in passive mode.
+func (r *AgentRegistry) IsPassiveAgent(agentID string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	id := routing.NormalizeAgentID(agentID)
+	return r.passive[id]
 }
 
 // CanSpawnSubagent checks if parentAgentID is allowed to spawn targetAgentID.

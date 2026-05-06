@@ -55,4 +55,8 @@ type Runtime struct {
 	SwitchChannel      func(value string) error
 	ClearHistory       func() error
 	ReloadConfig       func() error
+	GetCurrentAgent    func() string
+	GetCurrentProject  func() string
+	SwitchAgent        func(value string) (oldAgent string, err error)
+	SwitchProject      func(value string) (oldProject string, err error)
 }

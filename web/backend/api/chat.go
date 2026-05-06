@@ -227,7 +227,7 @@ func pollManusTaskResult(
 				errMsg, _ := msg["error_message"].(map[string]any)
 				content, _ := errMsg["content"].(string)
 				if strings.TrimSpace(content) != "" {
-					return out.String(), fmt.Errorf(strings.TrimSpace(content))
+					return out.String(), fmt.Errorf("%s", strings.TrimSpace(content))
 				}
 				return out.String(), fmt.Errorf("manus returned error_message")
 			case "status_update":
@@ -242,7 +242,7 @@ func pollManusTaskResult(
 					if errMessage == "" {
 						errMessage = "manus task failed"
 					}
-					return out.String(), fmt.Errorf(errMessage)
+					return out.String(), fmt.Errorf("%s", errMessage)
 				}
 			}
 		}

@@ -49,6 +49,9 @@ type Config struct {
 	// BuildInfo contains build-time version information
 	BuildInfo BuildInfo `json:"build_info,omitempty" yaml:"-"`
 
+	// MemoryCore configures integration with an external markdown-based memory system.
+	MemoryCore MemoryCoreConfig `json:"memory_core,omitempty" yaml:"-"`
+
 	// cache for sensitive values and compiled regex (computed once)
 	sensitiveCache *SensitiveDataCache
 }

@@ -33,6 +33,9 @@ type Definition struct {
 // it is auto-generated from sub-command names so metadata and behavior
 // cannot drift.
 func (d Definition) EffectiveUsage() string {
+	if strings.TrimSpace(d.Usage) != "" {
+		return d.Usage
+	}
 	if len(d.SubCommands) == 0 {
 		return d.Usage
 	}

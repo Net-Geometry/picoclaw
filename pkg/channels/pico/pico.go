@@ -61,6 +61,19 @@ var allowedInlineMIMETypes = map[string]struct{}{
 	"text/rtf":        {},
 }
 
+var allowedInlineImageMIMETypes = map[string]struct{}{
+	"image/jpeg": {},
+	"image/png":  {},
+	"image/gif":  {},
+	"image/webp": {},
+	"image/bmp":  {},
+}
+
+// parseInlineMedia is kept as a compatibility wrapper for existing tests/callers.
+func parseInlineMedia(payload map[string]any) ([]string, error) {
+	return parseInlineImageMedia(payload)
+}
+
 func outboundMessageIsThought(msg bus.OutboundMessage) bool {
 	if len(msg.Context.Raw) == 0 {
 		return false
@@ -1072,8 +1085,8 @@ func validateInlineImageDataURL(mediaURL string) error {
 	if mediaURL == "" {
 		return fmt.Errorf("image payload is empty")
 	}
-	if !strings.HasPrefix(mediaURL, "data:image/") {
-		return fmt.Errorf("only inline image data URLs are supported")
+	if !strings.HasPrefix(mediaURL, "data:") {
+		return fmt.Errorf("only inline data URLs are supported")
 	}
 
 	header, data, found := strings.Cut(mediaURL, ",")
@@ -1084,8 +1097,8 @@ func validateInlineImageDataURL(mediaURL string) error {
 		return fmt.Errorf("image data URL must be base64 encoded")
 	}
 	mimeType, _, _ := strings.Cut(strings.TrimPrefix(header, "data:"), ";")
-	if _, ok := allowedInlineImageMIMETypes[mimeType]; !ok {
-		return fmt.Errorf("unsupported image format: %s", mimeType)
+	if _, ok := allowedInlineMIMETypes[mimeType]; !ok {
+		return fmt.Errorf("unsupported media format: %s", mimeType)
 	}
 
 	data = strings.TrimSpace(data)

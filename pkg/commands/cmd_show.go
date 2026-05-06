@@ -9,6 +9,7 @@ func showCommand() Definition {
 	return Definition{
 		Name:        "show",
 		Description: "Show current configuration",
+		Usage:       "/show [model|channel|agents|mcp <server>]",
 		SubCommands: []SubCommand{
 			{
 				Name:        "model",
@@ -32,6 +33,12 @@ func showCommand() Definition {
 				Name:        "agents",
 				Description: "Registered agents",
 				Handler:     agentsHandler(),
+			},
+			{
+				Name:        "mcp",
+				Description: "Show active MCP tools for a server",
+				ArgsUsage:   "<server>",
+				Handler:     showMCPToolsHandler(),
 			},
 			{
 				Name:        "agent",

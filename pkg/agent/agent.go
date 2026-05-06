@@ -60,6 +60,10 @@ type AgentLoop struct {
 	pendingSkills  sync.Map
 	mu             sync.RWMutex
 
+	// manualAgents / manualProjects store per-scope overrides set via /switch agent|project.
+	manualAgents   sync.Map
+	manualProjects sync.Map
+
 	// workerSem limits concurrent turn processing workers.
 	workerSem chan struct{}
 

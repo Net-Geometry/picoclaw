@@ -6,6 +6,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -14,6 +16,7 @@ import (
 	"github.com/sipeed/picoclaw/pkg/config"
 	"github.com/sipeed/picoclaw/pkg/logger"
 	"github.com/sipeed/picoclaw/pkg/providers"
+	"github.com/sipeed/picoclaw/pkg/routing"
 )
 
 func (al *AgentLoop) handleCommand(
@@ -290,6 +293,64 @@ func (al *AgentLoop) buildCommandsRuntime(
 		rt.GetModelInfo = func() (string, string) {
 			return agent.Model, resolvedCandidateProvider(agent.Candidates, cfg.Agents.Defaults.Provider)
 		}
+
+		scopeKey := ""
+		if opts != nil {
+			scopeKey = manualSelectionScopeKey(opts.Dispatch.InboundContext, opts.Dispatch.SessionKey)
+		}
+		rt.GetCurrentAgent = func() string {
+			current, _ := al.getManualAgent(scopeKey)
+			return current
+		}
+		rt.GetCurrentProject = func() string {
+			current, _ := al.getManualProject(scopeKey)
+			return current
+		}
+
+		rt.SwitchAgent = func(value string) (string, error) {
+			raw := strings.TrimSpace(value)
+			if raw == "" {
+				return "", fmt.Errorf("agent id is required")
+			}
+			oldAgent, _ := al.getManualAgent(scopeKey)
+			if strings.EqualFold(raw, "none") || strings.EqualFold(raw, "clear") || strings.EqualFold(raw, "off") {
+				al.setManualAgent(scopeKey, "")
+				return oldAgent, nil
+			}
+			targetID := routing.NormalizeAgentID(raw)
+			target, ok := registry.GetAgent(targetID)
+			if !ok || target == nil {
+				return "", fmt.Errorf("agent '%s' not found", value)
+			}
+			if registry.IsPassiveAgent(targetID) {
+				return "", fmt.Errorf("agent '%s' is passive and cannot be selected via /switch", targetID)
+			}
+			if oldAgent == "" {
+				oldAgent = agent.ID
+			}
+			al.setManualAgent(scopeKey, targetID)
+			return oldAgent, nil
+		}
+
+		rt.SwitchProject = func(value string) (string, error) {
+			name, ok := normalizeProjectName(value)
+			if !ok {
+				return "", fmt.Errorf("invalid project name %q", strings.TrimSpace(value))
+			}
+			oldProject, _ := al.getManualProject(scopeKey)
+			if name == "" {
+				al.setManualProject(scopeKey, "")
+				return oldProject, nil
+			}
+			projectPath := filepath.Join(agent.Workspace, "projects", name)
+			info, err := os.Stat(projectPath)
+			if err != nil || !info.IsDir() {
+				return "", fmt.Errorf("project %q not found under %s", name, filepath.Join(agent.Workspace, "projects"))
+			}
+			al.setManualProject(scopeKey, name)
+			return oldProject, nil
+		}
+
 		rt.SwitchModel = func(value string) (string, error) {
 			value = strings.TrimSpace(value)
 			modelCfg, err := resolvedModelConfig(cfg, value, agent.Workspace)
