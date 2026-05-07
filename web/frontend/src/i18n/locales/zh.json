@@ -429,7 +429,7 @@
         "placeholderEnabled": "在最终回复发送前，先发送临时占位消息",
         "groupTriggerMentionOnly": "在群聊中仅当提及机器人时才响应",
         "groupTriggerPrefixes": "群聊触发前缀。可逐项添加，也支持一次粘贴多个值。",
-        "randomReactionEmoji": "PicoClaw 会对用户消息添加表情回复以确认已收到。例如：\"THUMBSUP\", \"HEART\", \"SMILE\"。留空则使用默认的 \"Pin\" 表情。",
+        "randomReactionEmoji": "NetGeoClaw 会对用户消息添加表情回复以确认已收到。例如：\"THUMBSUP\", \"HEART\", \"SMILE\"。留空则使用默认的 \"Pin\" 表情。",
         "isLark": "使用 Lark 国际版域名（open.larksuite.com）替代飞书域名（open.feishu.cn）",
         "allowFrom": "允许访问的用户或群组 ID。可逐项添加，也支持一次粘贴多个值。",
         "allowOrigins": "允许访问的来源域名。可逐项添加，也支持一次粘贴多个值。",
@@ -803,11 +803,11 @@
       "monitor_usb": "监听 USB",
       "monitor_usb_hint": "在启用设备功能时，监听 USB 插拔事件",
       "autostart_label": "开机自启",
-      "autostart_hint": "登录系统后自动启动 PicoClaw Web",
+      "autostart_hint": "登录系统后自动启动 NetGeoClaw Web",
       "autostart_unsupported": "当前平台不支持开机自启",
       "autostart_load_error": "加载开机自启状态失败",
       "server_port": "服务端口",
-      "server_port_hint": "PicoClaw Web 的 HTTP 监听端口",
+      "server_port_hint": "NetGeoClaw Web 的 HTTP 监听端口",
       "launcher_section_hint": "此分组中的改动需要在重启 launcher 后生效",
       "gateway_restart_hint": "这组配置保存后，需要重启服务才能正式生效。",
       "dashboard_password": "登录密码",
@@ -859,8 +859,8 @@
     "next": "下一步",
     "finish": "完成",
     "welcome": {
-      "title": "欢迎使用 PicoClaw",
-      "description": "PicoClaw 是一个强大的 AI 助手平台。让我们花几秒钟时间，帮您完成基础配置。"
+      "title": "欢迎使用 NetGeoClaw",
+      "description": "NetGeoClaw 是一个强大的 AI 助手平台。让我们花几秒钟时间，帮您完成基础配置。"
     },
     "models": {
       "title": "配置模型",

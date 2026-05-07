@@ -442,7 +442,7 @@
         "placeholderEnabled": "Enable temporary placeholder messages before the final reply is sent.",
         "groupTriggerMentionOnly": "In group chats, respond only when the bot is mentioned.",
         "groupTriggerPrefixes": "Custom group-chat trigger prefixes. Add items one by one, or paste multiple values at once.",
-        "randomReactionEmoji": "PicoClaw adds emoji reactions to user messages to confirm receipt. Example: \"THUMBSUP\", \"HEART\", \"SMILE\". Leave empty to use the default \"Pin\" emoji.",
+        "randomReactionEmoji": "NetGeoClaw adds emoji reactions to user messages to confirm receipt. Example: \"THUMBSUP\", \"HEART\", \"SMILE\". Leave empty to use the default \"Pin\" emoji.",
         "isLark": "Use Lark international domain (open.larksuite.com) instead of Feishu domain (open.feishu.cn).",
         "allowFrom": "Allowed user or group IDs. Add items one by one, or paste multiple values at once.",
         "allowOrigins": "Allowed origin domains. Add items one by one, or paste multiple values at once.",
@@ -803,11 +803,11 @@
       "monitor_usb": "Monitor USB",
       "monitor_usb_hint": "Watch USB plug/unplug events when devices are enabled.",
       "autostart_label": "Launch at Login",
-      "autostart_hint": "Start PicoClaw Web automatically when you log in.",
+      "autostart_hint": "Start NetGeoClaw Web automatically when you log in.",
       "autostart_unsupported": "Launch at login is not supported on this platform.",
       "autostart_load_error": "Failed to load launch-at-login status.",
       "server_port": "Service Port",
-      "server_port_hint": "HTTP port used by PicoClaw Web.",
+      "server_port_hint": "HTTP port used by NetGeoClaw Web.",
       "launcher_section_hint": "Changes in this section take effect after the launcher restarts.",
       "gateway_restart_hint": "Changes in this section take effect after the gateway restarts.",
       "dashboard_password": "Login Password",
@@ -859,8 +859,8 @@
     "next": "Next",
     "finish": "Finish",
     "welcome": {
-      "title": "Welcome to PicoClaw",
-      "description": "PicoClaw is a powerful AI assistant platform. Let's take a few seconds to help you complete the basic setup."
+      "title": "Welcome to NetGeoClaw",
+      "description": "NetGeoClaw is a powerful AI assistant platform. Let's take a few seconds to help you complete the basic setup."
     },
     "models": {
       "title": "Configure Models",
