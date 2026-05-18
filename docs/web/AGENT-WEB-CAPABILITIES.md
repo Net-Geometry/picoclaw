@@ -208,18 +208,18 @@ The web interface now properly integrates with PicoClaw's audio transcription ca
 
 ## API Endpoints Summary
 
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| GET | `/api/projects` | List all projects |
-| GET | `/api/projects/{name}/entries` | List directory contents |
-| GET | `/api/projects/{name}/file` | Read file content |
-| PUT | `/api/projects/{name}/file` | Update file content |
-| POST | `/api/projects/{name}/upload` | Upload files *(NEW)* |
-| GET | `/api/projects/{name}/download` | Download file *(NEW)* |
-| POST | `/api/containers/create` | Create container *(NEW)* |
-| POST | `/api/containers/run` | Run container command *(NEW)* |
-| POST | `/api/tests/run` | Run project tests *(NEW)* |
-| POST | `/api/scripts/run` | Execute script *(NEW)* |
+| Method | Endpoint                        | Purpose                       |
+| ------ | ------------------------------- | ----------------------------- |
+| GET    | `/api/projects`                 | List all projects             |
+| GET    | `/api/projects/{name}/entries`  | List directory contents       |
+| GET    | `/api/projects/{name}/file`     | Read file content             |
+| PUT    | `/api/projects/{name}/file`     | Update file content           |
+| POST   | `/api/projects/{name}/upload`   | Upload files *(NEW)*          |
+| GET    | `/api/projects/{name}/download` | Download file *(NEW)*         |
+| POST   | `/api/containers/create`        | Create container *(NEW)*      |
+| POST   | `/api/containers/run`           | Run container command *(NEW)* |
+| POST   | `/api/tests/run`                | Run project tests *(NEW)*     |
+| POST   | `/api/scripts/run`              | Execute script *(NEW)*        |
 
 ## Usage Examples
 

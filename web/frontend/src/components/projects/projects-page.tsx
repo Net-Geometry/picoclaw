@@ -1,4 +1,12 @@
-import { IconFile, IconFolder, IconRefresh, IconDownload, IconUpload, IconRun, IconBoxMultiple } from "@tabler/icons-react"
+import {
+  IconBoxMultiple,
+  IconDownload,
+  IconFile,
+  IconFolder,
+  IconRefresh,
+  IconRun,
+  IconUpload,
+} from "@tabler/icons-react"
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 
@@ -12,8 +20,8 @@ import {
   fetchProjects,
   runContainer,
   runTest,
-  uploadProjectFile,
   updateProjectFile,
+  uploadProjectFile,
 } from "@/api/projects"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
@@ -151,7 +159,9 @@ export function ProjectsPage() {
     try {
       const files = Array.from(e.target.files)
       await uploadProjectFile(selectedProject, files, currentPath)
-      setFileMessage(t("pages.projects.uploadSuccess") || "Files uploaded successfully")
+      setFileMessage(
+        t("pages.projects.uploadSuccess") || "Files uploaded successfully",
+      )
       await loadEntries(selectedProject, currentPath)
     } catch (err: unknown) {
       setFileMessage(err instanceof Error ? err.message : String(err))

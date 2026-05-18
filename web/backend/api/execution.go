@@ -39,13 +39,13 @@ type containerCreateResponse struct {
 }
 
 type containerRunRequest struct {
-	ProjectName string        `json:"project_name"`
-	ProjectPath string        `json:"project_path"`
-	Image       string        `json:"image"`
-	Command     []string      `json:"command"`
-	Timeout     int           `json:"timeout,omitempty"` // in seconds
-	Env         []string      `json:"env,omitempty"`
-	WorkDir     string        `json:"work_dir,omitempty"`
+	ProjectName string   `json:"project_name"`
+	ProjectPath string   `json:"project_path"`
+	Image       string   `json:"image"`
+	Command     []string `json:"command"`
+	Timeout     int      `json:"timeout,omitempty"` // in seconds
+	Env         []string `json:"env,omitempty"`
+	WorkDir     string   `json:"work_dir,omitempty"`
 }
 
 type containerRunResponse struct {
@@ -67,33 +67,33 @@ type testRunRequest struct {
 }
 
 type testRunResponse struct {
-	TestName  string `json:"test_name"`
-	Passed    int    `json:"passed"`
-	Failed    int    `json:"failed"`
-	Skipped   int    `json:"skipped"`
-	Duration  int64  `json:"duration_ms"`
-	Stdout    string `json:"stdout"`
-	Stderr    string `json:"stderr"`
-	Status    string `json:"status"`
-	ExitCode  int    `json:"exit_code"`
+	TestName string `json:"test_name"`
+	Passed   int    `json:"passed"`
+	Failed   int    `json:"failed"`
+	Skipped  int    `json:"skipped"`
+	Duration int64  `json:"duration_ms"`
+	Stdout   string `json:"stdout"`
+	Stderr   string `json:"stderr"`
+	Status   string `json:"status"`
+	ExitCode int    `json:"exit_code"`
 }
 
 // Script execution types
 type scriptRunRequest struct {
-	ProjectName string `json:"project_name"`
-	ProjectPath string `json:"project_path"`
-	ScriptPath  string `json:"script_path"`
+	ProjectName string   `json:"project_name"`
+	ProjectPath string   `json:"project_path"`
+	ScriptPath  string   `json:"script_path"`
 	Args        []string `json:"args,omitempty"`
 	Env         []string `json:"env,omitempty"`
-	Timeout     int    `json:"timeout,omitempty"` // in seconds
+	Timeout     int      `json:"timeout,omitempty"` // in seconds
 }
 
 type scriptRunResponse struct {
-	ExitCode   int    `json:"exit_code"`
-	Stdout     string `json:"stdout"`
-	Stderr     string `json:"stderr"`
-	Duration   int64  `json:"duration_ms"`
-	Status     string `json:"status"`
+	ExitCode int    `json:"exit_code"`
+	Stdout   string `json:"stdout"`
+	Stderr   string `json:"stderr"`
+	Duration int64  `json:"duration_ms"`
+	Status   string `json:"status"`
 }
 
 func (h *Handler) registerExecutionRoutes(mux *http.ServeMux) {
