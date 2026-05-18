@@ -97,5 +97,16 @@ func (p *Pipeline) SetupTurn(ctx context.Context, ts *turnState) (*turnExecution
 	exec.activeProvider = activeProvider
 	exec.usedLight = usedLight
 
+	// Notify the channel of the resolved model so the client can display it
+	// in real time (e.g. the pico web typing indicator). Only pico implements
+	// ModelActiveNotifier; all other channels silently ignore the call.
+	if p.ChannelManager != nil && ts.channel != "" && activeModel != "" {
+		providerName := ""
+		if len(activeCandidates) > 0 {
+			providerName = activeCandidates[0].Provider
+		}
+		p.ChannelManager.NotifyModelActive(ctx, ts.channel, ts.chatID, activeModel, providerName)
+	}
+
 	return exec, nil
 }

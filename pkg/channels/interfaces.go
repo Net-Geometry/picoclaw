@@ -68,3 +68,10 @@ type PlaceholderRecorder interface {
 type CommandRegistrarCapable interface {
 	RegisterCommands(ctx context.Context, defs []commands.Definition) error
 }
+
+// ModelActiveNotifier — optional interface for channels that can surface
+// the actively-selected LLM model to the client (e.g. via a typing event).
+// Only pico web channel implements this; other channels can ignore it.
+type ModelActiveNotifier interface {
+	NotifyModelActive(ctx context.Context, chatID, model, provider string) error
+}

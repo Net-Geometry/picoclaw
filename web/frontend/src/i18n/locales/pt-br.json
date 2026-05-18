@@ -63,6 +63,7 @@
       "step3": "Preparando resposta...",
       "step4": "Quase lá..."
     },
+    "processingModel": "Modelo em uso: {{model}}",
     "reasoningLabel": "Raciocínio",
     "toolCallsLabel": "Chamadas de ferramentas",
     "toolCallExplanationLabel": "Nota da chamada",
@@ -88,6 +89,7 @@
     "attachImage": "Adicionar imagens",
     "removeImage": "Remover imagem",
     "uploadedImage": "Imagem enviada",
+    "uploadWorkspacePath": "Depois de enviar, {{filename}} será salvo em {{path}}",
     "invalidImage": "\"{{name}}\" não é um arquivo de imagem suportado.",
     "imageTooLarge": "\"{{name}}\" excede o limite de {{size}}.",
     "imageReadFailed": "Falha ao ler \"{{name}}\".",
@@ -114,6 +116,11 @@
       "hintPico": "O modo Pico usa seu modelo padrão (por exemplo ChatGPT/GPT) no fluxo normal do gateway.",
       "hintManus": "O modo Manus é otimizado para fluxos de pesquisa e design de documentação.",
       "manusNoImage": "No momento, o modo Manus suporta apenas texto."
+    },
+    "projectFocus": {
+      "title": "Foco do projeto",
+      "none": "Todos os projetos",
+      "applyFailed": "Falha ao aplicar o foco do projeto. Tente novamente."
     }
   },
   "header": {

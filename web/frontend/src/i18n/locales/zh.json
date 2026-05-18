@@ -63,6 +63,7 @@
       "step3": "准备回复...",
       "step4": "马上就好..."
     },
+    "processingModel": "当前使用模型：{{model}}",
     "reasoningLabel": "思考",
     "toolCallsLabel": "工具调用",
     "toolCallExplanationLabel": "调用提示",
@@ -88,6 +89,7 @@
     "attachImage": "添加图片",
     "removeImage": "移除图片",
     "uploadedImage": "已上传图片",
+    "uploadWorkspacePath": "发送后，{{filename}} 会保存到 {{path}}",
     "invalidImage": "“{{name}}”不是支持的图片文件。",
     "imageTooLarge": "“{{name}}”超过了 {{size}} 限制。",
     "imageReadFailed": "读取“{{name}}”失败。",
@@ -114,6 +116,11 @@
       "hintPico": "Pico 模式会通过常规网关使用你的默认模型（例如 ChatGPT/GPT）。",
       "hintManus": "Manus 模式更适合研究和文档设计类工作流。",
       "manusNoImage": "Manus 模式当前仅支持文本输入。"
+    },
+    "projectFocus": {
+      "title": "项目聚焦",
+      "none": "全部项目",
+      "applyFailed": "应用项目聚焦失败，请重试。"
     }
   },
   "header": {

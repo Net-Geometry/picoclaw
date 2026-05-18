@@ -83,6 +83,23 @@ function parseContextUsage(
   }
 }
 
+function parseProcessingModel(payload: Record<string, unknown>): string | undefined {
+  const model =
+    typeof payload.model === "string" ? payload.model.trim() : ""
+  const provider =
+    typeof payload.provider === "string" ? payload.provider.trim() : ""
+
+  if (provider && model) {
+    return `${provider}/${model}`
+  }
+
+  if (model) {
+    return model
+  }
+
+  return undefined
+}
+
 export function handlePicoMessage(
   message: PicoMessage,
   expectedSessionId: string,
@@ -121,6 +138,7 @@ export function handlePicoMessage(
           },
         ],
         isTyping: false,
+        processingModel: undefined,
         ...(contextUsage ? { contextUsage } : {}),
       }))
       break
@@ -130,6 +148,7 @@ export function handlePicoMessage(
       const messageId = payload.message_id as string
       const attachments = parseAttachments(payload)
       const contextUsage = parseContextUsage(payload)
+      const processingModel = parseProcessingModel(payload)
       const timestamp =
         message.timestamp !== undefined &&
         Number.isFinite(Number(message.timestamp))
@@ -179,6 +198,7 @@ export function handlePicoMessage(
           ]
         })(),
         ...(contextUsage ? { contextUsage } : {}),
+        ...(processingModel ? { processingModel } : {}),
       }))
       break
     }
@@ -195,12 +215,17 @@ export function handlePicoMessage(
       break
     }
 
-    case "typing.start":
-      updateChatStore({ isTyping: true })
+    case "typing.start": {
+      const processingModel = parseProcessingModel(payload)
+      updateChatStore((prev) => ({
+        isTyping: true,
+        processingModel: processingModel || prev.processingModel,
+      }))
       break
+    }
 
     case "typing.stop":
-      updateChatStore({ isTyping: false })
+      updateChatStore({ isTyping: false, processingModel: undefined })
       break
 
     case "error": {
@@ -218,6 +243,7 @@ export function handlePicoMessage(
           ? prev.messages.filter((msg) => msg.id !== requestId)
           : prev.messages,
         isTyping: false,
+        processingModel: undefined,
       }))
       break
     }

@@ -58,6 +58,7 @@ export interface ChatStoreState {
   messages: ChatMessage[]
   connectionState: ConnectionState
   isTyping: boolean
+  processingModel?: string
   activeSessionId: string
   hasHydratedActiveSession: boolean
   contextUsage?: ContextUsage

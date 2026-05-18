@@ -3,6 +3,8 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -49,13 +51,25 @@ type updateProjectFileRequest struct {
 	Content string `json:"content"`
 }
 
-const maxEditableProjectFileSize = int64(2 * 1024 * 1024) // 2MB
+const (
+	maxEditableProjectFileSize = int64(2 * 1024 * 1024)   // 2MB
+	maxUploadFileSize          = int64(100 * 1024 * 1024) // 100MB
+)
+
+type projectFileUploadResponse struct {
+	Project string `json:"project"`
+	Path    string `json:"path"`
+	Name    string `json:"name"`
+	Size    int64  `json:"size"`
+}
 
 func (h *Handler) registerProjectRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/projects", h.handleListProjects)
 	mux.HandleFunc("GET /api/projects/{name}/entries", h.handleListProjectEntries)
 	mux.HandleFunc("GET /api/projects/{name}/file", h.handleGetProjectFile)
 	mux.HandleFunc("PUT /api/projects/{name}/file", h.handleUpdateProjectFile)
+	mux.HandleFunc("POST /api/projects/{name}/upload", h.handleFileUpload)
+	mux.HandleFunc("GET /api/projects/{name}/download", h.handleFileDownload)
 }
 
 func (h *Handler) projectsRoot() (string, string, error) {
@@ -350,4 +364,148 @@ func (h *Handler) handleUpdateProjectFile(w http.ResponseWriter, r *http.Request
 		Size:     int64(len(content)),
 		Editable: true,
 	})
+}
+
+// handleFileUpload handles multipart file uploads to a project directory
+func (h *Handler) handleFileUpload(w http.ResponseWriter, r *http.Request) {
+	_, root, err := h.projectsRoot()
+	if err != nil {
+		http.Error(w, "failed to load config: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	projectName := strings.TrimSpace(r.PathValue("name"))
+	if projectName == "" || strings.Contains(projectName, "/") || strings.Contains(projectName, "\\") {
+		http.Error(w, "invalid project name", http.StatusBadRequest)
+		return
+	}
+
+	relPath, err := safeRelPath(r.URL.Query().Get("path"))
+	if err != nil {
+		http.Error(w, "invalid path", http.StatusBadRequest)
+		return
+	}
+	if relPath == "." {
+		relPath = ""
+	}
+
+	projectRoot := filepath.Join(root, projectName)
+	targetDir := filepath.Join(projectRoot, relPath)
+
+	// Validate target directory exists and is a directory
+	info, err := os.Stat(targetDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			http.Error(w, "target directory not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "failed to stat directory: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if !info.IsDir() {
+		http.Error(w, "target path is not a directory", http.StatusBadRequest)
+		return
+	}
+
+	// Parse multipart form
+	if err := r.ParseMultipartForm(maxUploadFileSize); err != nil {
+		http.Error(w, "failed to parse form: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer r.MultipartForm.RemoveAll()
+
+	// Process uploaded files
+	uploadedFiles := make([]projectFileUploadResponse, 0)
+	for _, fheaders := range r.MultipartForm.File {
+		for _, fheader := range fheaders {
+			// Validate filename
+			fname := filepath.Base(fheader.Filename)
+			if fname == "" || fname == "." || fname == ".." || strings.Contains(fname, "/") || strings.Contains(fname, "\\") {
+				continue
+			}
+
+			file, err := fheader.Open()
+			if err != nil {
+				continue
+			}
+			defer file.Close()
+
+			// Limit file size
+			limitedFile := io.LimitReader(file, maxUploadFileSize)
+
+			targetPath := filepath.Join(targetDir, fname)
+
+			// Write file
+			outFile, err := os.Create(targetPath)
+			if err != nil {
+				continue
+			}
+			defer outFile.Close()
+
+			written, err := io.Copy(outFile, limitedFile)
+			if err != nil {
+				os.Remove(targetPath)
+				continue
+			}
+
+			filePath := fname
+			if relPath != "" {
+				filePath = filepath.Join(relPath, fname)
+			}
+
+			uploadedFiles = append(uploadedFiles, projectFileUploadResponse{
+				Project: projectName,
+				Path:    filepath.ToSlash(filePath),
+				Name:    fname,
+				Size:    written,
+			})
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"project": projectName,
+		"files":   uploadedFiles,
+	})
+}
+
+// handleFileDownload handles file downloads from a project
+func (h *Handler) handleFileDownload(w http.ResponseWriter, r *http.Request) {
+	_, relPath, target, err := h.resolveProjectFile(r)
+	if err != nil {
+		http.Error(w, "invalid project or file path", http.StatusBadRequest)
+		return
+	}
+
+	info, err := os.Stat(target)
+	if err != nil {
+		if os.IsNotExist(err) {
+			http.Error(w, "file not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "failed to stat file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if info.IsDir() {
+		http.Error(w, "path is a directory", http.StatusBadRequest)
+		return
+	}
+
+	// Open and serve the file
+	file, err := os.Open(target)
+	if err != nil {
+		http.Error(w, "failed to open file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	// Set appropriate headers for download
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", "attachment; filename=\""+filepath.Base(relPath)+"\"")
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", info.Size()))
+
+	if _, err := io.Copy(w, file); err != nil {
+		// Response already started, can't send error
+		return
+	}
 }

@@ -49,3 +49,9 @@ func (a *channelManagerAdapter) DismissToolFeedback(
 ) {
 	a.inner.DismissToolFeedback(ctx, channel, chatID, outboundCtx)
 }
+
+func (a *channelManagerAdapter) NotifyModelActive(
+	ctx context.Context, channel, chatID, model, provider string,
+) {
+	a.inner.NotifyModelActive(ctx, channel, chatID, model, provider)
+}

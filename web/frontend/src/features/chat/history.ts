@@ -6,6 +6,14 @@ import {
 } from "@/features/chat/tool-calls"
 import type { ChatAttachment, ChatMessage } from "@/store/chat"
 
+function mediaTypeFromDataURL(url: string): ChatAttachment["type"] {
+  const trimmed = url.trim().toLowerCase()
+  if (trimmed.startsWith("data:image/")) return "image"
+  if (trimmed.startsWith("data:audio/")) return "audio"
+  if (trimmed.startsWith("data:video/")) return "video"
+  return "file"
+}
+
 function toChatAttachments({
   media,
   attachments,
@@ -31,8 +39,8 @@ function toChatAttachments({
     )
 
   const legacyMediaAttachments = (media ?? [])
-    .filter((item) => item.startsWith("data:image/"))
-    .map((url) => ({ type: "image" as const, url }))
+    .filter((item) => item.trim().startsWith("data:"))
+    .map((url) => ({ type: mediaTypeFromDataURL(url), url }))
 
   const merged = [...(normalizedAttachments ?? []), ...legacyMediaAttachments]
 

@@ -63,6 +63,7 @@
       "step3": "Preparing response...",
       "step4": "Almost there..."
     },
+    "processingModel": "Model in use: {{model}}",
     "reasoningLabel": "Reasoning",
     "toolCallsLabel": "Tool calls",
     "toolCallExplanationLabel": "Call note",
@@ -88,6 +89,7 @@
     "attachImage": "Add images",
     "removeImage": "Remove image",
     "uploadedImage": "Uploaded image",
+    "uploadWorkspacePath": "After send, {{filename}} is stored at {{path}}",
     "invalidImage": "\"{{name}}\" is not a supported image file.",
     "imageTooLarge": "\"{{name}}\" exceeds the {{size}} limit.",
     "imageReadFailed": "Failed to read \"{{name}}\".",
@@ -114,6 +116,11 @@
       "hintPico": "Pico mode uses your default model (for example ChatGPT/GPT) through the normal gateway flow.",
       "hintManus": "Manus mode is optimized for research and document design workflows.",
       "manusNoImage": "Manus mode currently supports text input only."
+    },
+    "projectFocus": {
+      "title": "Project focus",
+      "none": "All projects",
+      "applyFailed": "Failed to apply project focus. Please retry."
     },
     "autoRouting": {
       "title": "Intelligent Model Routing",

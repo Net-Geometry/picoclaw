@@ -23,6 +23,7 @@ import (
 	"github.com/sipeed/picoclaw/pkg/config"
 	"github.com/sipeed/picoclaw/pkg/identity"
 	"github.com/sipeed/picoclaw/pkg/logger"
+	"github.com/sipeed/picoclaw/pkg/media"
 	"github.com/sipeed/picoclaw/pkg/utils"
 )
 
@@ -34,6 +35,12 @@ type picoConn struct {
 	writeMu   sync.Mutex
 	closed    atomic.Bool
 	cancel    context.CancelFunc // cancels per-connection goroutines (e.g. pingLoop)
+}
+
+type inboundInlineMedia struct {
+	DataURL     string
+	Filename    string
+	ContentType string
 }
 
 var allowedInlineMIMETypes = map[string]struct{}{
@@ -135,6 +142,20 @@ type PicoChannel struct {
 	cancel             context.CancelFunc
 	progress           *channels.ToolFeedbackAnimator
 	deleteMessageFn    func(context.Context, string, string) error
+	uploadDir          string // overrides picoInboundUploadDir() when non-empty (tests)
+}
+
+// setUploadDir overrides the default upload directory (used in tests to avoid
+// polluting the real workspace).
+func (c *PicoChannel) setUploadDir(dir string) { c.uploadDir = dir }
+
+// inboundUploadDir returns the directory for persisting inline uploaded files.
+// setUploadDir can override it in tests.
+func (c *PicoChannel) inboundUploadDir() string {
+	if c.uploadDir != "" {
+		return c.uploadDir
+	}
+	return picoInboundUploadDir()
 }
 
 // NewPicoChannel creates a new Pico Protocol channel.
@@ -480,6 +501,17 @@ func (c *PicoChannel) StartTyping(ctx context.Context, chatID string) (func(), e
 		stopMsg := newMessage(TypeTypingStop, nil)
 		c.broadcastToSession(chatID, stopMsg)
 	}, nil
+}
+
+// NotifyModelActive implements channels.ModelActiveNotifier.
+// It sends a typing.start event carrying the resolved model/provider so that
+// the web client can display which model is processing the request.
+func (c *PicoChannel) NotifyModelActive(ctx context.Context, chatID, model, provider string) error {
+	payload := map[string]any{
+		"model":    model,
+		"provider": provider,
+	}
+	return c.broadcastToSession(chatID, newMessage(TypeTypingStart, payload))
 }
 
 // SendPlaceholder implements channels.PlaceholderCapable.
@@ -948,7 +980,7 @@ func (c *PicoChannel) handleMessage(pc *picoConn, msg PicoMessage) {
 // handleMessageSend processes an inbound message.send from a client.
 func (c *PicoChannel) handleMessageSend(pc *picoConn, msg PicoMessage) {
 	content, _ := msg.Payload["content"].(string)
-	media, err := parseInlineImageMedia(msg.Payload)
+	inboundMedia, err := parseInlineMediaPayload(msg.Payload)
 	if err != nil {
 		errMsg := newErrorWithPayload("invalid_media", err.Error(), map[string]any{
 			"request_id": msg.ID,
@@ -957,7 +989,7 @@ func (c *PicoChannel) handleMessageSend(pc *picoConn, msg PicoMessage) {
 		return
 	}
 
-	if strings.TrimSpace(content) == "" && len(media) == 0 {
+	if strings.TrimSpace(content) == "" && len(inboundMedia) == 0 {
 		errMsg := newErrorWithPayload("empty_content", "message content is empty", map[string]any{
 			"request_id": msg.ID,
 		})
@@ -972,6 +1004,14 @@ func (c *PicoChannel) handleMessageSend(pc *picoConn, msg PicoMessage) {
 
 	chatID := "pico:" + sessionID
 	senderID := "pico-user"
+	mediaRefs, err := c.resolveInboundInlineMedia(chatID, msg.ID, inboundMedia)
+	if err != nil {
+		errMsg := newErrorWithPayload("invalid_media", err.Error(), map[string]any{
+			"request_id": msg.ID,
+		})
+		pc.writeJSON(errMsg)
+		return
+	}
 
 	metadata := map[string]string{
 		"platform":   "pico",
@@ -982,7 +1022,7 @@ func (c *PicoChannel) handleMessageSend(pc *picoConn, msg PicoMessage) {
 	logger.DebugCF("pico", "Received message", map[string]any{
 		"session_id": sessionID,
 		"preview":    truncate(content, 50),
-		"media":      len(media),
+		"media":      len(mediaRefs),
 	})
 
 	sender := bus.SenderInfo{
@@ -1004,7 +1044,220 @@ func (c *PicoChannel) handleMessageSend(pc *picoConn, msg PicoMessage) {
 		Raw:       metadata,
 	}
 
-	c.HandleInboundContext(c.ctx, chatID, content, media, inboundCtx, sender)
+	c.HandleInboundContext(c.ctx, chatID, content, mediaRefs, inboundCtx, sender)
+}
+
+func (c *PicoChannel) resolveInboundInlineMedia(chatID, messageID string, items []inboundInlineMedia) ([]string, error) {
+	if len(items) == 0 {
+		return nil, nil
+	}
+
+	store := c.GetMediaStore()
+	if store == nil {
+		media := make([]string, 0, len(items))
+		for _, item := range items {
+			media = append(media, item.DataURL)
+		}
+		return media, nil
+	}
+
+	scope := channels.BuildMediaScope(c.Name(), chatID, messageID)
+	mediaRefs := make([]string, 0, len(items))
+	for i, item := range items {
+		ref, err := c.storeInboundInlineMedia(item, scope, i)
+		if err != nil {
+			return nil, err
+		}
+		mediaRefs = append(mediaRefs, ref)
+	}
+
+	return mediaRefs, nil
+}
+
+func (c *PicoChannel) storeInboundInlineMedia(item inboundInlineMedia, scope string, index int) (string, error) {
+	mimeType, data, err := decodeInlineDataURL(item.DataURL)
+	if err != nil {
+		return "", err
+	}
+	if strings.TrimSpace(item.ContentType) == "" {
+		item.ContentType = mimeType
+	}
+
+	uploadDir := c.inboundUploadDir()
+	if err := os.MkdirAll(uploadDir, 0o700); err != nil {
+		return "", fmt.Errorf("failed to prepare upload directory: %w", err)
+	}
+
+	filename := strings.TrimSpace(item.Filename)
+	if filename == "" {
+		filename = fmt.Sprintf("upload-%d%s", index+1, extensionForMIMEType(item.ContentType))
+	}
+
+	tmpFile, err := os.CreateTemp(uploadDir, "pico-upload-*"+extensionForMIMEType(item.ContentType))
+	if err != nil {
+		return "", fmt.Errorf("failed to create upload file: %w", err)
+	}
+	tmpPath := tmpFile.Name()
+	if _, err := tmpFile.Write(data); err != nil {
+		tmpFile.Close()
+		_ = os.Remove(tmpPath)
+		return "", fmt.Errorf("failed to write upload file: %w", err)
+	}
+	if err := tmpFile.Close(); err != nil {
+		_ = os.Remove(tmpPath)
+		return "", fmt.Errorf("failed to finalize upload file: %w", err)
+	}
+
+	store := c.GetMediaStore()
+	if store == nil {
+		return "", fmt.Errorf("media store unavailable")
+	}
+
+	ref, err := store.Store(tmpPath, media.MediaMeta{
+		Filename:    filename,
+		ContentType: item.ContentType,
+		Source:      "pico:inline-upload",
+	}, scope)
+	if err != nil {
+		_ = os.Remove(tmpPath)
+		return "", fmt.Errorf("failed to store inline upload: %w", err)
+	}
+
+	return ref, nil
+}
+
+func picoInboundUploadDir() string {
+	workspace := strings.TrimSpace(os.Getenv("PICOCLAW_AGENTS_DEFAULTS_WORKSPACE"))
+	if workspace == "" {
+		workspace = config.DefaultConfig().WorkspacePath()
+	}
+	return filepath.Join(workspace, "projects", "incoming", "uploads")
+}
+
+func extensionForMIMEType(mimeType string) string {
+	mimeType = strings.TrimSpace(mimeType)
+	if mimeType == "" {
+		return ".bin"
+	}
+	if exts, err := mime.ExtensionsByType(mimeType); err == nil && len(exts) > 0 {
+		return exts[0]
+	}
+	return ".bin"
+}
+
+func decodeInlineDataURL(mediaURL string) (mimeType string, data []byte, err error) {
+	header, payload, found := strings.Cut(mediaURL, ",")
+	if !found {
+		return "", nil, fmt.Errorf("media data URL is malformed")
+	}
+	mimeType, _, _ = strings.Cut(strings.TrimPrefix(header, "data:"), ";")
+	if strings.TrimSpace(mimeType) == "" {
+		return "", nil, fmt.Errorf("media data URL is missing MIME type")
+	}
+	decoded, err := decodeBase64Payload(strings.TrimSpace(payload))
+	if err != nil {
+		return "", nil, fmt.Errorf("invalid base64 media data")
+	}
+	return mimeType, decoded, nil
+}
+
+func decodeBase64Payload(payload string) ([]byte, error) {
+	if decoded, err := base64.StdEncoding.DecodeString(payload); err == nil {
+		return decoded, nil
+	}
+	if decoded, err := base64.RawStdEncoding.DecodeString(payload); err == nil {
+		return decoded, nil
+	}
+	if decoded, err := base64.URLEncoding.DecodeString(payload); err == nil {
+		return decoded, nil
+	}
+	return base64.RawURLEncoding.DecodeString(payload)
+}
+
+func parseInlineMediaPayload(payload map[string]any) ([]inboundInlineMedia, error) {
+	items := make([]inboundInlineMedia, 0)
+	seen := make(map[string]struct{})
+
+	attachmentItems, err := parseInlineAttachmentMedia(payload)
+	if err != nil {
+		return nil, err
+	}
+	for _, item := range attachmentItems {
+		if _, ok := seen[item.DataURL]; ok {
+			continue
+		}
+		seen[item.DataURL] = struct{}{}
+		items = append(items, item)
+	}
+
+	rawMedia, err := parseInlineImageMedia(payload)
+	if err != nil {
+		return nil, err
+	}
+	for _, mediaURL := range rawMedia {
+		if _, ok := seen[mediaURL]; ok {
+			continue
+		}
+		mimeType, _, decodeErr := decodeInlineDataURL(mediaURL)
+		if decodeErr != nil {
+			return nil, decodeErr
+		}
+		seen[mediaURL] = struct{}{}
+		items = append(items, inboundInlineMedia{DataURL: mediaURL, ContentType: mimeType})
+	}
+
+	return items, nil
+}
+
+func parseInlineAttachmentMedia(payload map[string]any) ([]inboundInlineMedia, error) {
+	raw, ok := payload["attachments"]
+	if !ok || raw == nil {
+		return nil, nil
+	}
+
+	values, ok := raw.([]any)
+	if !ok {
+		return nil, fmt.Errorf("attachments must be an array")
+	}
+
+	items := make([]inboundInlineMedia, 0, len(values))
+	for i, item := range values {
+		obj, ok := item.(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("attachments[%d] must be an object", i)
+		}
+		urlValue, err := inlineImageValue(obj)
+		if err != nil {
+			return nil, fmt.Errorf("attachments[%d]: %w", i, err)
+		}
+		if err := validateInlineImageDataURL(urlValue); err != nil {
+			return nil, fmt.Errorf("attachments[%d]: %w", i, err)
+		}
+
+		filename := ""
+		if rawFilename, ok := obj["filename"].(string); ok {
+			filename = strings.TrimSpace(rawFilename)
+		}
+		contentType := ""
+		if rawType, ok := obj["content_type"].(string); ok {
+			contentType = strings.TrimSpace(rawType)
+		}
+		if contentType == "" {
+			mimeType, _, decodeErr := decodeInlineDataURL(urlValue)
+			if decodeErr != nil {
+				return nil, fmt.Errorf("attachments[%d]: %w", i, decodeErr)
+			}
+			contentType = mimeType
+		}
+
+		items = append(items, inboundInlineMedia{
+			DataURL:     urlValue,
+			Filename:    filename,
+			ContentType: contentType,
+		})
+	}
+
+	return items, nil
 }
 
 // truncate truncates a string to maxLen runes.
@@ -1083,7 +1336,7 @@ func inlineImageValue(item any) (string, error) {
 
 func validateInlineImageDataURL(mediaURL string) error {
 	if mediaURL == "" {
-		return fmt.Errorf("image payload is empty")
+		return fmt.Errorf("media payload is empty")
 	}
 	if !strings.HasPrefix(mediaURL, "data:") {
 		return fmt.Errorf("only inline data URLs are supported")
@@ -1094,19 +1347,19 @@ func validateInlineImageDataURL(mediaURL string) error {
 		return fmt.Errorf("image data URL is malformed")
 	}
 	if !strings.Contains(header, ";base64") {
-		return fmt.Errorf("image data URL must be base64 encoded")
+		return fmt.Errorf("media data URL must be base64 encoded")
 	}
 	mimeType, _, _ := strings.Cut(strings.TrimPrefix(header, "data:"), ";")
-	if _, ok := allowedInlineMIMETypes[mimeType]; !ok {
-		return fmt.Errorf("unsupported media format: %s", mimeType)
+	if strings.TrimSpace(mimeType) == "" {
+		return fmt.Errorf("media data URL is missing MIME type")
 	}
 
 	data = strings.TrimSpace(data)
 	if base64.StdEncoding.DecodedLen(len(data)) > config.DefaultMaxMediaSize {
-		return fmt.Errorf("image exceeds %d byte limit", config.DefaultMaxMediaSize)
+		return fmt.Errorf("media exceeds %d byte limit", config.DefaultMaxMediaSize)
 	}
-	if _, err := base64.StdEncoding.DecodeString(data); err != nil {
-		return fmt.Errorf("invalid base64 image data")
+	if _, err := decodeBase64Payload(data); err != nil {
+		return fmt.Errorf("invalid base64 media data")
 	}
 
 	return nil

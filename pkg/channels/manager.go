@@ -235,6 +235,18 @@ func (m *Manager) DismissToolFeedback(
 	dismissTrackedToolFeedbackMessage(ctx, ch, chatID, outboundCtx)
 }
 
+// NotifyModelActive forwards the resolved model/provider to the channel if it
+// implements ModelActiveNotifier. Silently no-ops for other channel types.
+func (m *Manager) NotifyModelActive(ctx context.Context, channelName, chatID, model, provider string) {
+	ch, ok := m.GetChannel(channelName)
+	if !ok {
+		return
+	}
+	if notifier, ok := ch.(ModelActiveNotifier); ok {
+		_ = notifier.NotifyModelActive(ctx, chatID, model, provider)
+	}
+}
+
 func prepareToolFeedbackMessageContent(ch Channel, content string) string {
 	prepared := strings.TrimSpace(content)
 	if prepared == "" {

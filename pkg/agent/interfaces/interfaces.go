@@ -51,4 +51,9 @@ type ChannelManager interface {
 	// outboundCtx carries topic/thread info needed for channels that use
 	// scoped tracker keys (e.g., Telegram forum topics); may be nil.
 	DismissToolFeedback(ctx context.Context, channel, chatID string, outboundCtx *bus.InboundContext)
+
+	// NotifyModelActive tells the channel (if it supports it) which LLM model
+	// has been selected for this turn, so the client can show it in real time.
+	// No-op for channels that do not implement ModelActiveNotifier.
+	NotifyModelActive(ctx context.Context, channel, chatID, model, provider string)
 }

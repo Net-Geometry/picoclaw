@@ -23,20 +23,23 @@ import { useGateway } from "@/hooks/use-gateway"
 import { usePicoChat } from "@/hooks/use-pico-chat"
 import { useSessionHistory } from "@/hooks/use-session-history"
 import { useTaskBasedModelRouting } from "@/hooks/use-task-based-model-routing"
+import { fetchProjects } from "@/api/projects"
 import type { ConnectionState } from "@/store/chat"
 import type { ChatAttachment } from "@/store/chat"
 import { showAssistantDetailsAtom } from "@/store/chat"
 import type { GatewayState } from "@/store/gateway"
 
-const MAX_IMAGE_SIZE_BYTES = 7 * 1024 * 1024
-const MAX_IMAGE_SIZE_LABEL = "7 MB"
-const ALLOWED_IMAGE_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-  "image/bmp",
-])
+const MAX_ATTACHMENT_SIZE_BYTES = 7 * 1024 * 1024
+const MAX_ATTACHMENT_SIZE_LABEL = "7 MB"
+const WORKSPACE_UPLOAD_RELATIVE_DIR = "projects/incoming/uploads"
+
+function inferAttachmentType(contentType: string): ChatAttachment["type"] {
+  const normalized = contentType.toLowerCase()
+  if (normalized.startsWith("image/")) return "image"
+  if (normalized.startsWith("audio/")) return "audio"
+  if (normalized.startsWith("video/")) return "video"
+  return "file"
+}
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -139,6 +142,10 @@ export function ChatPage() {
   const [input, setInput] = useState("")
   const [attachments, setAttachments] = useState<ChatAttachment[]>([])
   const [channelMode, setChannelMode] = useState<ChatChannelMode>("auto")
+  const [focusedProject, setFocusedProject] = useState("")
+  const [appliedProject, setAppliedProject] = useState("")
+  const [projectOptions, setProjectOptions] = useState<string[]>([])
+  const [workspacePath, setWorkspacePath] = useState("")
   const [autoRouteModel, setAutoRouteModel] = useState(true)
   const [showAssistantDetails, setShowAssistantDetails] = useAtom(
     showAssistantDetailsAtom,
@@ -148,6 +155,7 @@ export function ChatPage() {
     messages,
     connectionState,
     isTyping,
+    processingModel,
     activeSessionId,
     contextUsage,
     sendMessage,
@@ -217,6 +225,85 @@ export function ChatPage() {
     }
   }, [messages, isTyping, isAtBottom])
 
+  useEffect(() => {
+    let disposed = false
+
+    const loadProjects = async () => {
+      try {
+        const result = await fetchProjects()
+        if (disposed) return
+
+        setWorkspacePath(result.workspace || "")
+        const names = result.projects.map((project) => project.name)
+        setProjectOptions(names)
+
+        setFocusedProject((current) => {
+          if (!current || names.includes(current)) {
+            return current
+          }
+          setAppliedProject("")
+          return ""
+        })
+      } catch (error) {
+        console.warn("Failed to load projects for chat focus selector:", error)
+      }
+    }
+
+    void loadProjects()
+
+    return () => {
+      disposed = true
+    }
+  }, [])
+
+  const applyProjectFocusIfNeeded = (runtimeChannel: "pico" | "manus") => {
+    if (runtimeChannel !== "pico") {
+      return true
+    }
+
+    const targetProject = focusedProject.trim()
+    if (targetProject === appliedProject.trim()) {
+      return true
+    }
+
+    const commandValue = targetProject || "none"
+    const sent = sendMessage({
+      content: `/switch project to ${commandValue}`,
+      attachments: [],
+      channel: "pico",
+    })
+
+    if (!sent) {
+      toast.error(t("chat.projectFocus.applyFailed"))
+      return false
+    }
+
+    setAppliedProject(targetProject)
+    return true
+  }
+
+  const handleProjectFocusChange = (project: string) => {
+    setFocusedProject(project)
+
+    if (!canInput || channelMode === "manus") {
+      return
+    }
+
+    const commandValue = project.trim() || "none"
+    const sent = sendMessage({
+      content: `/switch project to ${commandValue}`,
+      attachments: [],
+      channel: "pico",
+    })
+
+    if (!sent) {
+      toast.error(t("chat.projectFocus.applyFailed"))
+      return
+    }
+
+    setAppliedProject(project.trim())
+  }
+
   const handleSend = () => {
     if ((!input.trim() && attachments.length === 0) || !canInput) return
 
@@ -235,11 +322,23 @@ export function ChatPage() {
     // Manus endpoint currently accepts text payload only.
     const runtimeAttachments = runtimeChannel === "manus" ? [] : attachments
 
+    if (!applyProjectFocusIfNeeded(runtimeChannel)) {
+      return
+    }
+
+    const processingModelLabel =
+      runtimeChannel === "manus"
+        ? t("chat.channel.manus")
+        : autoRouteModel && currentTaskRouting.selectedModelName
+          ? currentTaskRouting.selectedModelName
+          : (defaultModelName ?? "")
+
     if (
       sendMessage({
         content: input,
         attachments: runtimeAttachments,
         channel: runtimeChannel,
+        processingModel: processingModelLabel,
       })
     ) {
       setInput("")
@@ -266,30 +365,23 @@ export function ChatPage() {
 
     const nextAttachments: ChatAttachment[] = []
     for (const file of files) {
-      if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-        toast.error(
-          t("chat.invalidImage", {
-            name: file.name,
-          }),
-        )
-        continue
-      }
-
-      if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      if (file.size > MAX_ATTACHMENT_SIZE_BYTES) {
         toast.error(
           t("chat.imageTooLarge", {
             name: file.name,
-            size: MAX_IMAGE_SIZE_LABEL,
+            size: MAX_ATTACHMENT_SIZE_LABEL,
           }),
         )
         continue
       }
 
       try {
+        const contentType = file.type || "application/octet-stream"
         nextAttachments.push({
-          type: "image",
+          type: inferAttachmentType(contentType),
           filename: file.name,
           url: await readFileAsDataUrl(file),
+          contentType,
         })
       } catch {
         toast.error(
@@ -301,12 +393,16 @@ export function ChatPage() {
     }
 
     if (nextAttachments.length > 0) {
-      setAttachments(nextAttachments.slice(0, 1))
+      setAttachments(nextAttachments)
     }
   }
 
   const canSubmit =
     canInput && (Boolean(input.trim()) || attachments.length > 0)
+
+  const attachmentUploadDir = workspacePath
+    ? `${workspacePath.replace(/\/+$/, "")}/${WORKSPACE_UPLOAD_RELATIVE_DIR}`
+    : WORKSPACE_UPLOAD_RELATIVE_DIR
 
   const channelHint =
     channelMode === "auto"
@@ -415,14 +511,15 @@ export function ChatPage() {
             )
           })}
 
-          {isTyping && <TypingIndicator />}
+          {isTyping && <TypingIndicator processingModel={processingModel} />}
         </div>
       </div>
 
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/gif,image/webp,image/bmp"
+        accept="*/*"
+        multiple
         className="hidden"
         onChange={handleImageSelection}
       />
@@ -430,6 +527,7 @@ export function ChatPage() {
       <ChatComposer
         input={input}
         attachments={attachments}
+        attachmentUploadDir={attachmentUploadDir}
         onInputChange={setInput}
         onAddImages={handleAddImages}
         onRemoveAttachment={handleRemoveAttachment}
@@ -444,6 +542,9 @@ export function ChatPage() {
         contextUsage={contextUsage}
         channelMode={channelMode}
         onChannelModeChange={setChannelMode}
+        focusedProject={focusedProject}
+        projectOptions={projectOptions}
+        onProjectFocusChange={handleProjectFocusChange}
         channelHint={channelHint}
         canAttachImages={canAttachImages}
       />

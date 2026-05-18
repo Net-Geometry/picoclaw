@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 
-export function TypingIndicator() {
+interface TypingIndicatorProps {
+  processingModel?: string
+}
+
+export function TypingIndicator({ processingModel }: TypingIndicatorProps) {
   const { t } = useTranslation()
   const thinkingSteps = [
     t("chat.thinking.step1"),
@@ -38,6 +42,11 @@ export function TypingIndicator() {
         >
           {thinkingSteps[stepIndex]}
         </p>
+        {processingModel ? (
+          <p className="text-muted-foreground text-[11px]">
+            {t("chat.processingModel", { model: processingModel })}
+          </p>
+        ) : null}
       </div>
     </div>
   )

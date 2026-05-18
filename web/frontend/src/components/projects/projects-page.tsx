@@ -1,4 +1,4 @@
-import { IconFile, IconFolder, IconRefresh } from "@tabler/icons-react"
+import { IconFile, IconFolder, IconRefresh, IconDownload, IconUpload, IconRun, IconBoxMultiple } from "@tabler/icons-react"
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 
@@ -6,9 +6,13 @@ import {
   type ProjectEntry,
   type ProjectFileResponse,
   type ProjectListResponse,
+  downloadProjectFile,
   fetchProjectEntries,
   fetchProjectFile,
   fetchProjects,
+  runContainer,
+  runTest,
+  uploadProjectFile,
   updateProjectFile,
 } from "@/api/projects"
 import { PageHeader } from "@/components/page-header"
@@ -30,6 +34,13 @@ export function ProjectsPage() {
   const [loadingFile, setLoadingFile] = useState(false)
   const [savingFile, setSavingFile] = useState(false)
   const [fileMessage, setFileMessage] = useState("")
+
+  // New state for execution and upload features
+  const [uploadingFiles, setUploadingFiles] = useState(false)
+  const [runningTest, setRunningTest] = useState(false)
+  const [testResult, setTestResult] = useState<string>("")
+  const [runningContainer, setRunningContainer] = useState(false)
+  const [containerResult, setContainerResult] = useState<string>("")
 
   const breadcrumb = useMemo(() => {
     if (!currentPath) return []
@@ -131,6 +142,83 @@ export function ProjectsPage() {
     if (!selectedProject) return
     const path = breadcrumb.slice(0, index + 1).join("/")
     loadEntries(selectedProject, path)
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!selectedProject || !e.target.files) return
+    setUploadingFiles(true)
+    setFileMessage("")
+    try {
+      const files = Array.from(e.target.files)
+      await uploadProjectFile(selectedProject, files, currentPath)
+      setFileMessage(t("pages.projects.uploadSuccess") || "Files uploaded successfully")
+      await loadEntries(selectedProject, currentPath)
+    } catch (err: unknown) {
+      setFileMessage(err instanceof Error ? err.message : String(err))
+    } finally {
+      setUploadingFiles(false)
+      // Reset file input
+      if (e.target) e.target.value = ""
+    }
+  }
+
+  async function handleDownloadFile() {
+    if (!selectedProject || !selectedFile) return
+    try {
+      const blob = await downloadProjectFile(selectedProject, selectedFile)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = selectedFile.split("/").pop() || "download"
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err: unknown) {
+      setFileMessage(err instanceof Error ? err.message : String(err))
+    }
+  }
+
+  async function handleRunTests() {
+    if (!selectedProject) return
+    setRunningTest(true)
+    setTestResult("")
+    try {
+      const result = await runTest({
+        project_name: selectedProject,
+        project_path: currentPath || undefined,
+        verbose: true,
+      })
+      setTestResult(
+        `Tests: ${result.passed} passed, ${result.failed} failed, ${result.skipped} skipped\n\nStdout:\n${result.stdout}\n\nStderr:\n${result.stderr}`,
+      )
+    } catch (err: unknown) {
+      setTestResult(err instanceof Error ? err.message : String(err))
+    } finally {
+      setRunningTest(false)
+    }
+  }
+
+  async function handleRunContainer() {
+    if (!selectedProject) return
+    setRunningContainer(true)
+    setContainerResult("")
+    try {
+      const result = await runContainer({
+        project_name: selectedProject,
+        project_path: currentPath || undefined,
+        image: "alpine:latest",
+        command: ["echo", "Container is ready!"],
+        timeout: 30,
+      })
+      setContainerResult(
+        `Exit Code: ${result.exit_code}\nDuration: ${result.duration_ms}ms\n\nStdout:\n${result.stdout}\n\nStderr:\n${result.stderr}`,
+      )
+    } catch (err: unknown) {
+      setContainerResult(err instanceof Error ? err.message : String(err))
+    } finally {
+      setRunningContainer(false)
+    }
   }
 
   return (
@@ -275,7 +363,7 @@ export function ProjectsPage() {
               <p className="text-sm font-medium">
                 {t("pages.projects.editor")}: {selectedFile || "-"}
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   size="sm"
                   variant="outline"
@@ -290,6 +378,15 @@ export function ProjectsPage() {
                   disabled={!selectedFile || loadingFile || savingFile}
                 >
                   {t("pages.projects.save")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleDownloadFile}
+                  disabled={!selectedFile}
+                  title="Download selected file"
+                >
+                  <IconDownload className="size-4" />
                 </Button>
               </div>
             </div>
@@ -314,6 +411,92 @@ export function ProjectsPage() {
               />
             )}
           </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            <div className="rounded-md border p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-sm font-medium">File Upload & Operations</p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <div>
+                  <label className="cursor-pointer">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full"
+                      disabled={uploadingFiles || !selectedProject}
+                      asChild
+                    >
+                      <span>
+                        <IconUpload className="mr-2 size-4" />
+                        {uploadingFiles ? "Uploading..." : "Upload Files"}
+                      </span>
+                    </Button>
+                    <input
+                      type="file"
+                      multiple
+                      onChange={handleFileUpload}
+                      disabled={uploadingFiles || !selectedProject}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+              <p className="text-muted-foreground mt-2 text-xs">
+                Drag & drop or click to select files to upload
+              </p>
+            </div>
+
+            <div className="rounded-md border p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-sm font-medium">Execution & Testing</p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleRunTests}
+                  disabled={runningTest || !selectedProject}
+                  className="w-full"
+                >
+                  <IconRun className="mr-2 size-4" />
+                  {runningTest ? "Running..." : "Run Tests"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleRunContainer}
+                  disabled={runningContainer || !selectedProject}
+                  className="w-full"
+                >
+                  <IconBoxMultiple className="mr-2 size-4" />
+                  {runningContainer ? "Running..." : "Run Container"}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {testResult && (
+            <div className="mt-4 rounded-md border p-3">
+              <p className="mb-2 text-sm font-medium">Test Results</p>
+              <textarea
+                className="border-input bg-background focus-visible:ring-ring min-h-[150px] w-full resize-y rounded-md border p-2 font-mono text-sm focus-visible:ring-1 focus-visible:outline-none"
+                value={testResult}
+                readOnly
+              />
+            </div>
+          )}
+
+          {containerResult && (
+            <div className="mt-4 rounded-md border p-3">
+              <p className="mb-2 text-sm font-medium">Container Output</p>
+              <textarea
+                className="border-input bg-background focus-visible:ring-ring min-h-[150px] w-full resize-y rounded-md border p-2 font-mono text-sm focus-visible:ring-1 focus-visible:outline-none"
+                value={containerResult}
+                readOnly
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

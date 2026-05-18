@@ -104,6 +104,7 @@ function disconnectChatInternal({
   updateChatStore({
     connectionState: "disconnected",
     isTyping: false,
+    processingModel: undefined,
   })
 }
 
@@ -207,6 +208,7 @@ export async function connectChat() {
       updateChatStore({
         connectionState: "disconnected",
         isTyping: false,
+        processingModel: undefined,
       })
       scheduleReconnect(generation, sessionId)
     }
@@ -286,6 +288,7 @@ export async function hydrateActiveSession() {
       updateChatStore({
         messages: historyMessages,
         isTyping: false,
+        processingModel: undefined,
         hasHydratedActiveSession: true,
       })
     })
@@ -306,6 +309,7 @@ export async function hydrateActiveSession() {
       updateChatStore({
         messages: [],
         isTyping: false,
+        processingModel: undefined,
         hasHydratedActiveSession: true,
       })
     })
@@ -320,12 +324,14 @@ interface SendChatMessageInput {
   content: string
   attachments?: ChatAttachment[]
   channel?: "pico" | "manus"
+  processingModel?: string
 }
 
 export function sendChatMessage({
   content,
   attachments = [],
   channel = "pico",
+  processingModel,
 }: SendChatMessageInput) {
   if (channel === "pico" && (!wsRef || wsRef.readyState !== WebSocket.OPEN)) {
     console.warn("WebSocket not connected")
@@ -356,6 +362,7 @@ export function sendChatMessage({
       },
     ],
     isTyping: true,
+    processingModel: processingModel?.trim() || prev.processingModel,
   }))
 
   try {
@@ -375,7 +382,12 @@ export function sendChatMessage({
         id,
         payload: {
           content: normalizedContent,
-          media: normalizedAttachments.map((attachment) => attachment.url),
+          attachments: normalizedAttachments.map((attachment) => ({
+            type: attachment.type,
+            url: attachment.url,
+            filename: attachment.filename,
+            content_type: attachment.contentType,
+          })),
           channel,
         },
       }),
@@ -386,6 +398,7 @@ export function sendChatMessage({
     updateChatStore((prev) => ({
       messages: prev.messages.filter((message) => message.id !== id),
       isTyping: false,
+      processingModel: undefined,
     }))
     return false
   }
@@ -427,6 +440,7 @@ async function sendManusMessage(requestID: string, content: string) {
         },
       ],
       isTyping: false,
+      processingModel: undefined,
     }))
   } catch (error) {
     const message =
@@ -435,6 +449,7 @@ async function sendManusMessage(requestID: string, content: string) {
     updateChatStore((prev) => ({
       messages: prev.messages.filter((msg) => msg.id !== requestID),
       isTyping: false,
+      processingModel: undefined,
     }))
   }
 }
@@ -452,6 +467,7 @@ export async function switchChatSession(sessionId: string) {
     updateChatStore({
       messages: historyMessages,
       isTyping: false,
+      processingModel: undefined,
       hasHydratedActiveSession: true,
     })
 
@@ -475,6 +491,7 @@ export async function newChatSession() {
   updateChatStore({
     messages: [],
     isTyping: false,
+    processingModel: undefined,
     hasHydratedActiveSession: true,
     contextUsage: undefined,
   })

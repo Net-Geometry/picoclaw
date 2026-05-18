@@ -15,6 +15,7 @@ import (
 	"github.com/sipeed/picoclaw/pkg/bus"
 	"github.com/sipeed/picoclaw/pkg/channels"
 	"github.com/sipeed/picoclaw/pkg/config"
+	"github.com/sipeed/picoclaw/pkg/media"
 )
 
 func TestNewPicoClientChannel_MissingURL(t *testing.T) {
@@ -301,12 +302,15 @@ func TestParseInlineMedia_ValidDocumentAndAudio(t *testing.T) {
 	}
 }
 
-func TestParseInlineMedia_RejectsUnsupportedType(t *testing.T) {
-	_, err := parseInlineMedia(map[string]any{
+func TestParseInlineMedia_AllowsArbitraryMIMEType(t *testing.T) {
+	media, err := parseInlineMedia(map[string]any{
 		"media": []any{"data:application/zip;base64,UEsDBAoAAAAA"},
 	})
-	if err == nil {
-		t.Fatal("parseInlineMedia() error = nil, want unsupported type error")
+	if err != nil {
+		t.Fatalf("parseInlineMedia() error = %v", err)
+	}
+	if len(media) != 1 {
+		t.Fatalf("len(media) = %d, want 1", len(media))
 	}
 }
 
@@ -348,6 +352,62 @@ func TestPicoChannel_HandleMessageSend_AllowsMediaOnly(t *testing.T) {
 		}
 	case <-ctx.Done():
 		t.Fatal("timed out waiting for inbound media message")
+	}
+}
+
+func TestPicoChannel_HandleMessageSend_PersistsInboundAttachments(t *testing.T) {
+	mb := bus.NewMessageBus()
+	bc := &config.Channel{Type: "pico", Enabled: true}
+	ch, err := NewPicoChannel(bc, &config.PicoSettings{
+		Token: *config.NewSecureString("test-token"),
+	}, mb)
+	if err != nil {
+		t.Fatalf("NewPicoChannel() error = %v", err)
+	}
+	ch.setUploadDir(t.TempDir())
+
+	store := media.NewFileMediaStore()
+	ch.SetMediaStore(store)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := ch.Start(ctx); err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+	defer ch.Stop(ctx)
+
+	pc := &picoConn{id: "conn-2", sessionID: "sess-2"}
+	ch.handleMessageSend(pc, PicoMessage{
+		ID: "msg-2",
+		Payload: map[string]any{
+			"attachments": []any{
+				map[string]any{
+					"url":          "data:application/pdf;base64,UEZERGF0YQ==",
+					"filename":     "requirements.pdf",
+					"content_type": "application/pdf",
+				},
+			},
+		},
+	})
+
+	select {
+	case msg := <-mb.InboundChan():
+		if len(msg.Media) != 1 || !strings.HasPrefix(msg.Media[0], "media://") {
+			t.Fatalf("msg.Media = %#v, want media:// ref", msg.Media)
+		}
+		_, meta, err := store.ResolveWithMeta(msg.Media[0])
+		if err != nil {
+			t.Fatalf("ResolveWithMeta() error = %v", err)
+		}
+		if meta.Filename != "requirements.pdf" {
+			t.Fatalf("meta.Filename = %q, want %q", meta.Filename, "requirements.pdf")
+		}
+		if meta.ContentType != "application/pdf" {
+			t.Fatalf("meta.ContentType = %q, want %q", meta.ContentType, "application/pdf")
+		}
+	case <-ctx.Done():
+		t.Fatal("timed out waiting for inbound attachment message")
 	}
 }
 
