@@ -146,7 +146,7 @@ export function ChatPage() {
   const [appliedProject, setAppliedProject] = useState("")
   const [projectOptions, setProjectOptions] = useState<string[]>([])
   const [workspacePath, setWorkspacePath] = useState("")
-  const [autoRouteModel, setAutoRouteModel] = useState(true)
+  const [autoRouteModel] = useState(true)
   const [showAssistantDetails, setShowAssistantDetails] = useAtom(
     showAssistantDetailsAtom,
   )
