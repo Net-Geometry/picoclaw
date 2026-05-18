@@ -411,6 +411,7 @@ async function sendManusMessage(requestID: string, content: string) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content }),
     })
+    const traceID = (res.headers.get("x-pico-trace-id") || "").trim()
 
     if (!res.ok) {
       let reason = `HTTP ${res.status}`
@@ -422,12 +423,28 @@ async function sendManusMessage(requestID: string, content: string) {
       } catch {
         // Keep fallback HTTP status.
       }
+      if (traceID) {
+        reason = `${reason} (trace: ${traceID})`
+      }
       throw new Error(reason)
     }
 
-    const body = (await res.json()) as { content?: string; task_id?: string }
+    const body = (await res.json()) as {
+      content?: string
+      task_id?: string
+      trace_id?: string
+    }
+    const effectiveTraceID = (body.trace_id || traceID || "").trim()
     const assistantContent =
       (body.content || "").trim() || `(Manus task ${body.task_id || "created"})`
+
+    if (effectiveTraceID) {
+      console.info("[manus] request completed", {
+        requestID,
+        taskID: body.task_id,
+        traceID: effectiveTraceID,
+      })
+    }
 
     updateChatStore((prev) => ({
       messages: [
