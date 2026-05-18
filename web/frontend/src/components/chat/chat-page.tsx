@@ -22,7 +22,6 @@ import { useChatModels } from "@/hooks/use-chat-models"
 import { useGateway } from "@/hooks/use-gateway"
 import { usePicoChat } from "@/hooks/use-pico-chat"
 import { useSessionHistory } from "@/hooks/use-session-history"
-import { useTaskBasedModelRouting } from "@/hooks/use-task-based-model-routing"
 import { fetchProjects } from "@/api/projects"
 import type { ConnectionState } from "@/store/chat"
 import type { ChatAttachment } from "@/store/chat"
@@ -146,7 +145,6 @@ export function ChatPage() {
   const [appliedProject, setAppliedProject] = useState("")
   const [projectOptions, setProjectOptions] = useState<string[]>([])
   const [workspacePath, setWorkspacePath] = useState("")
-  const [autoRouteModel] = useState(true)
   const [showAssistantDetails, setShowAssistantDetails] = useAtom(
     showAssistantDetailsAtom,
   )
@@ -176,14 +174,6 @@ export function ChatPage() {
   } = useChatModels({ isConnected: isGatewayRunning })
   const hasDefaultModel = Boolean(defaultModelName)
 
-  // Task-based model routing
-  const { routeTask } = useTaskBasedModelRouting({
-    availableModels: [...apiKeyModels, ...oauthModels, ...localModels],
-    defaultModelName: defaultModelName || "",
-  })
-
-  // Calculate current task complexity for display
-  const currentTaskRouting = routeTask(input, attachments.length > 0)
   const inputDisabledReason = resolveChatInputDisabledReason({
     hasDefaultModel,
     connectionState,
@@ -307,11 +297,6 @@ export function ChatPage() {
   const handleSend = () => {
     if ((!input.trim() && attachments.length === 0) || !canInput) return
 
-    // Auto-route to best available model if enabled
-    if (autoRouteModel && currentTaskRouting.selectedModelName) {
-      void handleSetDefault(currentTaskRouting.selectedModelName)
-    }
-
     const runtimeChannel: "pico" | "manus" =
       channelMode === "auto"
         ? routeTaskToChannel(input)
@@ -329,9 +314,7 @@ export function ChatPage() {
     const processingModelLabel =
       runtimeChannel === "manus"
         ? t("chat.channel.manus")
-        : autoRouteModel && currentTaskRouting.selectedModelName
-          ? currentTaskRouting.selectedModelName
-          : (defaultModelName ?? "")
+        : (defaultModelName ?? "")
 
     if (
       sendMessage({
